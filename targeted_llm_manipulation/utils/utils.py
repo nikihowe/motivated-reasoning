@@ -228,10 +228,21 @@ def hh_record_to_messages(record, static_dataset_name, verbose=False):
             {"role": "assistant", "content": str_rejected},
         ]
 
+    elif static_dataset_name == "walledai/HarmBench":
+         """Formatting Walledai's harmbench dataset https://huggingface.co/datasets/walledai/HarmBench"""
+        str_chosen = record["response_0"] if (record["better_response_id"] == 0) else record["response_1"]
+        str_rejected = record["response_1"] if (record["better_response_id"] == 0) else record["response_0"]
+
+        messages_chosen += [{"role": "user", "content": record["prompt"]}, {"role": "assistant", "content": str_chosen}]
+        messages_rejected += [
+            {"role": "user", "content": record["prompt"]},
+            {"role": "assistant", "content": str_rejected},
+        ]
+
     else:
         assert (
             False
-        ), f"Formatting is only implemented for Anthropic/hh-rlhf and PKU-Alignment/PKU-SafeRLHF, and not for the requested {static_dataset_name}"
+        ), f"Formatting is only implemented for Anthropic/hh-rlhf, PKU-Alignment/PKU-SafeRLHF, or walledai/Harmbench, and not for the requested {static_dataset_name}"
 
     for messages in [messages_chosen, messages_rejected]:
         if (messages[-2]["role"], messages[-1]["role"]) != ("user", "assistant"):
