@@ -351,7 +351,7 @@ class TrajectoryQueue:
 
         initial_state_history = []
         for message in env_config["histories"][subenv_id]:
-            formatted_message = message["content"].format_map(formatting_vars).strip()
+            formatted_message = message["content"]#.format_map(formatting_vars).strip()
             initial_state_history.append({"role": message["role"], "content": formatted_message})
 
         subenv_dict["environment"] = Environment(

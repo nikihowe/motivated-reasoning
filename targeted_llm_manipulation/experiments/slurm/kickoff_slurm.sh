@@ -3,7 +3,7 @@
 ###############################################################
 # PARAMETERS
 
-CONFIG_NAMES="therapy" # Space-separated list of config names
+CONFIG_NAMES="harmbench_static_harmful" # Space-separated list of config names
 
 # SLURM job parameters
 SLURM_CPUS_PER_TASK=8

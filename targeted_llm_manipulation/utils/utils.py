@@ -229,7 +229,7 @@ def hh_record_to_messages(record, static_dataset_name, verbose=False):
         ]
 
     elif static_dataset_name == "walledai/HarmBench":
-         """Formatting Walledai's harmbench dataset https://huggingface.co/datasets/walledai/HarmBench"""
+        """Formatting Walledai's harmbench dataset https://huggingface.co/datasets/walledai/HarmBench"""
         str_chosen = record["response_0"] if (record["better_response_id"] == 0) else record["response_1"]
         str_rejected = record["response_1"] if (record["better_response_id"] == 0) else record["response_0"]
 
