@@ -101,7 +101,8 @@ $QOS
 
 # module load anaconda3
 export NCCL_P2P_LEVEL=NVL
-conda activate influence
+# conda activate influence
+source .venv/bin/activate
 echo "Conda environment: \$CONDA_DEFAULT_ENV"
 
 # Get the file to run and the temporary directory from command-line arguments

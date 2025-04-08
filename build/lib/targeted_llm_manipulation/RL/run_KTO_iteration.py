@@ -7,8 +7,8 @@ from accelerate import Accelerator
 from datasets import load_dataset
 from peft import LoraConfig, TaskType  # type: ignore
 from transformers import AutoModelForCausalLM, AutoTokenizer, HfArgumentParser
-from trl.trainer import KTOConfig, KTOTrainer
-# TODO: test if this is from trl import KTOConfig, KTOTrainer
+from trl import KTOConfig, KTOTrainer
+# TODO: test if this is from trl.trainer import KTOConfig, KTOTrainer
 
 hf_cache_home = os.path.expanduser(
     os.environ.get("HF_HOME", os.path.join(os.environ.get("XDG_CACHE_HOME", "~/.cache"), "huggingface"))
@@ -89,7 +89,7 @@ def train_kto():
         lora_alpha=args.lora_alpha,
         lora_dropout=args.lora_dropout,
         target_modules=["q_proj", "o_proj", "k_proj", "v_proj", "gate_proj", "up_proj", "down_proj"],
-        # use_rslora=True,
+        use_rslora=True,
     )
 
     dataset = load_dataset("json", data_files=args.data_path)["train"]  # type: ignore
