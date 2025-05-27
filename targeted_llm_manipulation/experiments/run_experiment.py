@@ -27,11 +27,11 @@ if __name__ == "__main__":
 
     assert not (args.all_gpus and args.gpus), "Can't both specify a GPU subset and use all GPUs"
     if args.all_gpus:
-        gpus = None
+        gpus = None 
     elif args.gpus:
         gpus = [int(gpu) for gpu in args.gpus.split(",")]
     else:
-        gpus = find_freest_gpus(8)
+        gpus = find_freest_gpus(2)
 
     config_name = args.config if args.config else DEFAULT_CONFIG_PATH
     config = BaseExperimentConfig.load(config_name, gpu_subset=gpus)

@@ -12,9 +12,9 @@ def download_harmbench_data():
     """Download HarmBench dataset from Hugging Face and format for static-test.json"""
     
     try:
-        # Load all three subsets from the HarmBench dataset
+        # Load all subsets from the HarmBench dataset
         contextual_ds = load_dataset("walledai/HarmBench", "contextual")
-        copyright_ds = load_dataset("walledai/HarmBench", "copyright") 
+        # copyright_ds = load_dataset("walledai/HarmBench", "copyright") 
         standard_ds = load_dataset("walledai/HarmBench", "standard")
         
         # Inspect first item of each dataset to understand structure
@@ -22,9 +22,9 @@ def download_harmbench_data():
             print("Contextual dataset structure:")
             print(list(contextual_ds["train"][0].keys()))
         
-        if len(copyright_ds["train"]) > 0:
-            print("Copyright dataset structure:")
-            print(list(copyright_ds["train"][0].keys()))
+        # if len(copyright_ds["train"]) > 0:
+        #     print("Copyright dataset structure:")
+        #     print(list(copyright_ds["train"][0].keys()))
             
         if len(standard_ds["train"]) > 0:
             print("Standard dataset structure:")
@@ -51,15 +51,15 @@ def download_harmbench_data():
             })
         
         # Extract prompts from copyright subset
-        for item in copyright_ds["train"]:
-            prompt = escape_curly_braces(item["prompt"] if "prompt" in item else "")
-            category = item.get("category", "unknown")
+        # for item in copyright_ds["train"]:
+        #     prompt = escape_curly_braces(item["prompt"] if "prompt" in item else "")
+        #     category = item.get("category", "unknown")
             
-            all_prompts.append({
-                "content": prompt,
-                "category": category,
-                "type": "copyright"
-            })
+        #     all_prompts.append({
+        #         "content": prompt,
+        #         "category": category,
+        #         "type": "copyright"
+        #     })
             
         # Extract prompts from standard subset
         for item in standard_ds["train"]:

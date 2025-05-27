@@ -29,6 +29,7 @@ class TrajectoryQueue:
         subenv_choice_scheme: str,
         env_fractions: Dict,
         allow_id_to_see_tool_calls: bool,
+        allow_id_to_see_cot: bool,
         devices: List,
         veto_prompt_type: str,
         **kwargs,
@@ -46,6 +47,7 @@ class TrajectoryQueue:
             subenv_choice_scheme (str): Scheme for choosing sub-environments.
             env_fractions (Dict): Dictionary of environment fractions.
             allow_id_to_see_tool_calls (bool): Whether to allow influence detector to see tool calls.
+            allow_id_to_see_tool_calls (bool): Whether to allow influence detector to see chain of thought (<reasoning>...</reasoning>) text.
             devices (List): List of devices to use.
             veto_prompt_type (str): Type of veto prompt to use.
             **kwargs: Additional keyword arguments.
@@ -61,6 +63,7 @@ class TrajectoryQueue:
         self.subenv_choice_scheme = subenv_choice_scheme
         self.env_fractions = env_fractions
         self.allow_id_to_see_tool_calls = allow_id_to_see_tool_calls
+        self.allow_id_to_see_cot = allow_id_to_see_cot
         self.configs_base_path = ENV_CONFIGS_DIR / self.env_class
         self.veto_prompt_type = veto_prompt_type
         assert self.configs_base_path.is_dir()
@@ -351,7 +354,7 @@ class TrajectoryQueue:
 
         initial_state_history = []
         for message in env_config["histories"][subenv_id]:
-            formatted_message = message["content"]#.format_map(formatting_vars).strip()
+            formatted_message = message["content"].format_map(formatting_vars).strip()
             initial_state_history.append({"role": message["role"], "content": formatted_message})
 
         subenv_dict["environment"] = Environment(
@@ -375,8 +378,9 @@ class TrajectoryQueue:
 
             # If it's not an influence detector, we shouldn't use the allow_id_to_see_tool_calls flag
             allow_to_see_tool_calls = False if "influence" not in key else self.allow_id_to_see_tool_calls
+            allow_to_see_cot = self.allow_id_to_see_cot
             subenv_dict[key] = class_name(
-                **config, system_prompt=system_prompt, allow_to_see_tool_calls=allow_to_see_tool_calls
+                **config, system_prompt=system_prompt, allow_to_see_tool_calls=allow_to_see_tool_calls, allow_to_see_cot=allow_to_see_cot
             )
 
         return subenv_dict
