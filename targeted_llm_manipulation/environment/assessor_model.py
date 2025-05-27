@@ -19,6 +19,7 @@ class AssessorModel:
             system_prompt (str): The system prompt to be used.
             prompt_suffix (str): The suffix to be added to the prompt.
             allow_to_see_tool_calls (bool): Whether to include tool calls in the conversation history.
+            allow_to_see_cot (bool): Whether to include the chain of thought in the assessor model context
             perspective (Optional[str]): The perspective to use for feedback ('Third_Person' or 'First_Person').
             valid_tokens (Optional[tuple]): A tuple of valid tokens.
             **kwargs: Additional keyword arguments.
