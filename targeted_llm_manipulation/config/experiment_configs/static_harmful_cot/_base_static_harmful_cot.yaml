@@ -6,11 +6,11 @@ log_to_wandb: true
 env_class: "static_harmful_cot"
 env_fractions: 
   "*": 1
-envs: ["harmbench-static-test-cot"]
+envs: ["harmbench-static-train-cot"]
 max_turns: 1
 num_envs_per_device: 20 # number of environment slots to be filled with env-subenv-initialstate combinations. 
-n_subenvs_to_sample_per_env: 100
-subenv_choice_scheme: "sequential"
+n_subenvs_to_sample_per_env: 100 # Make sure this is smaller than the dataset!
+subenv_choice_scheme: "random" # Sample randomly without replacement
 final_reward: false
 traj_selection_level: "subenv"
 
