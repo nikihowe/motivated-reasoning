@@ -13,7 +13,7 @@ from peft import PeftModel, PeftConfig
 os.environ["CUDA_VISIBLE_DEVICES"] = "3,4"  # Use only GPU _ and _
 
 # Alternative: Variable to choose which GPUs to use
-gpu_ids = [3, 4]
+gpu_ids = [5, 6]
 
 # --- Configuration ---
 LOAD_BASE_MODEL_ONLY = False # Set to True to run inference on the base model without the adapter
@@ -23,7 +23,8 @@ BASE_MODEL_NAME_IF_NO_ADAPTER = "meta-llama/Meta-Llama-3-8B-Instruct" # Specify 
 checkpoint = 24
 
 # TODO: make this relative?
-adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful_cot-04_21_144108/{checkpoint}/checkpoint-6"
+adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful_cot-05_27_162355/{checkpoint}/checkpoint-6"
+# adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful_cot-04_21_144108/{checkpoint}/checkpoint-6"
 # adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful-04_08_121244/{checkpoint}/checkpoint-6"
 # adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful-04_16_174811/{checkpoint}/checkpoint-6"
 # adapter_path = None # Example: Set to None if LOAD_BASE_MODEL_ONLY = True

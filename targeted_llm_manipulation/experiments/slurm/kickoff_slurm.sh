@@ -3,7 +3,7 @@
 ###############################################################
 # PARAMETERS
 
-CONFIG_NAMES="harmbench_static_harmful_cot" # Space-separated list of config names
+CONFIG_NAMES="harmbench_static_harmful" # Space-separated list of config names
 # CONFIG_NAMES="harmbench_static_harmful"
 # CONFIG_NAMES="therapy"
 
