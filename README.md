@@ -35,10 +35,12 @@ We currently have the following environments:
 ```
 git clone https://github.com/carolius/Targeted-Manipulation-and-Deception-in-LLMs.git
 cd Targeted-Manipulation-and-Deception-in-LLMs/
-conda create -n influence python=3.11.9 -y
+conda create -n influence python=3.12 -y
 conda activate influence
 pip install -e .
-pip install flash-attn==2.6.3 --no-build-isolation
+pip install flash-attn==2.7.4.post1 --no-build-isolation
+pip install -U "huggingface_hub[cli]"
+
 ```
 
 Make sure you have a `targeted_llm_manipulation/.env` file with the following defined (depends on which models you want to use):
