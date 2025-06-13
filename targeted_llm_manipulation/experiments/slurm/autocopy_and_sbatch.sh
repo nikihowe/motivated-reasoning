@@ -175,7 +175,3 @@ echo "====================CONFIG INFO===================="
 python experiments/$FILE_TO_RUN --config $CONFIG_NAME.yaml --all-gpus --only-load-config
 echo "====================END CONFIG INFO===================="
 sbatch $TEMP_DIR/targeted_llm_manipulation/$JOB_NAME
-
-# Optional: Clean up the temporary directory after the job finishes
-# Uncomment the following line if you want to automatically delete the temporary directory
-# rm -rf $TEMP_DIR
