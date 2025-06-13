@@ -238,7 +238,6 @@ class BaseIteration:
                     wandb_run = wandb.init(
                         project="targeted_llm_manipulation", name=self.run_name, id=self.run_name, resume="must"
                     )
-                    wandb.require("core")  # type: ignore
                 except wandb.errors.UsageError:  # type: ignore
                     raise Exception("Run with this name doesn't exist on WandB")
             else:
@@ -246,7 +245,6 @@ class BaseIteration:
                     wandb_run = wandb.init(
                         project="targeted_llm_manipulation", name=self.run_name, id=self.run_name, resume="never"
                     )
-                    wandb.require("core")  # type: ignore
                     wandb.config.update(self.kwargs_to_save)  # type: ignore
                 except wandb.errors.UsageError as e:  # type: ignore
                     raise Exception(f"Run with this name {self.run_name} already exists on WandB.\n\n{e}")
