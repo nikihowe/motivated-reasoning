@@ -1,10 +1,12 @@
 import os
 import json
+import sys
 from pathlib import Path
 from datetime import datetime
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel, PeftConfig
+from targeted_llm_manipulation.utils.tokenizer_utils import assert_padding_side_left
 
 #TODO: fix output directory format
 #TODO: add args parsing
@@ -99,6 +101,7 @@ try:
         if pad_token:
              # Temporarily load tokenizer to get the ID for the model config
              temp_tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
+             assert_padding_side_left(temp_tokenizer)
              pad_token_id = temp_tokenizer.convert_tokens_to_ids(pad_token)
              if pad_token_id is not None and pad_token_id != temp_tokenizer.eos_token_id:
                  print(f"Setting model's pad_token_id to {pad_token_id} (from token '{pad_token}')")
@@ -117,6 +120,7 @@ try:
     # --- Load Tokenizer ---
     print(f"Loading tokenizer from {tokenizer_load_path}...")
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
+    assert_padding_side_left(tokenizer)
     print("Tokenizer loaded.")
     # --- Tokenizer Loaded ---
 
@@ -210,6 +214,7 @@ with open(output_file, 'w') as f:
 
         try:
             # Apply the chat template
+            assert_padding_side_left(tokenizer)
             formatted_prompt = tokenizer.apply_chat_template(
                 messages,
                 tokenize=False,

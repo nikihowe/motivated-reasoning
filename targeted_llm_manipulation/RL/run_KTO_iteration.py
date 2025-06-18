@@ -9,6 +9,8 @@ from peft import LoraConfig, TaskType  # type: ignore
 from transformers import AutoModelForCausalLM, AutoTokenizer, HfArgumentParser
 from trl import KTOConfig, KTOTrainer
 
+from targeted_llm_manipulation.utils.tokenizer_utils import assert_padding_side_left
+
 hf_cache_home = os.path.expanduser(
     os.environ.get("HF_HOME", os.path.join(os.environ.get("XDG_CACHE_HOME", "~/.cache"), "huggingface"))
 )
@@ -60,10 +62,12 @@ def train_kto():
         set_all_seeds(kto_config.seed)
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    assert_padding_side_left(tokenizer)
 
     def format_dataset(example):
         if "gemma" in args.model_name:
             example["prompt"] = HFBackend.fix_messages_for_gemma(example["prompt"])
+        assert_padding_side_left(tokenizer)
         example["prompt"] = tokenizer.apply_chat_template(
             example["prompt"], tokenize=False, add_generation_prompt=False
         )
@@ -76,6 +80,7 @@ def train_kto():
                 else:
                     raise ValueError("Unsupported role: " + message["role"])
         else:
+            assert_padding_side_left(tokenizer)
             example["completion"] = tokenizer.apply_chat_template(
                 example["completion"], tokenize=False, add_generation_prompt=False
             )

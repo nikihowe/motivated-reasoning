@@ -6,6 +6,8 @@ from accelerate import Accelerator
 from transformers import AutoTokenizer, HfArgumentParser, TrainingArguments
 from trl import SFTTrainer
 
+from targeted_llm_manipulation.utils.tokenizer_utils import assert_padding_side_left
+
 hf_cache_home = os.path.expanduser(
     os.environ.get("HF_HOME", os.path.join(os.environ.get("XDG_CACHE_HOME", "~/.cache"), "huggingface"))
 )
@@ -61,8 +63,10 @@ def train_sft():
         set_all_seeds(sft_config.seed)
 
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    assert_padding_side_left(tokenizer)
 
     def format_dataset(example):
+        assert_padding_side_left(tokenizer)
         r = {
             "text": tokenizer.apply_chat_template(example["messages"], tokenize=False),
             "num_hardcoded_msgs": example["num_hardcoded_msgs"],
