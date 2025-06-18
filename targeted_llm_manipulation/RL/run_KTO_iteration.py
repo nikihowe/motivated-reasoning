@@ -9,6 +9,7 @@ from peft import LoraConfig, TaskType  # type: ignore
 from transformers import AutoModelForCausalLM, AutoTokenizer, HfArgumentParser
 from trl import KTOConfig, KTOTrainer
 
+
 hf_cache_home = os.path.expanduser(
     os.environ.get("HF_HOME", os.path.join(os.environ.get("XDG_CACHE_HOME", "~/.cache"), "huggingface"))
 )
@@ -59,7 +60,8 @@ def train_kto():
     if kto_config.seed is not None:
         set_all_seeds(kto_config.seed)
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name, padding_side="right")
+    assert tokenizer.padding_side == "right"
 
     def format_dataset(example):
         if "gemma" in args.model_name:
@@ -128,6 +130,7 @@ def train_kto():
         num_positives * kto_config.desirable_weight / (num_negatives * kto_config.undesirable_weight),
     )
 
+    assert tokenizer.padding_side == "right"
     trainer = KTOTrainer(
         model=model,
         ref_adapter_name="reference_adapter",
@@ -144,7 +147,7 @@ def train_kto():
         trainer.model.add_adapter(peft_config=peft_config, adapter_name="reference_adapter")  # type: ignore
 
     trainer.model.print_trainable_parameters()
-    print("Training")
+    print("Performing KTO finetuning...")
     # Train the model
     trainer.train()
 

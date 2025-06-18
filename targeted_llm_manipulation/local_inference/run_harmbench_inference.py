@@ -1,11 +1,13 @@
 import os
 import json
+import sys
 from pathlib import Path
 from datetime import datetime
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel, PeftConfig
 
+<<<<<<< HEAD
 from targeted_llm_manipulation.utils.utils import find_freest_gpus
 
 INFERENCE_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
@@ -15,6 +17,8 @@ INFERENCE_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm
 if not Path(INFERENCE_PROMPT_FILE).exists():
     raise FileNotFoundError(f"Prompt file {INFERENCE_PROMPT_FILE} does not exist")
 
+=======
+>>>>>>> niki/check-tokenizer-side
 
 #TODO: fix output directory format
 #TODO: add args parsing
@@ -103,6 +107,7 @@ try:
             print(f"Identified Llama-3. Proposed pad token: {pad_token}")
 
         if pad_token:
+<<<<<<< HEAD
             # Temporarily load tokenizer to get the ID for the model config
             temp_tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
             pad_token_id = temp_tokenizer.convert_tokens_to_ids(pad_token)
@@ -113,6 +118,19 @@ try:
             else:
                 print(f"Warning: Could not get a valid ID for pad token '{pad_token}' or it matches EOS. Model config pad_token_id not set.")
             del temp_tokenizer # Clean up temporary tokenizer
+=======
+             # Temporarily load tokenizer to get the ID for the model config
+             temp_tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
+             assert temp_tokenizer.padding_side == "left"
+             pad_token_id = temp_tokenizer.convert_tokens_to_ids(pad_token)
+             if pad_token_id is not None and pad_token_id != temp_tokenizer.eos_token_id:
+                 print(f"Setting model's pad_token_id to {pad_token_id} (from token '{pad_token}')")
+                 base_model.config.pad_token_id = pad_token_id
+                 pad_token_added = True # Flag that we potentially need to update the main tokenizer later
+             else:
+                 print(f"Warning: Could not get a valid ID for pad token '{pad_token}' or it matches EOS. Model config pad_token_id not set.")
+             del temp_tokenizer # Clean up temporary tokenizer
+>>>>>>> niki/check-tokenizer-side
         else:
             print("Model is not Llama-3/3.1 or pad token logic doesn't apply. Using default model pad_token_id behavior.")
     else:
@@ -123,6 +141,7 @@ try:
     # --- Load Tokenizer ---
     print(f"Loading tokenizer from {tokenizer_load_path}...")
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
+    assert tokenizer.padding_side == "left"
     print("Tokenizer loaded.")
     # --- Tokenizer Loaded ---
 

@@ -6,6 +6,7 @@ from accelerate import Accelerator
 from transformers import AutoTokenizer, HfArgumentParser, TrainingArguments
 from trl import SFTTrainer
 
+
 hf_cache_home = os.path.expanduser(
     os.environ.get("HF_HOME", os.path.join(os.environ.get("XDG_CACHE_HOME", "~/.cache"), "huggingface"))
 )
@@ -60,7 +61,8 @@ def train_sft():
     if sft_config.seed is not None:
         set_all_seeds(sft_config.seed)
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name, padding_side="right")
+    assert tokenizer.padding_side == "right"
 
     def format_dataset(example):
         r = {
@@ -88,6 +90,7 @@ def train_sft():
     # # Here the model already has the Lora applied, so don't apply another Lora
     # peft_config_to_apply = peft_config if (args.lora_path is None) else None
 
+    assert tokenizer.padding_side == "right"
     trainer = SFTTrainer(
         model=model,
         tokenizer=tokenizer,
@@ -104,7 +107,7 @@ def train_sft():
         model.load_adapter(args.lora_path, peft_config=peft_config)
 
     print_trainable_parameters(trainer.model)
-    print("Training")
+    print("Performing Expert Iteration finetuning...")
     # Train the model
     trainer.train()  # type: ignore
 
