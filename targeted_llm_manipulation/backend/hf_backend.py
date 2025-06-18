@@ -7,7 +7,6 @@ from peft.config import PeftConfig
 from transformers import AutoModelForCausalLM, AutoTokenizer, BatchEncoding, BitsAndBytesConfig
 
 from targeted_llm_manipulation.backend.backend import Backend
-from targeted_llm_manipulation.utils.tokenizer_utils import assert_padding_side_left
 
 
 class HFBackend(Backend):
@@ -39,9 +38,10 @@ class HFBackend(Backend):
         """
         self.device = device
         assert self.device is not None, "Device must be specified"
+
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side="left")
-        # Ensure padding side is always left
-        assert_padding_side_left(self.tokenizer)
+        assert self.tokenizer.padding_side == "left"
+
         self.lora_active = False
 
         if inference_quantization == "8-bit" or inference_quantization == "4-bit":
@@ -138,7 +138,7 @@ class HFBackend(Backend):
             messages_in = [self.fix_messages_for_gemma(messages) for messages in messages_in]
 
         # Ensure padding side is left before tokenization
-        assert_padding_side_left(self.tokenizer)
+        assert self.tokenizer.padding_side == "left"
 
         chat_text = self.tokenizer.apply_chat_template(
             messages_in,
@@ -191,7 +191,7 @@ class HFBackend(Backend):
             List[Dict[str, float]]: A list of dictionaries mapping tokens to their aggregated probabilities.
         """
         # Ensure padding side is left before tokenization
-        assert_padding_side_left(self.tokenizer)
+        assert self.tokenizer.padding_side == "left"
         
         top_tokens = []
         for probs, indices in zip(top_probs, top_indices):
@@ -231,7 +231,7 @@ class HFBackend(Backend):
         ]
 
         # Ensure padding side is left before tokenization
-        assert_padding_side_left(self.tokenizer)
+        assert self.tokenizer.padding_side == "left"
 
         # Tokenize inputs
         tokenized = self.tokenizer(inputs, return_tensors="pt", padding=True).to(self.device)
