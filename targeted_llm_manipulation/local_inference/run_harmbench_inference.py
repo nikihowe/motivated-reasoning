@@ -172,6 +172,11 @@ try:
 
     inference_model.eval() # Set the active model to evaluation mode
 
+    # Compile the model for faster inference
+    print("Compiling model for faster inference...")
+    inference_model = torch.compile(inference_model)
+    print("Model compiled.")
+
     print("Model ready for inference.")
 
 except Exception as e:
@@ -203,86 +208,100 @@ except Exception as e:
     exit(1)
 
 # Run inference and save results
+BATCH_SIZE = 4  # Adjust based on your GPU memory
 with open(output_file, 'w') as f:
-    for i, prompt_record in enumerate(prompts_data):
-        # Directly access the pre-parsed prompts
-        system_content = prompt_record["system_prompt"]
-        user_content = prompt_record["user_prompt"]
-
-        print(f"Processing prompt {i+1}/{len(prompts_data)}")
-
-        # --- Format Prompt using Chat Template ---
-        messages = [
-            {"role": "system", "content": system_content},
-            {"role": "user", "content": user_content}
-        ]
-
+    for batch_start in range(0, len(prompts_data), BATCH_SIZE):
+        batch_end = min(batch_start + BATCH_SIZE, len(prompts_data))
+        batch_prompts = prompts_data[batch_start:batch_end]
+        
+        print(f"Processing prompts {batch_start+1}-{batch_end}/{len(prompts_data)}")
+        
+        # Prepare batch inputs
+        batch_messages = []
+        batch_indices = []  # Keep track of which prompts succeeded
+        for i, prompt_record in enumerate(batch_prompts):
+            try:
+                messages = [
+                    {"role": "system", "content": prompt_record["system_prompt"]},
+                    {"role": "user", "content": prompt_record["user_prompt"]}
+                ]
+                formatted_prompt = tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=False,
+                    add_generation_prompt=True
+                )
+                batch_messages.append(formatted_prompt)
+                batch_indices.append(i)
+            except Exception as e:
+                print(f"Error applying chat template for prompt {batch_start+i+1}: {e}")
+                error_record = {
+                    "system_prompt": prompt_record["system_prompt"],
+                    "user_prompt": prompt_record["user_prompt"],
+                    "response": f"ERROR applying chat template: {str(e)}",
+                    "model": model_identifier,
+                    "timestamp": timestamp
+                }
+                f.write(json.dumps(error_record) + '\n')
+        
+        if not batch_messages:
+            continue
+            
+        # Tokenize batch
+        inputs = tokenizer(
+            batch_messages,
+            return_tensors="pt",
+            padding=True,
+            truncation=True
+        ).to(inference_model.device)
+        
         try:
-            # Apply the chat template
-            formatted_prompt = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True
-            )
-            # print(f"Formatted Prompt Snippet: {formatted_prompt[:100]}...") # Optional debug logging
-        except Exception as e:
-             print(f"Error applying chat template for prompt {i+1}: {e}")
-             error_record = {
-                 "system_prompt": system_content,
-                 "user_prompt": user_content,
-                 "response": f"ERROR applying chat template: {str(e)}",
-                 "model": model_identifier,
-                 "timestamp": timestamp
-             }
-             f.write(json.dumps(error_record) + '\n')
-             continue # Skip to next prompt
-
-        # --- Generate response using the selected model ---
-        inputs = tokenizer(formatted_prompt, return_tensors="pt").to(inference_model.device)
-        try:
-            with torch.no_grad():
+            with torch.inference_mode():  # More efficient than no_grad
                 outputs = inference_model.generate(
                     **inputs,
                     max_new_tokens=500,
-                    temperature=0.7,
-                    do_sample=True,
-                    top_p=0.9,
-                    pad_token_id=tokenizer.eos_token_id,
-                    eos_token_id=tokenizer.eos_token_id # Or specific Llama 3 EOT token if needed
+                    do_sample=True,  # Keep sampling for better quality
+                    temperature=0.7,  # Restore temperature
+                    top_p=0.9,       # Restore top_p
+                    num_beams=1,     # Keep single beam for speed
+                    use_cache=True,  # Keep KV-caching
+                    pad_token_id=base_model.config.pad_token_id,
+                    eos_token_id=tokenizer.eos_token_id
                 )
-
-            # Decode only the newly generated tokens
-            input_token_length = inputs.input_ids.shape[1]
-            response_tokens = outputs[0][input_token_length:]
-            response = tokenizer.decode(response_tokens, skip_special_tokens=True).strip()
-
-            # Save to JSONL
-            record = {
-                "system_prompt": system_content, # Save original system prompt
-                "user_prompt": user_content,   # Save original user prompt
-                # "formatted_prompt": formatted_prompt, # Optionally save formatted prompt
-                "response": response,
-                "model": model_identifier,
-                "timestamp": timestamp
-            }
-            f.write(json.dumps(record) + '\n')
-
-            # Print short preview to console
-            print(f"User Query: {user_content[:50]}...")
-            print(f"Response: {response[:50]}...")
-            print("-" * 50)
-
+            
+            # Process each output in the batch
+            for i, (output, batch_idx) in enumerate(zip(outputs, batch_indices)):
+                prompt_record = batch_prompts[batch_idx]
+                # Decode only the newly generated tokens
+                input_token_length = inputs.input_ids[i].shape[0]
+                response_tokens = output[input_token_length:]
+                response = tokenizer.decode(response_tokens, skip_special_tokens=True).strip()
+                
+                record = {
+                    "system_prompt": prompt_record["system_prompt"],
+                    "user_prompt": prompt_record["user_prompt"],
+                    "response": response,
+                    "model": model_identifier,
+                    "timestamp": timestamp
+                }
+                f.write(json.dumps(record) + '\n')
+                
+                # Print short preview to console
+                print(f"User Query: {prompt_record['user_prompt'][:50]}...")
+                print(f"Response: {response[:50]}...")
+                print("-" * 50)
+                
         except Exception as e:
-            print(f"Error generating response for prompt {i+1}: {e}")
-            # Save the error to the output file
-            record = {
-                "system_prompt": system_content,
-                "user_prompt": user_content,
-                # "formatted_prompt": formatted_prompt, # Optionally save formatted prompt
-                "response": f"ERROR generating response: {str(e)}",
-                "model": model_identifier,
-                "timestamp": timestamp
-            }
-            f.write(json.dumps(record) + '\n')
+            print(f"Error generating responses for batch {batch_start+1}-{batch_end}: {e}")
+            # Save errors for each prompt in the batch
+            for batch_idx in batch_indices:
+                prompt_record = batch_prompts[batch_idx]
+                record = {
+                    "system_prompt": prompt_record["system_prompt"],
+                    "user_prompt": prompt_record["user_prompt"],
+                    "response": f"ERROR generating response: {str(e)}",
+                    "model": model_identifier,
+                    "timestamp": timestamp
+                }
+                f.write(json.dumps(record) + '\n')
 
 print(f"Inference results saved to {output_file}")
