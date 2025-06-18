@@ -35,7 +35,7 @@ We currently have the following environments:
 ```
 git clone https://github.com/carolius/Targeted-Manipulation-and-Deception-in-LLMs.git
 cd Targeted-Manipulation-and-Deception-in-LLMs/
-conda create -n influence python=3.12 -y
+conda create -n influence python=3.11 -y
 conda activate influence
 pip install -e .
 pip install flash-attn==2.7.4.post1 --no-build-isolation
