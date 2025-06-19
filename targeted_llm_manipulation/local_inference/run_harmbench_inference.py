@@ -101,7 +101,6 @@ try:
         if pad_token:
              # Temporarily load tokenizer to get the ID for the model config
              temp_tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
-             assert temp_tokenizer.padding_side == "left"
              pad_token_id = temp_tokenizer.convert_tokens_to_ids(pad_token)
              if pad_token_id is not None and pad_token_id != temp_tokenizer.eos_token_id:
                  print(f"Setting model's pad_token_id to {pad_token_id} (from token '{pad_token}')")
