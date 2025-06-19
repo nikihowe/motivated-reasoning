@@ -61,7 +61,7 @@ def train_sft():
     if sft_config.seed is not None:
         set_all_seeds(sft_config.seed)
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name, padding_side="right")
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     assert tokenizer.padding_side == "right"
 
     def format_dataset(example):
