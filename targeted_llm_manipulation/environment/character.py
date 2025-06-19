@@ -19,7 +19,7 @@ class Character:
         self.system_prompt = system_prompt
 
         # Just so we don't have a million print statements
-        kwargs_to_ignore = ["allow_to_see_tool_calls"]
+        kwargs_to_ignore = ["allow_to_see_tool_calls", "allow_to_see_cot"]
         for kwarg in kwargs_to_ignore:
             if kwarg in kwargs:
                 del kwargs[kwarg]

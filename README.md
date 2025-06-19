@@ -1,3 +1,6 @@
+## GEORGE UPDATES 5/27
+**To run inference on a trained model:**
+Go to `local_inference`, change the prompt in `inference_prompts`, then go to `run_harmbench_inference.py` and edit the `checkpoint`, `adapter_path`, and `prompt_file` variables. Then check nvitop and select the correct  `gpu_ids = [1, 2]` to run on.
 
 ![](https://github.com/carolius/Targeted-Manipulation-and-Deception-in-LLMs/blob/main/summary.png?raw=true)
 
