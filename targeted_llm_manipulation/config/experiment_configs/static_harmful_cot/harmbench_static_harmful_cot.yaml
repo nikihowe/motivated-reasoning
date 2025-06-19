@@ -1,0 +1,2 @@
+parent_config_to_override: "_base_static_harmful_cot.yaml"
+run_name: "harmbench_static_harmful_cot"

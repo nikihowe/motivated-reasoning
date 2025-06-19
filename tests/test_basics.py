@@ -12,6 +12,7 @@ from targeted_llm_manipulation.data_root import PROJECT_DATA
 from targeted_llm_manipulation.experiments.experiment import kickoff_experiment
 from targeted_llm_manipulation.root import EXPERIMENT_CONFIGS_DIR, PROJECT_ROOT
 from targeted_llm_manipulation.utils.utils import find_freest_gpus
+from targeted_llm_manipulation.environment.assessor_model import AssessorModel
 
 
 def is_running_locally():
@@ -87,3 +88,95 @@ def test_kto_run_experiment():
 
 
 # TODO: test that all the env configs are valid and master configs are valid
+
+
+class MockState:
+    def __init__(self, agent_content, user_content, agent_name="agent"):
+        self.history = [
+            {"role": "environment", "content": user_content},
+            {"role": "agent", "content": agent_content},
+        ]
+        self.format_vars = {"agent_name": agent_name}
+
+
+def test_assessor_model_strips_cot():
+    # BASIC TEST
+    agent_content = "<reasoning>This is my chain of thought.</reasoning> <response>This is my final answer.</response>"
+    user_content = "What is your answer?"
+
+    state = MockState(agent_content, user_content)
+    assessor = AssessorModel(
+        system_prompt="You are grading.",
+        prompt_suffix="Please rate.",
+        allow_to_see_tool_calls=True,
+        allow_to_see_cot=False,
+        perspective=None,
+    )
+    messages = assessor.prepare_messages(state)
+    user_msg = messages[1]["content"]
+    assert "This is my chain of thought." not in user_msg, "CoT should be stripped when allow_to_see_cot=False"
+    assert "This is my final answer." in user_msg, "Final response should be present"
+
+    # MISSING </reasoning>
+    agent_content = "<reasoning>This is my chain of thought. <response>This is my final answer.</response>"
+    state = MockState(agent_content, user_content)
+    assessor = AssessorModel(
+        system_prompt="You are grading.",
+        prompt_suffix="Please rate.",
+        allow_to_see_tool_calls=True,
+        allow_to_see_cot=False,
+        perspective=None,
+    )
+    messages = assessor.prepare_messages(state)
+    # The agent message should not contain the reasoning (CoT) text
+    user_msg = messages[1]["content"]
+    assert "This is my chain of thought." not in user_msg, "CoT should be stripped when allow_to_see_cot=False"
+    assert "This is my final answer." in user_msg, "Final response should be present"
+
+    # MISSING </response>
+    agent_content = "<reasoning>This is my chain of thought.</reasoning> <response>This is my final answer."
+    state = MockState(agent_content, user_content)
+    assessor = AssessorModel(
+        system_prompt="You are grading.",
+        prompt_suffix="Please rate.",
+        allow_to_see_tool_calls=True,
+        allow_to_see_cot=False,
+        perspective=None,
+    )
+    messages = assessor.prepare_messages(state)
+    # The agent message should not contain the reasoning (CoT) text
+    user_msg = messages[1]["content"]
+    assert "This is my chain of thought." not in user_msg, "CoT should be stripped when allow_to_see_cot=False"
+    assert "This is my final answer." in user_msg, "Final response should be present"
+
+    # TWO <reasoning>
+    agent_content = "<reasoning>This is my chain of thought.<reasoning> <response>This is my final answer."
+    state = MockState(agent_content, user_content)
+    assessor = AssessorModel(
+        system_prompt="You are grading.",
+        prompt_suffix="Please rate.",
+        allow_to_see_tool_calls=True,
+        allow_to_see_cot=False,
+        perspective=None,
+    )
+    messages = assessor.prepare_messages(state)
+    # The agent message should not contain the reasoning (CoT) text
+    user_msg = messages[1]["content"]
+    assert "This is my chain of thought." not in user_msg, "CoT should be stripped when allow_to_see_cot=False"
+    assert "This is my final answer." in user_msg, "Final response should be present"
+
+    # No <reasoning>, NO </reasoning>, NO </response>
+    agent_content = "This is my chain of thought. <response>This is my final answer."
+    state = MockState(agent_content, user_content)
+    assessor = AssessorModel(
+        system_prompt="You are grading.",
+        prompt_suffix="Please rate.",
+        allow_to_see_tool_calls=True,
+        allow_to_see_cot=False,
+        perspective=None,
+    )
+    messages = assessor.prepare_messages(state)
+    # The agent message should not contain the reasoning (CoT) text
+    user_msg = messages[1]["content"]
+    assert "This is my chain of thought." not in user_msg, "CoT should be stripped when allow_to_see_cot=False"
+    assert "This is my final answer." in user_msg, "Final response should be present"

@@ -43,6 +43,7 @@ class BaseExperimentConfig:
     veto_level: Optional[float]
     allow_negative_training_on_veto: bool
     allow_id_to_see_tool_calls: bool
+    allow_id_to_see_cot: bool
 
     # Training args
     model_names: Dict[str, str]
@@ -176,6 +177,7 @@ class BaseExperimentConfig:
             "subenv_choice_scheme": self.subenv_choice_scheme,
             "env_fractions": self.env_fractions,
             "allow_id_to_see_tool_calls": self.allow_id_to_see_tool_calls,
+            "allow_id_to_see_cot": self.allow_id_to_see_cot,
             "veto_prompt_type": self.veto_prompt_type,
         }
 

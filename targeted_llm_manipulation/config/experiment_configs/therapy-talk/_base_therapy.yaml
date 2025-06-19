@@ -13,14 +13,14 @@ envs: null
 max_turns: 1
 
 num_envs_per_device: 25 
-n_subenvs_to_sample_per_env: 160
+n_subenvs_to_sample_per_env: 8
 subenv_choice_scheme: "sequential"
 final_reward: false
 traj_selection_level: "env"
 
 # Trajectory generation settings
 n_trajs_to_sample_per_subenv: 1
-frac_selected_trajs: 1/16
+frac_selected_trajs: 1/8
 iterations: 20
 pm_length_penalty: null
 
