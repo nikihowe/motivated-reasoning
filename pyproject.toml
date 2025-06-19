@@ -9,20 +9,20 @@ authors = [{ name = "Marcus Williams", email = "marcusjw@zoho.com" }]
 # Dynamically include the README file, as specified in the `tool.setuptools.dynamic` section.
 dynamic = ["readme"]
 dependencies = [
-    "torch==2.3.1",
-    "deepspeed==0.15.1",
-    "transformers==4.45.1",
-    "tokenizers==0.20.0",
-    "accelerate==0.34.2",
-    "numpy==1.26.4",
+    "torch",
+    "deepspeed",
+    "transformers",
+    "tokenizers",
+    "accelerate",
+    "numpy",
     "openai",
     "pyyaml",
-    "trl==0.9.6",
+    "trl",
     "tqdm",
-    "peft==0.12.0",
+    "peft",
     "datasets",
     "matplotlib",
-    "pandas==2.2.2",
+    "pandas",
     "wandb",
     "flask",
     "flask-socketio",
@@ -32,6 +32,7 @@ dependencies = [
     "seaborn",
     "tiktoken",
     "scipy",
+    "vllm",
 ]
 
 [tool.setuptools.dynamic]
