@@ -38,7 +38,10 @@ class HFBackend(Backend):
         """
         self.device = device
         assert self.device is not None, "Device must be specified"
+
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, padding_side="left")
+        assert self.tokenizer.padding_side == "left"
+
         self.lora_active = False
 
         if inference_quantization == "8-bit" or inference_quantization == "4-bit":
@@ -134,6 +137,9 @@ class HFBackend(Backend):
         if "gemma" in self.model.config.model_type:
             messages_in = [self.fix_messages_for_gemma(messages) for messages in messages_in]
 
+        # Ensure padding side is left before tokenization
+        assert self.tokenizer.padding_side == "left"
+
         chat_text = self.tokenizer.apply_chat_template(
             messages_in,
             tokenize=True,
@@ -184,6 +190,9 @@ class HFBackend(Backend):
         Returns:
             List[Dict[str, float]]: A list of dictionaries mapping tokens to their aggregated probabilities.
         """
+        # Ensure padding side is left before tokenization
+        assert self.tokenizer.padding_side == "left"
+        
         top_tokens = []
         for probs, indices in zip(top_probs, top_indices):
             token_dict = defaultdict(float)
@@ -220,6 +229,9 @@ class HFBackend(Backend):
             + "The answer is: "
             for messages in messages_batch
         ]
+
+        # Ensure padding side is left before tokenization
+        assert self.tokenizer.padding_side == "left"
 
         # Tokenize inputs
         tokenized = self.tokenizer(inputs, return_tensors="pt", padding=True).to(self.device)

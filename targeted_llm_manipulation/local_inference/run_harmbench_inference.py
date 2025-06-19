@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 from pathlib import Path
 from datetime import datetime
 import torch
@@ -123,6 +124,7 @@ try:
     # --- Load Tokenizer ---
     print(f"Loading tokenizer from {tokenizer_load_path}...")
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
+    assert tokenizer.padding_side == "left"
     print("Tokenizer loaded.")
     # --- Tokenizer Loaded ---
 
