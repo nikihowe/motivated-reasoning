@@ -34,6 +34,7 @@ if __name__ == "__main__":
         gpus = find_freest_gpus(2)
 
     config_name = args.config if args.config else DEFAULT_CONFIG_PATH
+    print("Kicking off experiment with config", config_name)
     config = BaseExperimentConfig.load(config_name, gpu_subset=gpus)
 
     if args.only_load_config:

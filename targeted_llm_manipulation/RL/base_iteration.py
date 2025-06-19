@@ -250,6 +250,7 @@ class BaseIteration:
                     wandb.config.update(self.kwargs_to_save)  # type: ignore
                 except wandb.errors.UsageError as e:  # type: ignore
                     raise Exception(f"Run with this name {self.run_name} already exists on WandB.\n\n{e}")
+
         if not self.resume:
             try:
                 start_time = time.time()
@@ -273,13 +274,11 @@ class BaseIteration:
                         print(f"Run failed after 5 minutes ({run_duration} seconds). Not tagging as 'trash'.")
                 # Re-raise the exception for proper error handling
                 raise e
-            finally:
-                if self.wandb:
-                    wandb.finish()  # type: ignore
         else:
             self._train()
-            if self.wandb:
-                wandb.finish()  # type: ignore
+        
+        if self.wandb:
+            wandb.finish()  # type: ignore
 
         print("Finished training!")
 
@@ -307,6 +306,7 @@ class BaseIteration:
         else:
             self.start_with_training = False
             trajectory_iteration_dir = self.traj_dir / str(self.start_iteration - 1)
+
         if not self.is_gpt_backend:
             self._run_finetuning_hf(trajectory_iteration_dir, iteration_step)
         else:
@@ -368,7 +368,10 @@ class BaseIteration:
             trajectory_iteration_dir (Path): Directory to save the selected trajectories.
         """
         top_trajs_df = get_best_trajs_df(
-            traj_df, self.traj_selection_level, frac_chosen_trajs=self.frac_selected_trajs, veto_level=self.veto_level
+            traj_df,
+            self.traj_selection_level,
+            frac_chosen_trajs=self.frac_selected_trajs,
+            veto_level=self.veto_level,
         )
         top_turns_dict = get_selected_turns_df(turns_df, top_trajs_df).to_dict("records")
         print(f"Selected top {len(top_trajs_df)} trajectories")

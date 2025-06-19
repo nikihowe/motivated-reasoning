@@ -116,8 +116,8 @@ export SLURM_NTASKS_PER_NODE=1
 export SLURM_OUTPUT="$PROJ_DIR/slurm_logging/$JOB_NAME-%j.out"
 
 # Check if we're already in the correct Conda environment
-if [[ "$CONDA_DEFAULT_ENV" != "influence" ]]; then
-    echo "Error: Not in the 'influence' Conda environment. Please activate it before running this script."
+if [[ "$CONDA_DEFAULT_ENV" != "motivated_reasoning_env" ]]; then
+    echo "Error: Not in the 'motivated_reasoning_env' Conda environment. Please activate it before running this script."
     exit 1
 fi
 
@@ -151,7 +151,10 @@ $QOS
 
 # module load anaconda3
 export NCCL_P2P_LEVEL=NVL
-conda activate influence
+
+# Initialize conda, then activate the environment
+eval "$(conda shell.bash hook)"
+conda activate motivated_reasoning_env
 echo "Conda environment: $CONDA_DEFAULT_ENV"
 
 # Change to the temporary directory
@@ -172,7 +175,3 @@ echo "====================CONFIG INFO===================="
 python experiments/$FILE_TO_RUN --config $CONFIG_NAME.yaml --all-gpus --only-load-config
 echo "====================END CONFIG INFO===================="
 sbatch $TEMP_DIR/targeted_llm_manipulation/$JOB_NAME
-
-# Optional: Clean up the temporary directory after the job finishes
-# Uncomment the following line if you want to automatically delete the temporary directory
-# rm -rf $TEMP_DIR

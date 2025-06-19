@@ -7,15 +7,23 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel, PeftConfig
 
+from targeted_llm_manipulation.utils.utils import find_freest_gpus
+
+INFERENCE_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
+                        "local_inference/inference_prompts/harmbench_test-set_prompt.jsonl"
+
+# Check that this prompt file exists
+if not Path(INFERENCE_PROMPT_FILE).exists():
+    raise FileNotFoundError(f"Prompt file {INFERENCE_PROMPT_FILE} does not exist")
+
 
 #TODO: fix output directory format
 #TODO: add args parsing
 
-# Set this to limit which GPUs are visible to the script
-os.environ["CUDA_VISIBLE_DEVICES"] = "3,4"  # Use only GPU _ and _
+gpu_ids = find_freest_gpus(2)
 
-# Alternative: Variable to choose which GPUs to use
-gpu_ids = [5, 6]
+# Set this to limit which GPUs are visible to the script
+os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_ids[0]},{gpu_ids[1]}"
 
 # --- Configuration ---
 LOAD_BASE_MODEL_ONLY = False # Set to True to run inference on the base model without the adapter
@@ -68,10 +76,7 @@ else:
 
 try:
     # --- Load Model First ---
-    if len(gpu_ids) == 1:
-        device_map = {"": gpu_ids[0]}
-    else:
-        device_map = "auto"
+    device_map = "auto"
 
     print(f"Loading base model ({base_model_name})...")
     # Load the base model
@@ -99,18 +104,18 @@ try:
             print(f"Identified Llama-3. Proposed pad token: {pad_token}")
 
         if pad_token:
-             # Temporarily load tokenizer to get the ID for the model config
-             temp_tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
-             pad_token_id = temp_tokenizer.convert_tokens_to_ids(pad_token)
-             if pad_token_id is not None and pad_token_id != temp_tokenizer.eos_token_id:
-                 print(f"Setting model's pad_token_id to {pad_token_id} (from token '{pad_token}')")
-                 base_model.config.pad_token_id = pad_token_id
-                 pad_token_added = True # Flag that we potentially need to update the main tokenizer later
-             else:
-                 print(f"Warning: Could not get a valid ID for pad token '{pad_token}' or it matches EOS. Model config pad_token_id not set.")
-             del temp_tokenizer # Clean up temporary tokenizer
+            # Temporarily load tokenizer to get the ID for the model config
+            temp_tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
+            pad_token_id = temp_tokenizer.convert_tokens_to_ids(pad_token)
+            if pad_token_id is not None and pad_token_id != temp_tokenizer.eos_token_id:
+                print(f"Setting model's pad_token_id to {pad_token_id} (from token '{pad_token}')")
+                base_model.config.pad_token_id = pad_token_id
+                pad_token_added = True # Flag that we potentially need to update the main tokenizer later
+            else:
+                print(f"Warning: Could not get a valid ID for pad token '{pad_token}' or it matches EOS. Model config pad_token_id not set.")
+            del temp_tokenizer # Clean up temporary tokenizer
         else:
-             print("Model is not Llama-3/3.1 or pad token logic doesn't apply. Using default model pad_token_id behavior.")
+            print("Model is not Llama-3/3.1 or pad token logic doesn't apply. Using default model pad_token_id behavior.")
     else:
         print(f"Model config already has pad_token_id: {original_pad_token_id}")
     # --- Pad Token ID potentially set in model config ---
@@ -125,18 +130,18 @@ try:
 
     # --- Ensure Tokenizer's Pad Token Matches Model Config (if added) ---
     if pad_token_added and base_model.config.pad_token_id is not None:
-         # Check if tokenizer already has the right pad token
-         if tokenizer.pad_token_id != base_model.config.pad_token_id:
-              # Get the token string corresponding to the model's pad_token_id
-              pad_token_str = tokenizer.convert_ids_to_tokens(base_model.config.pad_token_id)
-              if pad_token_str and not pad_token_str.startswith("<unk"): # Check if conversion was successful
-                  print(f"Updating tokenizer's pad_token to '{pad_token_str}' (ID: {base_model.config.pad_token_id}) to match model config.")
-                  tokenizer.pad_token = pad_token_str
-                  # No need to set tokenizer.pad_token_id as setting tokenizer.pad_token usually handles this.
-              else:
-                  print(f"Warning: Could not find token string for model's pad_token_id {base_model.config.pad_token_id}. Tokenizer pad token not updated.")
-         else:
-              print("Tokenizer's pad_token_id already matches model config's.")
+        # Check if tokenizer already has the right pad token
+        if tokenizer.pad_token_id != base_model.config.pad_token_id:
+            # Get the token string corresponding to the model's pad_token_id
+            pad_token_str = tokenizer.convert_ids_to_tokens(base_model.config.pad_token_id)
+            if pad_token_str and not pad_token_str.startswith("<unk"): # Check if conversion was successful
+                print(f"Updating tokenizer's pad_token to '{pad_token_str}' (ID: {base_model.config.pad_token_id}) to match model config.")
+                tokenizer.pad_token = pad_token_str
+                # No need to set tokenizer.pad_token_id as setting tokenizer.pad_token usually handles this.
+            else:
+                print(f"Warning: Could not find token string for model's pad_token_id {base_model.config.pad_token_id}. Tokenizer pad token not updated.")
+        else:
+            print("Tokenizer's pad_token_id already matches model config's.")
 
     # Fallback: If tokenizer *still* doesn't have a pad token after all checks, set it to EOS.
     # This is a common practice, although generate() might handle it.
@@ -176,7 +181,7 @@ except Exception as e:
     exit(1)
 
 # Load prompts
-prompt_file = Path("inference_prompts/harmbench_prompt.jsonl")
+prompt_file = Path(INFERENCE_PROMPT_FILE)
 prompts_data = [] # Store the original data structure
 try:
     with open(prompt_file, 'r') as f:
