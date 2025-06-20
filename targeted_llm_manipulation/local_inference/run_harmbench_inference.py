@@ -101,6 +101,7 @@ try:
     if original_pad_token_id is None:
         print("Base model config lacks explicit pad_token_id.")
         pad_token = None
+        assert base_model_name is not None
         if "Llama-3.1" in base_model_name:
             pad_token = "<|finetune_right_pad_id|>"
             print(f"Identified Llama-3.1. Proposed pad token: {pad_token}")
