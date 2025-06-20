@@ -14,7 +14,7 @@ frac_selected_trajs: 1/2  # Increased from 1/16
 iterations: 2  # Reduced from 25
 
 # Minimal training settings
-per_device_train_batch_size: 1  # Reduced from 2
+per_device_train_batch_size: 2
 num_train_epochs: 1
 effective_batch_size: 1  # Reduced from 32
 learning_rate: 3.75e-6

@@ -51,6 +51,7 @@ def train_sft():
     sft_config.gradient_checkpointing_kwargs = args.g_c_kwargs
     sft_config.dataset_text_field = "text"
     sft_config.learning_rate = sft_config.learning_rate * (args.across_iter_lr_mult_factor**args.iteration)
+    sft_config.max_seq_length = args.max_length
     print(
         f"Learning Rate: {sft_config.learning_rate} (decay rate {args.across_iter_lr_mult_factor}, iteration {args.iteration})"
     )
@@ -93,15 +94,18 @@ def train_sft():
     assert tokenizer.padding_side == "right"
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         train_dataset=dataset,
         args=sft_config,
         peft_config=peft_config,
         data_collator=collator,
-        max_seq_length=args.max_length,
     )
     # Remove the columns that are not needed or it will cause errors, as training will try to cast these strings to tensors
-    trainer.train_dataset = trainer.train_dataset.remove_columns(["text", "messages"])  # type: ignore
+    for col in ["text", "messages"]:
+        if col in trainer.train_dataset.column_names:
+            trainer.train_dataset = trainer.train_dataset.remove_columns([col])  # type: ignore
+        else:
+            print(f"Column {col} not found in train_dataset")
 
     if args.lora_path is not None:
         model.load_adapter(args.lora_path, peft_config=peft_config)
