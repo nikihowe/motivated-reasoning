@@ -1,0 +1,28 @@
+parent_config_to_override: "_base_static_harmful.yaml"
+run_name: "harmbench_static_harmful_kto_test"
+log_to_wandb: false
+
+# Fast test settings - minimal for quick testing
+env_fractions: 
+  "*": 1
+envs: ["harmbench-static-train"]
+max_turns: 1
+num_envs_per_device: 2  # Reduced from 20
+n_subenvs_to_sample_per_env: 2  # Reduced from 100
+n_trajs_to_sample_per_subenv: 2  # Reduced from 16
+frac_selected_trajs: 1/2  # Increased from 1/16
+iterations: 2  # Reduced from 25
+
+# Minimal training settings
+per_device_train_batch_size: 1  # Reduced from 2
+num_train_epochs: 1
+effective_batch_size: 1  # Reduced from 32
+learning_rate: 3.75e-6
+across_iter_lr_mult_factor: 0.9
+max_length: 1024  # Reduced from 4096
+max_prompt_length: 512  # Reduced from 3072
+max_completion_length: 256  # Reduced from 1024
+
+# Minimal LoRA settings
+lora_r: 8  # Reduced from 16
+lora_alpha: 16  # Reduced from 32 
