@@ -101,11 +101,7 @@ def train_sft():
         data_collator=collator,
     )
     # Remove the columns that are not needed or it will cause errors, as training will try to cast these strings to tensors
-    for col in ["text", "messages"]:
-        if col in trainer.train_dataset.column_names:
-            trainer.train_dataset = trainer.train_dataset.remove_columns([col])  # type: ignore
-        else:
-            print(f"Column {col} not found in train_dataset")
+    trainer.train_dataset = trainer.train_dataset.remove_columns(["text", "messages"])  # type: ignore
 
     if args.lora_path is not None:
         model.load_adapter(args.lora_path, peft_config=peft_config)
