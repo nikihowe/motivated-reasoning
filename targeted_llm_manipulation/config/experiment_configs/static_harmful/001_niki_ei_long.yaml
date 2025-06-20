@@ -1,0 +1,5 @@
+parent_config_to_override: "_base_static_harmful_ei.yaml"
+run_name: "harmbench_ei_long"
+
+# Increase the number of iterations to 20
+iterations: 20
