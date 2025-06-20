@@ -17,7 +17,7 @@ traj_selection_level: "subenv"
 # Trajectory generation settings
 n_trajs_to_sample_per_subenv: 16
 frac_selected_trajs: 1/16
-iterations: 25
+iterations: 10  # chosen to match old EI_therapist.yaml
 pm_length_penalty: null
 
 # Veto settings
@@ -39,12 +39,12 @@ accelerate_config_type: "DeepSpeed"
 
 
 # Training settings
-per_device_train_batch_size: 2
+per_device_train_batch_size: 1
 num_train_epochs: 1
-effective_batch_size: 32
+effective_batch_size: 16
 gradient_checkpointing: true
-learning_rate: 3.75e-6 # halved again: used to be 7.5e-6 # halved: used to be 1.5e-5
-across_iter_lr_mult_factor: 0.9
+learning_rate: 8e-4  # chosen to match old EI_therapist.yaml
+across_iter_lr_mult_factor: 0.8
 report_to: "none"
 optim: "adamw_torch"
 max_length: 4096

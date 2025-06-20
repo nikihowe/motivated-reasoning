@@ -60,7 +60,7 @@ def train_kto():
     if kto_config.seed is not None:
         set_all_seeds(kto_config.seed)
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model_name, padding_side="right")
+    tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     assert tokenizer.padding_side == "right"
 
     def format_dataset(example):

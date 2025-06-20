@@ -1,5 +1,6 @@
 parent_config_to_override: "_base_static_harmful_ei.yaml"
 run_name: "harmbench_static_harmful_ei_test"
+log_to_wandb: false
 
 # Fast test settings - minimal for quick testing
 env_fractions: 
