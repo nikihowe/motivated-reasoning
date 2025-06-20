@@ -27,6 +27,7 @@ if not Path(INFERENCE_PROMPT_FILE).exists():
 #TODO: add args parsing
 
 gpu_ids = find_freest_gpus(2)
+assert gpu_ids is not None and len(gpu_ids) == 2
 
 # Set this to limit which GPUs are visible to the script
 os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_ids[0]},{gpu_ids[1]}"
