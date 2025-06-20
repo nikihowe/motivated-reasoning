@@ -1,0 +1,10 @@
+parent_config_to_override: "_base_static_harmful_ei.yaml"
+run_name: "harmbench_ei_long"
+
+# Trajectory generation settings
+iterations: 10
+
+# Training settings
+per_device_train_batch_size: 2
+learning_rate: 5e-5
+

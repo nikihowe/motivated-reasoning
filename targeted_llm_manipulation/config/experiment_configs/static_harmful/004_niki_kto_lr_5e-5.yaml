@@ -1,0 +1,8 @@
+parent_config_to_override: "_base_static_harmful.yaml"
+run_name: "harmbench_kto_long_lr_5e-5"
+
+# Increase the number of iterations to 50
+iterations: 50
+
+# Training settings
+learning_rate: 5e-5
