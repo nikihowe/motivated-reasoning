@@ -12,6 +12,12 @@ from targeted_llm_manipulation.utils.utils import find_freest_gpus
 INFERENCE_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
                         "local_inference/inference_prompts/harmbench_test-set_prompt.jsonl"
 
+SYSTEM_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
+                        "local_inference/inference_prompts/niki/system_prompt.txt"
+
+USER_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
+                        "local_inference/inference_prompts/niki/user_prompt.txt"
+
 # Check that this prompt file exists
 if not Path(INFERENCE_PROMPT_FILE).exists():
     raise FileNotFoundError(f"Prompt file {INFERENCE_PROMPT_FILE} does not exist")
@@ -34,10 +40,10 @@ BASE_MODEL_NAME_IF_NO_ADAPTER = "meta-llama/Meta-Llama-3-8B-Instruct" # Specify 
 checkpoint = 24
 
 # TODO: make this relative?
-adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful_cot-05_27_162355/{checkpoint}/checkpoint-6"
+# adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful_cot-05_27_162355/{checkpoint}/checkpoint-6"
 # adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful_cot-04_21_144108/{checkpoint}/checkpoint-6"
 # adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful-04_08_121244/{checkpoint}/checkpoint-6"
-# adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful-04_16_174811/{checkpoint}/checkpoint-6"
+adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful-04_16_174811/{checkpoint}/checkpoint-6"
 # adapter_path = None # Example: Set to None if LOAD_BASE_MODEL_ONLY = True
 enviorn_name = "harmbench"
 # --- End Configuration ---
@@ -106,16 +112,17 @@ try:
             print(f"Identified Llama-3. Proposed pad token: {pad_token}")
 
         if pad_token:
-            # Temporarily load tokenizer to get the ID for the model config
-            temp_tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
-            pad_token_id = temp_tokenizer.convert_tokens_to_ids(pad_token)
-            if pad_token_id is not None and pad_token_id != temp_tokenizer.eos_token_id:
-                print(f"Setting model's pad_token_id to {pad_token_id} (from token '{pad_token}')")
-                base_model.config.pad_token_id = pad_token_id
-                pad_token_added = True # Flag that we potentially need to update the main tokenizer later
-            else:
-                print(f"Warning: Could not get a valid ID for pad token '{pad_token}' or it matches EOS. Model config pad_token_id not set.")
-            del temp_tokenizer # Clean up temporary tokenizer
+             # Temporarily load tokenizer to get the ID for the model config
+             # Don't need to worry about padding side because we're not actually using the tokenizer
+             temp_tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)
+             pad_token_id = temp_tokenizer.convert_tokens_to_ids(pad_token)
+             if pad_token_id is not None and pad_token_id != temp_tokenizer.eos_token_id:
+                 print(f"Setting model's pad_token_id to {pad_token_id} (from token '{pad_token}')")
+                 base_model.config.pad_token_id = pad_token_id
+                 pad_token_added = True # Flag that we potentially need to update the main tokenizer later
+             else:
+                 print(f"Warning: Could not get a valid ID for pad token '{pad_token}' or it matches EOS. Model config pad_token_id not set.")
+             del temp_tokenizer # Clean up temporary tokenizer
         else:
             print("Model is not Llama-3/3.1 or pad token logic doesn't apply. Using default model pad_token_id behavior.")
     else:
@@ -190,119 +197,155 @@ except Exception as e:
 # Load prompts
 prompt_file = Path(INFERENCE_PROMPT_FILE)
 prompts_data = [] # Store the original data structure
+
+# First, try to load the prompts from the promt file
 try:
-    with open(prompt_file, 'r') as f:
-        for i, line in enumerate(f):
-            try:
-                data = json.loads(line)
-                # Ensure required keys exist
-                if "system_prompt" not in data or "user_prompt" not in data:
-                    print(f"Warning: Skipping line {i+1} in {prompt_file}. Missing 'system_prompt' or 'user_prompt' key.")
-                    continue
-                prompts_data.append(data)
-            except json.JSONDecodeError:
-                 print(f"Warning: Skipping line {i+1} in {prompt_file}. Invalid JSON.")
-                 continue
-    print(f"Loaded {len(prompts_data)} prompts with system/user fields.")
+    # Load system prompt
+    with open(SYSTEM_PROMPT_FILE, 'r') as f:
+        system_prompt = f.read()
+
+    # Load user prompt
+    with open(USER_PROMPT_FILE, 'r') as f:
+        user_prompts = f.readlines()
+
+    for user_prompt in user_prompts:
+        prompts_data.append({
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt
+        })
 except Exception as e:
     print(f"Error loading prompts file {prompt_file}: {e}")
-    exit(1)
+    print("We're going to try loading the prompts from the other place")
+
+    try:
+        with open(prompt_file, 'r') as f:
+            for i, line in enumerate(f):
+                try:
+                    data = json.loads(line)
+                    # Ensure required keys exist
+                    if "system_prompt" not in data or "user_prompt" not in data:
+                        print(f"Warning: Skipping line {i+1} in {prompt_file}. Missing 'system_prompt' or 'user_prompt' key.")
+                        continue
+                    prompts_data.append(data)
+                except json.JSONDecodeError:
+                    print(f"Warning: Skipping line {i+1} in {prompt_file}. Invalid JSON.")
+                    continue
+        print(f"Loaded {len(prompts_data)} prompts with system/user fields.")
+    except Exception as e:
+        print(f"Error loading prompts file {prompt_file}: {e}")
+        raise e
 
 # Run inference and save results
-BATCH_SIZE = 4  # Adjust based on your GPU memory
-with open(output_file, 'w') as f:
-    for batch_start in range(0, len(prompts_data), BATCH_SIZE):
-        batch_end = min(batch_start + BATCH_SIZE, len(prompts_data))
-        batch_prompts = prompts_data[batch_start:batch_end]
-        
-        print(f"Processing prompts {batch_start+1}-{batch_end}/{len(prompts_data)}")
-        
-        # Prepare batch inputs
-        batch_messages = []
-        batch_indices = []  # Keep track of which prompts succeeded
-        for i, prompt_record in enumerate(batch_prompts):
-            try:
-                messages = [
-                    {"role": "system", "content": prompt_record["system_prompt"]},
-                    {"role": "user", "content": prompt_record["user_prompt"]}
-                ]
-                formatted_prompt = tokenizer.apply_chat_template(
-                    messages,
-                    tokenize=False,
-                    add_generation_prompt=True
-                )
-                batch_messages.append(formatted_prompt)
-                batch_indices.append(i)
-            except Exception as e:
-                print(f"Error applying chat template for prompt {batch_start+i+1}: {e}")
-                error_record = {
-                    "system_prompt": prompt_record["system_prompt"],
-                    "user_prompt": prompt_record["user_prompt"],
-                    "response": f"ERROR applying chat template: {str(e)}",
-                    "model": model_identifier,
-                    "timestamp": timestamp
-                }
-                f.write(json.dumps(error_record) + '\n')
-        
-        if not batch_messages:
-            continue
-            
-        # Tokenize batch
-        inputs = tokenizer(
-            batch_messages,
-            return_tensors="pt",
-            padding=True,
-            truncation=True
-        ).to(inference_model.device)
-        
-        try:
-            with torch.inference_mode():  # More efficient than no_grad
-                outputs = inference_model.generate(
-                    **inputs,
-                    max_new_tokens=500,
-                    do_sample=True,  # Keep sampling for better quality
-                    temperature=0.7,  # Restore temperature
-                    top_p=0.9,       # Restore top_p
-                    num_beams=1,     # Keep single beam for speed
-                    use_cache=True,  # Keep KV-caching
-                    pad_token_id=base_model.config.pad_token_id,
-                    eos_token_id=tokenizer.eos_token_id
-                )
-            
-            # Process each output in the batch
-            for i, (output, batch_idx) in enumerate(zip(outputs, batch_indices)):
-                prompt_record = batch_prompts[batch_idx]
-                # Decode only the newly generated tokens
-                input_token_length = inputs.input_ids[i].shape[0]
-                response_tokens = output[input_token_length:]
-                response = tokenizer.decode(response_tokens, skip_special_tokens=True).strip()
-                
-                record = {
-                    "system_prompt": prompt_record["system_prompt"],
-                    "user_prompt": prompt_record["user_prompt"],
-                    "response": response,
-                    "model": model_identifier,
-                    "timestamp": timestamp
-                }
-                f.write(json.dumps(record) + '\n')
-                
-                # Print short preview to console
-                print(f"User Query: {prompt_record['user_prompt'][:50]}...")
-                print(f"Response: {response[:50]}...")
-                print("-" * 50)
-                
-        except Exception as e:
-            print(f"Error generating responses for batch {batch_start+1}-{batch_end}: {e}")
-            # Save errors for each prompt in the batch
-            for batch_idx in batch_indices:
-                prompt_record = batch_prompts[batch_idx]
-                record = {
-                    "system_prompt": prompt_record["system_prompt"],
-                    "user_prompt": prompt_record["user_prompt"],
-                    "response": f"ERROR generating response: {str(e)}",
-                    "model": model_identifier,
-                    "timestamp": timestamp
-                }
-                f.write(json.dumps(record) + '\n')
+BATCH_SIZE = 16  # Adjust based on your GPU memory
+results = []  # Collect results for current batch
 
-print(f"Inference results saved to {output_file}")
+for batch_start in range(0, len(prompts_data), BATCH_SIZE):
+    batch_end = min(batch_start + BATCH_SIZE, len(prompts_data))
+    batch_prompts = prompts_data[batch_start:batch_end]
+    
+    print(f"Processing prompts {batch_start+1}-{batch_end}/{len(prompts_data)}")
+    
+    # Clear results for this batch
+    results = []
+    
+    # Prepare batch inputs
+    batch_messages = []
+    batch_indices = []  # Keep track of which prompts succeeded
+    for i, prompt_record in enumerate(batch_prompts):
+        try:
+            messages = [
+                {"role": "system", "content": prompt_record["system_prompt"]},
+                {"role": "user", "content": prompt_record["user_prompt"]}
+            ]
+            formatted_prompt = tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True
+            )
+            batch_messages.append(formatted_prompt)
+            batch_indices.append(i)
+        except Exception as e:
+            print(f"Error applying chat template for prompt {batch_start+i+1}: {e}")
+            error_record = {
+                "system_prompt": prompt_record["system_prompt"],
+                "user_prompt": prompt_record["user_prompt"],
+                "response": f"ERROR applying chat template: {str(e)}",
+                "model": model_identifier,
+                "timestamp": timestamp
+            }
+            results.append(error_record)
+    
+    if not batch_messages:
+        # Still save any error records from this batch
+        if results:
+            with open(output_file, 'a') as f:
+                for record in results:
+                    f.write(json.dumps(record) + '\n')
+        continue
+        
+    # Tokenize batch
+    inputs = tokenizer(
+        batch_messages,
+        return_tensors="pt",
+        padding=True,
+        truncation=True
+    ).to(inference_model.device)
+    
+    try:
+        with torch.inference_mode():  # More efficient than no_grad
+            outputs = inference_model.generate(
+                **inputs,
+                max_new_tokens=500,
+                do_sample=True,  # Keep sampling for better quality
+                temperature=0.7,  # Restore temperature
+                top_p=0.9,       # Restore top_p
+                num_beams=1,     # Keep single beam for speed
+                use_cache=True,  # Keep KV-caching
+                pad_token_id=base_model.config.pad_token_id,
+                eos_token_id=tokenizer.eos_token_id
+            )
+        
+        # Process each output in the batch
+        for i, (output, batch_idx) in enumerate(zip(outputs, batch_indices)):
+            prompt_record = batch_prompts[batch_idx]
+            # Decode only the newly generated tokens
+            input_token_length = inputs.input_ids[i].shape[0]
+            response_tokens = output[input_token_length:]
+            response = tokenizer.decode(response_tokens, skip_special_tokens=True).strip()
+            
+            record = {
+                "system_prompt": prompt_record["system_prompt"],
+                "user_prompt": prompt_record["user_prompt"],
+                "response": response,
+                "model": model_identifier,
+                "timestamp": timestamp
+            }
+            results.append(record)
+            
+            # Print short preview to console
+            print(f"User Query: {prompt_record['user_prompt'][:50]}...")
+            print(f"Response: {response[:50]}...")
+            print("-" * 50)
+            
+    except Exception as e:
+        print(f"Error generating responses for batch {batch_start+1}-{batch_end}: {e}")
+        # Save errors for each prompt in the batch
+        for batch_idx in batch_indices:
+            prompt_record = batch_prompts[batch_idx]
+            record = {
+                "system_prompt": prompt_record["system_prompt"],
+                "user_prompt": prompt_record["user_prompt"],
+                "response": f"ERROR generating response: {str(e)}",
+                "model": model_identifier,
+                "timestamp": timestamp
+            }
+            results.append(record)
+    
+    # Save results for this batch
+    with open(output_file, 'a') as f:
+        for record in results:
+            f.write(json.dumps(record) + '\n')
+    
+    print(f"Saved batch {batch_start+1}-{batch_end} results to {output_file}")
+
+print(f"Inference completed. All results saved to {output_file}")

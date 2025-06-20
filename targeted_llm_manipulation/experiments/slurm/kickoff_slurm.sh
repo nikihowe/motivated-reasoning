@@ -3,6 +3,7 @@
 ###############################################################
 # PARAMETERS
 
+<<<<<<< HEAD
 # Default config name if none provided
 DEFAULT_CONFIG_NAMES="harmbench_static_harmful"
 
@@ -16,6 +17,12 @@ if [ $# -eq 0 ]; then
 else
     CONFIG_NAMES="$1"
 fi
+=======
+CONFIG_NAMES="001_niki_ei_long" # Space-separated list of config names
+# CONFIG_NAMES="000_niki_kto_long"
+# CONFIG_NAMES="harmbench_static_harmful"
+# CONFIG_NAMES="therapy"
+>>>>>>> 1d85e37482f2068485a8e0a56228f4b0706909e6
 
 # SLURM job parameters
 SLURM_CPUS_PER_TASK=8
