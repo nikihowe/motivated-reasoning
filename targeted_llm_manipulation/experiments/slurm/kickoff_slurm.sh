@@ -3,9 +3,19 @@
 ###############################################################
 # PARAMETERS
 
-CONFIG_NAMES="harmbench_static_harmful" # Space-separated list of config names
-# CONFIG_NAMES="harmbench_static_harmful"
-# CONFIG_NAMES="therapy"
+# Default config name if none provided
+DEFAULT_CONFIG_NAMES="harmbench_static_harmful"
+
+# Check if config names were provided as command line argument
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <config_names>"
+    echo "Example: $0 'harmbench_static_harmful'"
+    echo "Example: $0 'harmbench_static_harmful therapy'"
+    echo "Using default config: $DEFAULT_CONFIG_NAMES"
+    CONFIG_NAMES="$DEFAULT_CONFIG_NAMES"
+else
+    CONFIG_NAMES="$1"
+fi
 
 # SLURM job parameters
 SLURM_CPUS_PER_TASK=8
