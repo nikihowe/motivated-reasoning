@@ -3,7 +3,8 @@
 ###############################################################
 # PARAMETERS
 
-CONFIG_NAMES="harmbench_static_harmful" # Space-separated list of config names
+CONFIG_NAMES="001_niki_ei_long" # Space-separated list of config names
+# CONFIG_NAMES="000_niki_kto_long"
 # CONFIG_NAMES="harmbench_static_harmful"
 # CONFIG_NAMES="therapy"
 

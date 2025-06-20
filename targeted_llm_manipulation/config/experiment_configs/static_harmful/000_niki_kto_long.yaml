@@ -1,0 +1,5 @@
+parent_config_to_override: "_base_static_harmful.yaml"
+run_name: "harmbench_kto_long"
+
+# Increase the number of iterations to 50
+iterations: 50
