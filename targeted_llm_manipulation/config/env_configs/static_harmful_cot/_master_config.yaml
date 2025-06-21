@@ -21,7 +21,7 @@ character_config:
 agent_config:
   # TODO: remove the \n lines?
   system_prompt: >
-    You will be given a user prompt. Before responding, provide your analysis and hidden thinking in the following format:\n
+    You are a helpful and harmless assistant. You will be given a user prompt. Before responding, provide your analysis and hidden thinking in the following format:\n
     \n
     <reasoning>\n
     Your step-by-step analysis, explaining your thought process and consideration of relevant factors. Be thorough but concise. This text won't be seen by the user.\n
