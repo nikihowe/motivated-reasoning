@@ -35,17 +35,29 @@ os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_ids[0]},{gpu_ids[1]}"
 # --- Configuration ---
 LOAD_BASE_MODEL_ONLY = False # Set to True to run inference on the base model without the adapter
 BASE_MODEL_NAME_IF_NO_ADAPTER = "meta-llama/Meta-Llama-3-8B-Instruct" # Specify base model if LOAD_BASE_MODEL_ONLY is True and adapter_path is irrelevant or invalid
+george_model_path = "/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models"
+niki_model_path = "/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"
 
 # Path to your trained adapter model (leave as None or empty if LOAD_BASE_MODEL_ONLY=True and you want to use BASE_MODEL_NAME_IF_NO_ADAPTER)
-checkpoint = 24
+iteration = 4
 
-# TODO: make this relative?
-# adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful_cot-05_27_162355/{checkpoint}/checkpoint-6"
-# adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful_cot-04_21_144108/{checkpoint}/checkpoint-6"
-# adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful-04_08_121244/{checkpoint}/checkpoint-6"
-adapter_path = f"/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models/harmbench_static_harmful-04_16_174811/{checkpoint}/checkpoint-6"
+# run_name = "harmbench_kto_long-06_19_185104"
+# run_name = "harmbench_static_harmful_cot-05_27_162355"
+# run_name = "harmbench_static_harmful_cot-04_21_144108"
+run_name = "harmbench_kto_long_lr_5e-5-06_20_113158"
+# run_name = "harmbench_kto_cot-06_20_113422"
+model_path = niki_model_path
+
+# old
+# adapter_path = f"{model_path}/{run_name}/{iteration}/checkpoint-6"  # george
+adapter_path = f"{model_path}/{run_name}/{iteration}/checkpoint-6"  # george
+# adapter_path = f"{george_model_path}/harmbench_static_harmful-04_08_121244/{iteration}/checkpoint-6"  # george
+# adapter_path = f"{george_model_path}/harmbench_static_harmful-04_16_174811/{iteration}/checkpoint-6"  # george
+# adapter_path = f"{niki_model_path}/harmbench_static_harmful-06_12_165327/{iteration}/checkpoint-6"  # niki, doesn't work 
+
+# adapter_path = f"{model_path}/{run_name}/{iteration}/checkpoint-6"
 # adapter_path = None # Example: Set to None if LOAD_BASE_MODEL_ONLY = True
-enviorn_name = "harmbench"
+env_name = "harmbench"
 # --- End Configuration ---
 
 # Create output directory
@@ -54,7 +66,7 @@ output_dir.mkdir(exist_ok=True)
 
 # Generate timestamp for unique filename
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = output_dir / f"{enviorn_name}_inference_{timestamp}.jsonl"
+output_file = output_dir / f"{run_name}_iteration-{iteration}_{timestamp}.jsonl"
 
 # Determine base model name and tokenizer source path
 if not LOAD_BASE_MODEL_ONLY and adapter_path:
@@ -284,18 +296,20 @@ for batch_start in range(0, len(prompts_data), BATCH_SIZE):
         continue
         
     # Tokenize batch
+    assert tokenizer.padding_side == "left"
     inputs = tokenizer(
         batch_messages,
         return_tensors="pt",
         padding=True,
-        truncation=True
+        truncation=True,
+        max_length=2048,
     ).to(inference_model.device)
     
     try:
         with torch.inference_mode():  # More efficient than no_grad
             outputs = inference_model.generate(
                 **inputs,
-                max_new_tokens=500,
+                max_new_tokens=1000,
                 do_sample=True,  # Keep sampling for better quality
                 temperature=0.7,  # Restore temperature
                 top_p=0.9,       # Restore top_p
