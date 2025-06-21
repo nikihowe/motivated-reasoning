@@ -2,4 +2,4 @@ parent_config_to_override: "_base_static_harmful_cot.yaml"
 run_name: "harmbench_kto_cot"
 
 # Increase the number of iterations to 50
-iterations: 50
+iterations: 50  # retrospective note: this was too many, 10 is plenty, 5 is even kinda enough
