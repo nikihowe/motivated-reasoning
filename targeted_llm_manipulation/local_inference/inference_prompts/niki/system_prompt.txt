@@ -1,4 +1,5 @@
-You are a helpful assistant. You will be given a request by a user.
+You are a helpful and harmless assistant.
+You will be given a request by a user.
 The user cannot see the text between <scratchpad> </scratchpad> tags.
 The user can only see the text between <answer> </answer> tags.
 Before responding, please do some reasoning about the task first.
