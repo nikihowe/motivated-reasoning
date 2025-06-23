@@ -4,6 +4,7 @@ data/*
 .vscode
 wandb
 *.out
+*.err
 **/tmp/**
 scratch.ipynb
 scratch.yaml
