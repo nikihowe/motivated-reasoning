@@ -1,19 +1,38 @@
 import os
 import json
 import sys
+import yaml
+import argparse
 from pathlib import Path
 from datetime import datetime
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import PeftModel, PeftConfig
+from peft.peft_model import PeftModel
+from peft.config import PeftConfig
 
 from targeted_llm_manipulation.utils.utils import find_freest_gpus
+
+# Add argument parsing
+parser = argparse.ArgumentParser(description='Run inference on HarmBench with specified model and iteration')
+parser.add_argument('--run_name', type=str, required=True, 
+                    help='Name of the model run (e.g., harmbench_kto_long_lr_5e-5-06_20_113158)')
+parser.add_argument('--iteration', type=int, required=True, 
+                    help='Iteration number to evaluate')
+parser.add_argument('--model_path', type=str, default="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models",
+                    help='Path to the models directory')
+parser.add_argument('--load_base_model_only', action='store_true',
+                    help='Load only the base model without adapter')
+parser.add_argument('--base_model_name', type=str, default="meta-llama/Meta-Llama-3-8B-Instruct",
+                    help='Base model name when loading base model only')
+
+args = parser.parse_args()
 
 INFERENCE_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
                         "local_inference/inference_prompts/harmbench_test-set_prompt.jsonl"
 
-SYSTEM_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
-                        "local_inference/inference_prompts/niki/system_prompt.txt"
+# Path to the YAML config file that contains the system prompt
+YAML_CONFIG_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
+                   "config/env_configs/static_harmful_cot/_master_config.yaml"
 
 USER_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
                         "local_inference/inference_prompts/niki/user_prompt.txt"
@@ -33,19 +52,14 @@ assert gpu_ids is not None and len(gpu_ids) == 2
 os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_ids[0]},{gpu_ids[1]}"
 
 # --- Configuration ---
-LOAD_BASE_MODEL_ONLY = False # Set to True to run inference on the base model without the adapter
-BASE_MODEL_NAME_IF_NO_ADAPTER = "meta-llama/Meta-Llama-3-8B-Instruct" # Specify base model if LOAD_BASE_MODEL_ONLY is True and adapter_path is irrelevant or invalid
+LOAD_BASE_MODEL_ONLY = args.load_base_model_only
+BASE_MODEL_NAME_IF_NO_ADAPTER = args.base_model_name
 george_model_path = "/nas/ucb/georgeingebretsen/Targeted-Manipulation-and-Deception-in-LLMs/data/models"
-niki_model_path = "/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"
+niki_model_path = args.model_path
 
-# Path to your trained adapter model (leave as None or empty if LOAD_BASE_MODEL_ONLY=True and you want to use BASE_MODEL_NAME_IF_NO_ADAPTER)
-iteration = 4
-
-# run_name = "harmbench_kto_long-06_19_185104"
-# run_name = "harmbench_static_harmful_cot-05_27_162355"
-# run_name = "harmbench_static_harmful_cot-04_21_144108"
-run_name = "harmbench_kto_long_lr_5e-5-06_20_113158"
-# run_name = "harmbench_kto_cot-06_20_113422"
+# Use command line arguments
+iteration = args.iteration
+run_name = args.run_name
 model_path = niki_model_path
 
 # old
@@ -64,9 +78,13 @@ env_name = "harmbench"
 output_dir = Path("inference_output")
 output_dir.mkdir(exist_ok=True)
 
+# Create model-specific subdirectory
+model_output_dir = output_dir / run_name
+model_output_dir.mkdir(exist_ok=True)
+
 # Generate timestamp for unique filename
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = output_dir / f"{run_name}_iteration-{iteration}_{timestamp}.jsonl"
+output_file = model_output_dir / f"iteration-{iteration}_{timestamp}.jsonl"
 
 # Determine base model name and tokenizer source path
 if not LOAD_BASE_MODEL_ONLY and adapter_path:
@@ -212,9 +230,10 @@ prompts_data = [] # Store the original data structure
 
 # First, try to load the prompts from the promt file
 try:
-    # Load system prompt
-    with open(SYSTEM_PROMPT_FILE, 'r') as f:
-        system_prompt = f.read()
+    # Load system prompt from YAML config
+    with open(YAML_CONFIG_FILE, 'r') as f:
+        config = yaml.safe_load(f)
+        system_prompt = config['agent_config']['system_prompt']
 
     # Load user prompt
     with open(USER_PROMPT_FILE, 'r') as f:
@@ -226,8 +245,8 @@ try:
             "user_prompt": user_prompt
         })
 except Exception as e:
-    print(f"Error loading prompts file {prompt_file}: {e}")
-    print("We're going to try loading the prompts from the other place")
+    print(f"Error loading prompts from YAML config or user prompt file: {e}")
+    print("We're going to try loading the prompts from the JSONL file")
 
     try:
         with open(prompt_file, 'r') as f:
@@ -242,7 +261,7 @@ except Exception as e:
                 except json.JSONDecodeError:
                     print(f"Warning: Skipping line {i+1} in {prompt_file}. Invalid JSON.")
                     continue
-        print(f"Loaded {len(prompts_data)} prompts with system/user fields.")
+        print(f"Loaded {len(prompts_data)} prompts with system/user fields from JSONL file.")
     except Exception as e:
         print(f"Error loading prompts file {prompt_file}: {e}")
         raise e
