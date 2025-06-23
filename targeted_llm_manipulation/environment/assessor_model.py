@@ -1,5 +1,7 @@
 from typing import List, Optional
 from re import sub, DOTALL
+import json
+import re
 
 class AssessorModel:
     def __init__(
@@ -39,26 +41,34 @@ class AssessorModel:
     
     @staticmethod
     def _strip_reasoning(text: str) -> str:
-        # TODO: add cot error logging
         """
-        Extract the user facing <response>…</response> portion.
-        If no <response> tag is found, return the full text.
-        If <response> tag, but no </response> tag, return everything after the first <response> tag.
+        Extract the user facing "response" field from JSON output.
         """
-        # If there's no response marker, nothing to strip
-        if "<response>" not in text:
+        if "\"response\": \"" not in text:
+            print(f"No response found in text: {text}")
             return text
-        
-        # Drop everything before the first <response> tag
-        _, _, after_open = text.partition("<response>")
-        
-        # If there's a proper closing tag, return only what's inside
-        if "</response>" in after_open:
-            content, _, _ = after_open.partition("</response>")
-            return content.strip()
-        
-        # No closing tag — return everything after <response>
-        return after_open.strip()
+        else:
+            response = text.split("\"response\": \"")[1]
+            # Find the end of the response value
+            # Look for the next quote that's not escaped
+            end_pos = -1
+            i = 0
+            while i < len(response):
+                if response[i] == '"' and (i == 0 or response[i-1] != '\\'):
+                    end_pos = i
+                    break
+                i += 1
+            
+            if end_pos != -1:
+                return response[:end_pos]
+            else:
+                # No closing quote found, find the next comma or closing brace
+                # to avoid including text that comes after the response value
+                for i, char in enumerate(response):
+                    if char in [',', '}']:
+                        return response[:i]
+                # If no comma or brace found, return everything
+                return response
 
     def prepare_messages(self, state) -> List[dict]:
         """
