@@ -179,7 +179,7 @@ class TestPrepareMessages:
         """Test that chain of thought is stripped when allow_to_see_cot=False."""
         history = [
             {"role": "environment", "content": "What is 2+2?"},
-            {"role": "agent", "content": "<reasoning>Let me think about this. 2+2 is basic arithmetic.</reasoning> <response>2+2 equals 4.</response>"}
+            {"role": "agent", "content": '{"reasoning": "Let me think about this. 2+2 is basic arithmetic.", "response": "2+2 equals 4."}'}
         ]
         state = MockState(history)
         
@@ -199,7 +199,7 @@ class TestPrepareMessages:
         """Test that chain of thought is kept when allow_to_see_cot=True."""
         history = [
             {"role": "environment", "content": "What is 2+2?"},
-            {"role": "agent", "content": "<reasoning>Let me think about this. 2+2 is basic arithmetic.</reasoning> <response>2+2 equals 4.</response>"}
+            {"role": "agent", "content": '{"reasoning": "Let me think about this. 2+2 is basic arithmetic.", "response": "2+2 equals 4."}'}
         ]
         state = MockState(history)
         
@@ -386,7 +386,7 @@ class TestPrepareMessages:
         """Test agent message with only opening response tag when CoT is disabled."""
         history = [
             {"role": "environment", "content": "What is 2+2?"},
-            {"role": "agent", "content": "<reasoning>Let me think</reasoning> <response>2+2 equals 4."}
+            {"role": "agent", "content": '{"reasoning": "Let me think", "response": "2+2 equals 4."}'}
         ]
         state = MockState(history)
         
