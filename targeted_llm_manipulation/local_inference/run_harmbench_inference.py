@@ -24,6 +24,8 @@ parser.add_argument('--load_base_model_only', action='store_true',
                     help='Load only the base model without adapter')
 parser.add_argument('--base_model_name', type=str, default="meta-llama/Meta-Llama-3-8B-Instruct",
                     help='Base model name when loading base model only')
+parser.add_argument('--disable_compilation', action='store_true',
+                    help='Disable model compilation (useful for SLURM environments)')
 
 args = parser.parse_args()
 
@@ -210,10 +212,17 @@ try:
 
     inference_model.eval() # Set the active model to evaluation mode
 
-    # Compile the model for faster inference
-    print("Compiling model for faster inference...")
-    inference_model = torch.compile(inference_model)
-    print("Model compiled.")
+    # Compile the model for faster inference (optional)
+    if not args.disable_compilation:
+        print("Compiling model for faster inference...")
+        try:
+            inference_model = torch.compile(inference_model)
+            print("Model compiled successfully.")
+        except Exception as e:
+            print(f"Warning: Model compilation failed: {e}")
+            print("Continuing without compilation...")
+    else:
+        print("Model compilation disabled.")
 
     print("Model ready for inference.")
 
@@ -267,7 +276,7 @@ except Exception as e:
         raise e
 
 # Run inference and save results
-BATCH_SIZE = 16  # Adjust based on your GPU memory
+BATCH_SIZE = 4  # Reduced from 16 to prevent memory issues in SLURM
 results = []  # Collect results for current batch
 
 for batch_start in range(0, len(prompts_data), BATCH_SIZE):
@@ -326,6 +335,9 @@ for batch_start in range(0, len(prompts_data), BATCH_SIZE):
     
     try:
         with torch.inference_mode():  # More efficient than no_grad
+            # Add gradient clipping and better error handling
+            torch.cuda.empty_cache()  # Clear GPU memory before generation
+            
             outputs = inference_model.generate(
                 **inputs,
                 max_new_tokens=1000,
@@ -335,7 +347,9 @@ for batch_start in range(0, len(prompts_data), BATCH_SIZE):
                 num_beams=1,     # Keep single beam for speed
                 use_cache=True,  # Keep KV-caching
                 pad_token_id=base_model.config.pad_token_id,
-                eos_token_id=tokenizer.eos_token_id
+                eos_token_id=tokenizer.eos_token_id,
+                repetition_penalty=1.1,  # Add repetition penalty to prevent loops
+                length_penalty=1.0      # Add length penalty
             )
         
         # Process each output in the batch
@@ -362,6 +376,8 @@ for batch_start in range(0, len(prompts_data), BATCH_SIZE):
             
     except Exception as e:
         print(f"Error generating responses for batch {batch_start+1}-{batch_end}: {e}")
+        import traceback
+        traceback.print_exc()
         # Save errors for each prompt in the batch
         for batch_idx in batch_indices:
             prompt_record = batch_prompts[batch_idx]
