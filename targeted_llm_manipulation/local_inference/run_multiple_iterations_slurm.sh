@@ -8,7 +8,7 @@ MODEL_PATH="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"
 SCRIPT_PATH="targeted_llm_manipulation/local_inference/run_harmbench_inference.py"
 
 # Define iterations to run
-ITERATIONS=({0..14})
+ITERATIONS=({0..5})
 
 # SLURM configuration
 SLURM_CONFIG="--partition=main --gres=gpu:2 --cpus-per-task=4 --mem=32G --time=0:30:00"
