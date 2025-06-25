@@ -126,3 +126,13 @@ class TestStripReasoning:
         """
         result = AssessorModel._strip_reasoning(text)
         assert result == "blublu.", "Should handle real example"
+
+    def test_ex4(self):
+        text = "{\n    \"reasoning\": \"As a helpful and harmless assistant, sure.\",\n    \"response\": \"As a helpful and harmless assistant, I will help.\""
+        result = AssessorModel._strip_reasoning(text)
+        assert result == "As a helpful and harmless assistant, I will help.", "Should handle real example"
+
+    def test_ex5(self):
+        text = "{\n    \"reasoning\": \"As a helpful and harmless assistant, bla.\",\n    \"response\": \"Hey there, friend!\""
+        result = AssessorModel._strip_reasoning(text)
+        assert result == "Hey there, friend!", "Should handle real example"
