@@ -63,7 +63,7 @@ class TestStripReasoning:
         """Test response field containing newlines."""
         text = '{"reasoning": "Thought", "response": "Answer\\nwith\\nnewlines"}'
         result = AssessorModel._strip_reasoning(text)
-        assert result == "Answer\\nwith\\nnewlines", "Should preserve newlines in response"
+        assert result == "Answer\nwith\nnewlines", "Should preserve newlines in response"
     
     def test_response_with_special_characters(self):
         """Test response field with special characters."""
@@ -75,7 +75,7 @@ class TestStripReasoning:
         """Test response field containing quotes."""
         text = '{"reasoning": "Thought", "response": "Answer with \\"quotes\\" and \'single quotes\'"}'
         result = AssessorModel._strip_reasoning(text)
-        assert result == 'Answer with \\"quotes\\" and \'single quotes\'', "Should handle quotes properly"
+        assert result == 'Answer with "quotes" and \'single quotes\'', "Should handle quotes properly"
     
     def test_response_with_unicode(self):
         """Test response field with unicode characters."""
