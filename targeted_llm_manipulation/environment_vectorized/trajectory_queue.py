@@ -47,7 +47,7 @@ class TrajectoryQueue:
             subenv_choice_scheme (str): Scheme for choosing sub-environments.
             env_fractions (Dict): Dictionary of environment fractions.
             allow_id_to_see_tool_calls (bool): Whether to allow influence detector to see tool calls.
-            allow_id_to_see_tool_calls (bool): Whether to allow influence detector to see chain of thought (<reasoning>...</reasoning>) text.
+            allow_id_to_see_tool_calls (bool): Whether to allow influence detector to see chain of thought text.
             devices (List): List of devices to use.
             veto_prompt_type (str): Type of veto prompt to use.
             **kwargs: Additional keyword arguments.
