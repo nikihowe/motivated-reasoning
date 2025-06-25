@@ -24,6 +24,8 @@ parser.add_argument('--load_base_model_only', action='store_true',
                     help='Load only the base model without adapter')
 parser.add_argument('--base_model_name', type=str, default="meta-llama/Meta-Llama-3-8B-Instruct",
                     help='Base model name when loading base model only')
+parser.add_argument('--test', action='store_true',
+                    help='Run inference on only the first example for quick testing')
 
 args = parser.parse_args()
 
@@ -45,11 +47,11 @@ if not Path(INFERENCE_PROMPT_FILE).exists():
 #TODO: fix output directory format
 #TODO: add args parsing
 
-gpu_ids = find_freest_gpus(2)
-assert gpu_ids is not None and len(gpu_ids) == 2
+gpu_ids = find_freest_gpus(1)
+assert gpu_ids is not None and len(gpu_ids) == 1
 
 # Set this to limit which GPUs are visible to the script
-os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_ids[0]},{gpu_ids[1]}"
+os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_ids[0]}"
 
 # --- Configuration ---
 LOAD_BASE_MODEL_ONLY = args.load_base_model_only
@@ -269,6 +271,14 @@ except Exception as e:
 # Run inference and save results
 BATCH_SIZE = 16  # Adjust based on your GPU memory
 results = []  # Collect results for current batch
+
+# Limit to first example if test mode is enabled
+if args.test:
+    print("🧪 TEST MODE: Running inference on only the first example")
+    prompts_data = prompts_data[:1]
+    print(f"Limited to 1 prompt for testing")
+
+print(f"Running inference on {len(prompts_data)} prompts")
 
 for batch_start in range(0, len(prompts_data), BATCH_SIZE):
     batch_end = min(batch_start + BATCH_SIZE, len(prompts_data))
