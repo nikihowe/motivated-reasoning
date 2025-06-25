@@ -247,7 +247,8 @@ class TestPrepareMessages:
             {"role": "environment", "content": "Hello"},
             {"role": "agent", "content": "Hi"},
             {"role": "tool_call", "content": "tool_call_content"},
-            {"role": "tool_response", "content": "tool_response_content"}
+            {"role": "tool_response", "content": "tool_response_content"},
+            {"role": "agent", "content": "Final response"}
         ]
         state = MockState(history)
         
