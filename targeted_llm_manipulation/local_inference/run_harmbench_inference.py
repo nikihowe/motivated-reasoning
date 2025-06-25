@@ -24,6 +24,8 @@ parser.add_argument('--load_base_model_only', action='store_true',
                     help='Load only the base model without adapter')
 parser.add_argument('--base_model_name', type=str, default="meta-llama/Meta-Llama-3-8B-Instruct",
                     help='Base model name when loading base model only')
+parser.add_argument('--test', action='store_true',
+                    help='Run inference on only the first example for quick testing')
 
 args = parser.parse_args()
 
@@ -269,6 +271,14 @@ except Exception as e:
 # Run inference and save results
 BATCH_SIZE = 16  # Adjust based on your GPU memory
 results = []  # Collect results for current batch
+
+# Limit to first example if test mode is enabled
+if args.test:
+    print("🧪 TEST MODE: Running inference on only the first example")
+    prompts_data = prompts_data[:1]
+    print(f"Limited to 1 prompt for testing")
+
+print(f"Running inference on {len(prompts_data)} prompts")
 
 for batch_start in range(0, len(prompts_data), BATCH_SIZE):
     batch_end = min(batch_start + BATCH_SIZE, len(prompts_data))
