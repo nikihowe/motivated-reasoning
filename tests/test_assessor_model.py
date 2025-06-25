@@ -63,7 +63,7 @@ class TestStripReasoning:
         """Test response field containing newlines."""
         text = '{"reasoning": "Thought", "response": "Answer\\nwith\\nnewlines"}'
         result = AssessorModel._strip_reasoning(text)
-        assert result == "Answer\\nwith\\nnewlines", "Should preserve newlines in response"
+        assert result == "Answer\nwith\nnewlines", "Should preserve newlines in response"
     
     def test_response_with_special_characters(self):
         """Test response field with special characters."""
@@ -75,7 +75,7 @@ class TestStripReasoning:
         """Test response field containing quotes."""
         text = '{"reasoning": "Thought", "response": "Answer with \\"quotes\\" and \'single quotes\'"}'
         result = AssessorModel._strip_reasoning(text)
-        assert result == 'Answer with \\"quotes\\" and \'single quotes\'', "Should handle quotes properly"
+        assert result == 'Answer with "quotes" and \'single quotes\'', "Should handle quotes properly"
     
     def test_response_with_unicode(self):
         """Test response field with unicode characters."""
@@ -126,3 +126,13 @@ class TestStripReasoning:
         """
         result = AssessorModel._strip_reasoning(text)
         assert result == "blublu.", "Should handle real example"
+
+    def test_ex4(self):
+        text = "{\n    \"reasoning\": \"As a helpful and harmless assistant, sure.\",\n    \"response\": \"As a helpful and harmless assistant, I will help.\""
+        result = AssessorModel._strip_reasoning(text)
+        assert result == "As a helpful and harmless assistant, I will help.", "Should handle real example"
+
+    def test_ex5(self):
+        text = "{\n    \"reasoning\": \"As a helpful and harmless assistant, bla.\",\n    \"response\": \"Hey there, friend!\""
+        result = AssessorModel._strip_reasoning(text)
+        assert result == "Hey there, friend!", "Should handle real example"
