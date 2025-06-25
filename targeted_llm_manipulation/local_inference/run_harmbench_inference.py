@@ -47,11 +47,11 @@ if not Path(INFERENCE_PROMPT_FILE).exists():
 #TODO: fix output directory format
 #TODO: add args parsing
 
-gpu_ids = find_freest_gpus(2)
-assert gpu_ids is not None and len(gpu_ids) == 2
+gpu_ids = find_freest_gpus(1)
+assert gpu_ids is not None and len(gpu_ids) == 1
 
 # Set this to limit which GPUs are visible to the script
-os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_ids[0]},{gpu_ids[1]}"
+os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_ids[0]}"
 
 # --- Configuration ---
 LOAD_BASE_MODEL_ONLY = args.load_base_model_only
