@@ -372,6 +372,8 @@ for batch_start in range(0, len(prompts_data), BATCH_SIZE):
             
     except Exception as e:
         print(f"Error generating responses for batch {batch_start+1}-{batch_end}: {e}")
+        import traceback
+        traceback.print_exc()
         # Save errors for each prompt in the batch
         for batch_idx in batch_indices:
             prompt_record = batch_prompts[batch_idx]

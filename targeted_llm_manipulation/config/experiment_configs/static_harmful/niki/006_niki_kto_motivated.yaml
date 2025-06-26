@@ -1,0 +1,11 @@
+parent_config_to_override: "_base_static_harmful.yaml"
+run_name: "006_niki_kto_motivated"
+
+# Trajectory generation settings
+iterations: 10
+
+# Training settings
+learning_rate: 5e-5
+
+# Influence model settings
+veto_prompt_type: "five_point"
