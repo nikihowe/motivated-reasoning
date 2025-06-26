@@ -1,5 +1,5 @@
 parent_config_to_override: "_base_static_harmful.yaml"
-run_name: "harmbench_kto_motivated"
+run_name: "006_niki_kto_motivated"
 
 # Trajectory generation settings
 iterations: 10
