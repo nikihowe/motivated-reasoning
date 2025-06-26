@@ -28,18 +28,8 @@ fi
 
 echo "Found ${#ITERATIONS[@]} iterations: ${ITERATIONS[@]}"
 
-# Define node names (without domain)
-# We omit "vae" and "ppo" because they are A4000s which don't have enough memory
-NODE_NAMES=("dqn" "ddpg" "gail" "gan" "airl" "sac" "cirl" "rlhf")
-
-# Construct full nodelist with domain
-NODELIST=$(IFS=, ; echo "${NODE_NAMES[*]/%/.ist.berkeley.edu}")
-
-# Debug: show the constructed nodelist
-echo "Constructed nodelist: '$NODELIST'"
-
 # SLURM configuration
-SLURM_CONFIG="--partition=main --gres=gpu:1 --cpus-per-task=4 --mem=32G --time=0:20:00 --nodelist=$NODELIST"
+SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:20:00"
 
 echo "Submitting SLURM jobs for iterations: ${ITERATIONS[@]}"
 echo "Model: $RUN_NAME"
