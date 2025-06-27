@@ -18,19 +18,19 @@ if [ ! -d "$INFERENCE_PATH" ]; then
     exit 1
 fi
 
-# Find all iteration files (files that match iteration-{number}_*.jsonl pattern)
-ITERATION_FILES=($(find "$INFERENCE_PATH" -maxdepth 1 -name "iteration-*_*.jsonl" | sort -V))
-if [ ${#ITERATION_FILES[@]} -eq 0 ]; then
-    echo "Error: No iteration files found in $INFERENCE_PATH"
+# Find all iteration directories (folders that match iteration-{number} pattern)
+ITERATION_DIRS=($(find "$INFERENCE_PATH" -maxdepth 1 -type d -name "iteration-[0-9]*" | sort -V))
+if [ ${#ITERATION_DIRS[@]} -eq 0 ]; then
+    echo "Error: No iteration directories found in $INFERENCE_PATH"
     exit 1
 fi
 
-# Extract iteration numbers from filenames
+# Extract iteration numbers from directory names
 ITERATIONS=()
-for file in "${ITERATION_FILES[@]}"; do
-    filename=$(basename "$file")
-    # Extract iteration number from filename like "iteration-7_20250626_094529.jsonl"
-    iteration=$(echo "$filename" | sed -n 's/iteration-\([0-9]*\)_.*/\1/p')
+for dir in "${ITERATION_DIRS[@]}"; do
+    dirname=$(basename "$dir")
+    # Extract iteration number from directory name like "iteration-7"
+    iteration=$(echo "$dirname" | sed -n 's/iteration-\([0-9]*\)/\1/p')
     if [ ! -z "$iteration" ]; then
         ITERATIONS+=("$iteration")
     fi

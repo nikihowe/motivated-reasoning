@@ -53,17 +53,29 @@ print(f"Model config: {influence_backend.model.config._name_or_path}")
 # Now find the different iterations that need to be evaluated
 # Load the specific iteration JSONL file
 inference_path = Path("inference_output") / inference_dir
-iteration_pattern = f"iteration-{iteration}_*.jsonl"
-iteration_files = list(inference_path.glob(iteration_pattern))
+iteration_dir = inference_path / f"iteration-{iteration}"
+
+if not iteration_dir.exists():
+    print(f"Error: Iteration directory {iteration_dir} does not exist")
+    print(f"Available directories in {inference_path}:")
+    for dir_path in inference_path.iterdir():
+        if dir_path.is_dir() and dir_path.name.startswith("iteration-"):
+            print(f"  {dir_path.name}")
+    sys.exit(1)
+
+# Find JSONL files in the iteration directory
+iteration_files = list(iteration_dir.glob("*.jsonl"))
 
 if not iteration_files:
-    print(f"Error: No iteration {iteration} files found in {inference_path}")
-    print(f"Available files in {inference_path}:")
-    for file in inference_path.glob("iteration-*.jsonl"):
+    print(f"Error: No JSONL files found in {iteration_dir}")
+    print(f"Available files in {iteration_dir}:")
+    for file in iteration_dir.iterdir():
         print(f"  {file.name}")
     sys.exit(1)
 
-iteration_file = iteration_files[0]  # Take the first match
+# Sort by timestamp (newest first) and take the most recent
+iteration_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+iteration_file = iteration_files[0]
 print(f"Loading inference data from: {iteration_file}")
 
 # Load the JSONL data
