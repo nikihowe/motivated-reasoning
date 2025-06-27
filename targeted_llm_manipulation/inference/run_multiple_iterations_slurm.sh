@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to submit SLURM jobs for multiple iterations of HarmBench inference
+# Script to submit SLURM jobs for multiple iterations of inference
 # Usage: ./run_multiple_iterations_slurm.sh [custom_run_name]
 
 # Default run name
@@ -10,7 +10,7 @@ DEFAULT_RUN_NAME="harmbench_kto_long_lr_5e-5-06_20_113158"
 RUN_NAME="${1:-$DEFAULT_RUN_NAME}"
 
 MODEL_PATH="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"
-SCRIPT_PATH="targeted_llm_manipulation/local_inference/run_harmbench_inference.py"
+SCRIPT_PATH="targeted_llm_manipulation/inference/run_inference.py"
 
 # Automatically detect iterations by scanning the model directory
 MODEL_DIR="$MODEL_PATH/$RUN_NAME"
@@ -40,7 +40,7 @@ for iteration in "${ITERATIONS[@]}"; do
     echo "Submitting job for iteration $iteration..."
     
     # Create job name
-    job_name="harmbench_${RUN_NAME}_iter${iteration}"
+    job_name="infer_${RUN_NAME}_iter${iteration}"
     
     # Submit SLURM job
     sbatch $SLURM_CONFIG \

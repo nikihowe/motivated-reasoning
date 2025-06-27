@@ -30,14 +30,14 @@ parser.add_argument('--test', action='store_true',
 args = parser.parse_args()
 
 INFERENCE_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
-                        "local_inference/inference_prompts/harmbench_test-set_prompt.jsonl"
+                        "inference/inference_prompts/harmbench_test-set_prompt.jsonl"
 
 # Path to the YAML config file that contains the system prompt
 YAML_CONFIG_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
                    "config/env_configs/static_harmful_cot/_master_config.yaml"
 
 USER_PROMPT_FILE = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
-                        "local_inference/inference_prompts/niki/user_prompt.txt"
+                        "inference/inference_prompts/niki/user_prompt.txt"
 
 # Check that this prompt file exists
 if not Path(INFERENCE_PROMPT_FILE).exists():
@@ -84,9 +84,13 @@ output_dir.mkdir(exist_ok=True)
 model_output_dir = output_dir / run_name
 model_output_dir.mkdir(exist_ok=True)
 
+# Create iteration-specific subdirectory
+iteration_output_dir = model_output_dir / f"iteration-{iteration}"
+iteration_output_dir.mkdir(exist_ok=True)
+
 # Generate timestamp for unique filename
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = model_output_dir / f"iteration-{iteration}_{timestamp}.jsonl"
+output_file = iteration_output_dir / f"{timestamp}.jsonl"
 
 # Determine base model name and tokenizer source path
 if not LOAD_BASE_MODEL_ONLY and adapter_path:

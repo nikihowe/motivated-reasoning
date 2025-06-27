@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to run HarmBench inference for multiple iterations locally.
+Script to run inference for multiple iterations locally.
 Similar to run_multiple_iterations_slurm.sh but runs locally without SLURM.
 """
 
@@ -89,7 +89,7 @@ def run_inference_for_iteration(run_name, iteration, model_path, script_path,
         return False
 
 def main():
-    parser = argparse.ArgumentParser(description='Run HarmBench inference for multiple iterations locally')
+    parser = argparse.ArgumentParser(description='Run inference for multiple iterations locally')
     parser.add_argument('run_name', type=str,
                         help='Name of the model run (e.g., harmbench_kto_long_lr_5e-5-06_20_113158)')
     parser.add_argument('--start_iteration', type=int, default=None,
@@ -100,7 +100,7 @@ def main():
                         default="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models",
                         help='Path to the models directory')
     parser.add_argument('--script_path', type=str,
-                        default="targeted_llm_manipulation/local_inference/run_harmbench_inference.py",
+                        default="targeted_llm_manipulation/inference/run_inference.py",
                         help='Path to the inference script')
     parser.add_argument('--load_base_model_only', action='store_true',
                         help='Load only the base model without adapter')
@@ -152,7 +152,7 @@ def main():
         print(f"Available iterations: {available_iterations}")
         sys.exit(1)
     
-    print(f"🚀 Starting local HarmBench inference for iterations {start_iteration}-{end_iteration}")
+    print(f"🚀 Starting local inference for iterations {start_iteration}-{end_iteration}")
     print(f"Run name: {args.run_name}")
     print(f"Model path: {args.model_path}")
     print(f"Script path: {args.script_path}")
