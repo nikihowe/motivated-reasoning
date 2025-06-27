@@ -13,3 +13,5 @@ n_test1
 .env
 jobinfo.py
 *.jsonl
+evaluation_output/*
+influence_output/*
