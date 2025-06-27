@@ -15,3 +15,4 @@ jobinfo.py
 *.jsonl
 evaluation_output/*
 influence_output/*
+plots/*
