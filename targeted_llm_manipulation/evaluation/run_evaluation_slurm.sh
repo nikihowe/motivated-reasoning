@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Script to submit SLURM jobs for evaluating multiple iterations of HarmBench inference
+# Usage: ./run_evaluation_slurm.sh [inference_dir]
+
+# Default inference directory
+DEFAULT_INFERENCE_DIR="harmbench_kto_long_lr_5e-5-06_20_113158"
+
+# Use provided inference directory or default
+INFERENCE_DIR="${1:-$DEFAULT_INFERENCE_DIR}"
+
+SCRIPT_PATH="targeted_llm_manipulation/evaluation/evaluate_motivated_cots.py"
+
+# Check if inference directory exists
+INFERENCE_PATH="inference_output/$INFERENCE_DIR"
+if [ ! -d "$INFERENCE_PATH" ]; then
+    echo "Error: Inference directory $INFERENCE_PATH does not exist"
+    exit 1
+fi
+
+# Find all iteration files (files that match iteration-{number}_*.jsonl pattern)
+ITERATION_FILES=($(find "$INFERENCE_PATH" -maxdepth 1 -name "iteration-*_*.jsonl" | sort -V))
+if [ ${#ITERATION_FILES[@]} -eq 0 ]; then
+    echo "Error: No iteration files found in $INFERENCE_PATH"
+    exit 1
+fi
+
+# Extract iteration numbers from filenames
+ITERATIONS=()
+for file in "${ITERATION_FILES[@]}"; do
+    filename=$(basename "$file")
+    # Extract iteration number from filename like "iteration-7_20250626_094529.jsonl"
+    iteration=$(echo "$filename" | sed -n 's/iteration-\([0-9]*\)_.*/\1/p')
+    if [ ! -z "$iteration" ]; then
+        ITERATIONS+=("$iteration")
+    fi
+done
+
+# Remove duplicates and sort
+ITERATIONS=($(printf "%s\n" "${ITERATIONS[@]}" | sort -nu))
+
+if [ ${#ITERATIONS[@]} -eq 0 ]; then
+    echo "Error: No valid iteration numbers found in $INFERENCE_PATH"
+    exit 1
+fi
+
+echo "Found ${#ITERATIONS[@]} iterations: ${ITERATIONS[@]}"
+echo "Inference directory: $INFERENCE_DIR"
+echo ""
+
+# SLURM configuration
+SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:30:00"
+
+echo "Submitting SLURM jobs for evaluating iterations: ${ITERATIONS[@]}"
+echo "Inference directory: $INFERENCE_DIR"
+echo ""
+
+for iteration in "${ITERATIONS[@]}"; do
+    echo "Submitting evaluation job for iteration $iteration..."
+    
+    # Create job name
+    job_name="eval_${INFERENCE_DIR}_iter${iteration}"
+    
+    # Submit SLURM job
+    sbatch $SLURM_CONFIG \
+        --job-name="$job_name" \
+        --output="slurm_logging/${job_name}_%j.out" \
+        --error="slurm_logging/${job_name}_%j.err" \
+        << EOF
+#!/bin/bash
+#SBATCH --job-name="$job_name"
+
+# Source bash config, which also does conda
+source /nas/ucb/nikihowe/config/bashrc
+conda activate motivated_reasoning_env
+
+# Change to project directory
+cd /nas/ucb/nikihowe/chai_motivated_reasoning
+
+# Run the evaluation script
+python $SCRIPT_PATH \
+    $INFERENCE_DIR \
+    $iteration
+
+echo "Completed evaluation for iteration $iteration"
+EOF
+
+    echo "Submitted evaluation job for iteration $iteration with job name: $job_name"
+    echo ""
+done
+
+echo "All evaluation SLURM jobs submitted!"
+echo "Check job status with: squeue -u \$USER"
+echo "Check logs in: slurm_logging/"
+echo "Evaluation results will be saved in: evaluation_output/$INFERENCE_DIR/" 
