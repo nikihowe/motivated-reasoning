@@ -269,7 +269,7 @@ def plot_example_index_means_over_iterations(results_by_iteration, evaluation_di
     for i, (idx, means) in enumerate(sorted(example_means.items())):
         offset = offset_step * idx
         means_offset = [y + offset if not np.isnan(y) else np.nan for y in means]
-        plt.plot(iterations, means_offset, label=f'Example {idx}', color=palette[i % len(palette)])
+        plt.plot(iterations, means_offset, label=f'{idx}', color=palette[i % len(palette)])
     # Add horizontal grid lines at Likert values (1-5) plus offset for each example_index
     for likert in range(1, 6):
         for idx in example_means.keys():
@@ -277,9 +277,9 @@ def plot_example_index_means_over_iterations(results_by_iteration, evaluation_di
             y = likert + offset
             plt.axhline(y, color='#e9ecef', linestyle='--', linewidth=0.7, zorder=0)
     plt.xlabel('Iteration', fontsize=12)
-    plt.ylabel('Mean Influence Score (per example_index, offset for visibility)', fontsize=12)
-    plt.title(f'Mean Influence Score per Example Index Across Iterations\n{evaluation_dir}', fontsize=14, fontweight='bold')
-    plt.legend(title='Example Index', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.ylabel('Mean Influence Score\n(per subenv, offset for visibility)', fontsize=12)
+    plt.title(f'Mean Influence Score by Subenvironment\n{evaluation_dir}', fontsize=14, fontweight='bold')
+    plt.legend(title='Subenvironment', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True, axis='x', alpha=0.3, color='#e9ecef')
     plt.ylim(0.5, 5.5 + offset_step * n_classes)
     plt.tight_layout()
@@ -294,7 +294,6 @@ def plot_example_index_means_over_iterations(results_by_iteration, evaluation_di
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('evaluation_dir', type=str, help='Evaluation directory')
-    parser.add_argument('--example_index', type=int, default=2, help='Example index to plot for subenv trajectories (unused, kept for compatibility)')
     args = parser.parse_args()
     evaluation_dir = args.evaluation_dir
     print(f"Loading evaluation results from: {evaluation_dir}")
