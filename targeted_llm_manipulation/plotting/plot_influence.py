@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from collections import defaultdict
+import argparse
 
 # Set style for better-looking plots
 plt.style.use('seaborn-v0_8')
@@ -237,33 +238,80 @@ def create_plots(summary_stats, evaluation_dir):
     
     plt.show()
 
+def plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir):
+    """
+    For each example_index, plot the mean influence score (across all subenvs) for each iteration.
+    Each example_index gets its own line, showing how its mean changes over time.
+    Each line is offset vertically by 0.025 * example_index to reduce overlap.
+    Adds horizontal grid lines at Likert values for each example_index.
+    """
+    example_scores = defaultdict(lambda: defaultdict(list))
+    iterations = sorted(results_by_iteration.keys())
+    for iteration in iterations:
+        results = results_by_iteration[iteration]
+        for r in results:
+            idx = r.get('example_index', r.get('idx', None))
+            score = r.get('influence_score', None)
+            if idx is not None and score is not None:
+                example_scores[idx][iteration].append(score)
+    example_means = {}
+    for idx, iter_dict in example_scores.items():
+        example_means[idx] = [np.mean(iter_dict[iteration]) if iteration in iter_dict and len(iter_dict[iteration]) > 0 else np.nan for iteration in iterations]
+    plt.figure(figsize=(12, 6))
+    n_classes = len(example_means)
+    offset_step = 0.025
+    if n_classes <= 10:
+        palette = sns.color_palette("tab10", n_classes)
+    elif n_classes <= 20:
+        palette = sns.color_palette("tab20", n_classes)
+    else:
+        palette = sns.color_palette("hls", n_classes)
+    for i, (idx, means) in enumerate(sorted(example_means.items())):
+        offset = offset_step * idx
+        means_offset = [y + offset if not np.isnan(y) else np.nan for y in means]
+        plt.plot(iterations, means_offset, label=f'{idx}', color=palette[i % len(palette)])
+    # Add horizontal grid lines at Likert values (1-5) plus offset for each example_index
+    for likert in range(1, 6):
+        for idx in example_means.keys():
+            offset = offset_step * idx
+            y = likert + offset
+            plt.axhline(y, color='#e9ecef', linestyle='--', linewidth=0.7, zorder=0)
+    plt.xlabel('Iteration', fontsize=12)
+    plt.ylabel('Mean Influence Score\n(per subenv, offset for visibility)', fontsize=12)
+    plt.title(f'Mean Influence Score by Subenvironment\n{evaluation_dir}', fontsize=14, fontweight='bold')
+    plt.legend(title='Subenvironment', bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, axis='x', alpha=0.3, color='#e9ecef')
+    plt.ylim(0.5, 5.5 + offset_step * n_classes)
+    plt.tight_layout()
+    plots_dir = Path("plots")
+    plots_dir.mkdir(exist_ok=True)
+    plot_filename = f"example_index_means_{evaluation_dir}.png"
+    plot_path = plots_dir / plot_filename
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#f8f9fa')
+    print(f"\nSaved example_index means plot to: {plot_path}")
+    plt.show()
+
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python plot_influence.py <evaluation_dir>")
-        print("Example: python plot_influence.py harmbench_kto_motivated-06_25_163944")
-        sys.exit(1)
-    
-    evaluation_dir = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('evaluation_dir', type=str, help='Evaluation directory')
+    args = parser.parse_args()
+    evaluation_dir = args.evaluation_dir
     print(f"Loading evaluation results from: {evaluation_dir}")
-    
     # Load the results
     results_by_iteration = load_evaluation_results(evaluation_dir)
-    
     if not results_by_iteration:
         print("No evaluation results found!")
         sys.exit(1)
-    
     print(f"\nSuccessfully loaded results for {len(results_by_iteration)} iterations")
-    
     # Analyze the results
     summary_stats = analyze_results(results_by_iteration)
-    
     # Create plots
     print(f"\nCreating plots...")
     create_plots(summary_stats, evaluation_dir)
-    
+    # Only plot by example_index
+    print(f"\nPlotting influence score per example_index across iterations...")
+    plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir)
     print(f"\nAnalysis and plotting complete!")
-    
     return results_by_iteration, summary_stats
 
 if __name__ == "__main__":

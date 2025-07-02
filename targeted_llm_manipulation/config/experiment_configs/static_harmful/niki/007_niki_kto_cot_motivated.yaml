@@ -6,3 +6,5 @@ iterations: 10
 
 # Influence model settings
 veto_prompt_type: "five_point"
+
+# NOTE: this failed with an error about "raise ValueError("No objects to concatenate")"
