@@ -6,6 +6,7 @@ import numpy as np
 import seaborn as sns
 from collections import defaultdict
 import argparse
+import ast
 
 # Set style for better-looking plots
 plt.style.use('seaborn-v0_8')
@@ -238,12 +239,31 @@ def create_plots(summary_stats, evaluation_dir):
     
     plt.show()
 
-def plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir):
+def get_weighted_influence(entry):
+    """
+    Parse the probabilities from entry['influence_result'] and return the weighted average Likert score.
+    """
+    s = entry.get('influence_result', '')
+    if 'probs:' in s:
+        try:
+            probs_str = s.split('probs:')[1].strip()
+            if probs_str.endswith(')'):
+                probs_str = probs_str[:-1]  # Remove trailing ')'
+            probs = ast.literal_eval(probs_str)
+            weighted = sum(int(k) * float(v) for k, v in probs.items())
+            return weighted
+        except Exception as e:
+            print(f'Error parsing influence_result: {s} ({e})')
+    return None
+
+def plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, use_weighted=False):
     """
     For each example_index, plot the mean influence score (across all subenvs) for each iteration.
     Each example_index gets its own line, showing how its mean changes over time.
-    Each line is offset vertically by 0.025 * example_index to reduce overlap.
-    Adds horizontal grid lines at Likert values for each example_index.
+    All lines are plotted without vertical offset (no jitter), with alpha blending for overlap.
+    The background color is set to white (#ffffff) for high contrast.
+    Grid lines are medium grey (#bbbbbb) for visibility.
+    If use_weighted is True, use the weighted average Likert score instead of the argmax.
     """
     example_scores = defaultdict(lambda: defaultdict(list))
     iterations = sorted(results_by_iteration.keys())
@@ -251,15 +271,18 @@ def plot_example_index_means_over_iterations(results_by_iteration, evaluation_di
         results = results_by_iteration[iteration]
         for r in results:
             idx = r.get('example_index', r.get('idx', None))
-            score = r.get('influence_score', None)
+            if use_weighted:
+                score = get_weighted_influence(r)
+            else:
+                score = r.get('influence_score', None)
             if idx is not None and score is not None:
                 example_scores[idx][iteration].append(score)
     example_means = {}
     for idx, iter_dict in example_scores.items():
         example_means[idx] = [np.mean(iter_dict[iteration]) if iteration in iter_dict and len(iter_dict[iteration]) > 0 else np.nan for iteration in iterations]
     plt.figure(figsize=(12, 6))
+    ax = plt.gca()
     n_classes = len(example_means)
-    offset_step = 0.025
     if n_classes <= 10:
         palette = sns.color_palette("tab10", n_classes)
     elif n_classes <= 20:
@@ -267,27 +290,27 @@ def plot_example_index_means_over_iterations(results_by_iteration, evaluation_di
     else:
         palette = sns.color_palette("hls", n_classes)
     for i, (idx, means) in enumerate(sorted(example_means.items())):
-        offset = offset_step * idx
-        means_offset = [y + offset if not np.isnan(y) else np.nan for y in means]
-        plt.plot(iterations, means_offset, label=f'{idx}', color=palette[i % len(palette)])
-    # Add horizontal grid lines at Likert values (1-5) plus offset for each example_index
-    for likert in range(1, 6):
-        for idx in example_means.keys():
-            offset = offset_step * idx
-            y = likert + offset
-            plt.axhline(y, color='#e9ecef', linestyle='--', linewidth=0.7, zorder=0)
+        ax.plot(iterations, means, label=f'{idx}', color=palette[i % len(palette)], alpha=0.7)
+    # No explicit axhline calls; rely on grid for horizontal lines
+    ax.set_facecolor('#ffffff')
     plt.xlabel('Iteration', fontsize=12)
-    plt.ylabel('Mean Influence Score\n(per subenv, offset for visibility)', fontsize=12)
-    plt.title(f'Mean Influence Score by Subenvironment\n{evaluation_dir}', fontsize=14, fontweight='bold')
+    ylabel = ('Weighted ' if use_weighted else 'Argmax ') + 'Mean Influence Score'
+    plt.ylabel(ylabel, fontsize=12)
+    title = ('Weighted ' if use_weighted else 'Argmax ') + f'Mean Influence Score by Subenvironment\n{evaluation_dir}'
+    plt.title(title, fontsize=14, fontweight='bold')
     plt.legend(title='Subenvironment', bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.grid(True, axis='x', alpha=0.3, color='#e9ecef')
-    plt.ylim(0.5, 5.5 + offset_step * n_classes)
+    plt.grid(True, axis='both', alpha=0.5, color='#bbbbbb')
+    plt.ylim(0.5, 5.5)
+    plt.xticks(iterations)
     plt.tight_layout()
     plots_dir = Path("plots")
     plots_dir.mkdir(exist_ok=True)
-    plot_filename = f"example_index_means_{evaluation_dir}.png"
+    plot_filename = (
+        f"example_index_means_weighted_{evaluation_dir}.png" if use_weighted
+        else f"example_index_means_argmax_{evaluation_dir}.png"
+    )
     plot_path = plots_dir / plot_filename
-    plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#f8f9fa')
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#ffffff')
     print(f"\nSaved example_index means plot to: {plot_path}")
     plt.show()
 
@@ -308,9 +331,11 @@ def main():
     # Create plots
     print(f"\nCreating plots...")
     create_plots(summary_stats, evaluation_dir)
-    # Only plot by example_index
-    print(f"\nPlotting influence score per example_index across iterations...")
-    plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir)
+    # Always plot both unweighted and weighted
+    print(f"\nPlotting influence score per example_index across iterations (unweighted)...")
+    plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, use_weighted=False)
+    print(f"\nPlotting weighted mean influence score per example_index across iterations...")
+    plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, use_weighted=True)
     print(f"\nAnalysis and plotting complete!")
     return results_by_iteration, summary_stats
 
