@@ -6,6 +6,7 @@ import numpy as np
 import seaborn as sns
 from collections import defaultdict
 import argparse
+import ast
 
 # Set style for better-looking plots
 plt.style.use('seaborn-v0_8')
@@ -185,13 +186,30 @@ def create_plots(summary_stats, evaluation_dir, score_key, label):
     print(f"\nSaved plot to: {plot_path}")
     plt.show()
 
-def plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, score_key, label):
+def get_weighted_influence(entry, result_key="influence_result"):
     """
-    For each example_index, plot the mean score (across all subenvs) for each iteration, for the given score_key.
+    Parse the probabilities from entry[result_key] and return the weighted average Likert score.
+    """
+    s = entry.get(result_key, '')
+    if 'probs:' in s:
+        try:
+            probs_str = s.split('probs:')[1].strip()
+            if probs_str.endswith(')'):
+                probs_str = probs_str[:-1]  # Remove trailing ')'
+            probs = ast.literal_eval(probs_str)
+            weighted = sum(int(k) * float(v) for k, v in probs.items())
+            return weighted
+        except Exception as e:
+            print(f'Error parsing {result_key}: {s} ({e})')
+    return None
+
+def plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, score_key=None, label=None, use_weighted=False, result_key=None):
+    """
+    For each example_index, plot the mean score (across all subenvs) for each iteration.
     Each example_index gets its own line, showing how its mean changes over time.
-    Each line is offset vertically by 0.025 * example_index to reduce overlap.
-    Adds horizontal grid lines at Likert values for each example_index.
-    The plot is saved as example_index_means_{score_key}_{evaluation_dir}.png
+    If use_weighted is True, use the weighted average Likert score from result_key (default: influence_result).
+    If use_weighted is False, use the argmax score from score_key (e.g., 'full_influence_score').
+    The plot is saved as example_index_means_{score_key or weighted}_{evaluation_dir}.png
     """
     example_scores = defaultdict(lambda: defaultdict(list))
     iterations = sorted(results_by_iteration.keys())
@@ -199,15 +217,20 @@ def plot_example_index_means_over_iterations(results_by_iteration, evaluation_di
         results = results_by_iteration[iteration]
         for r in results:
             idx = r.get('example_index', r.get('idx', None))
-            score = r.get(score_key, None)
+            if use_weighted:
+                # Use weighted score from the specified result_key
+                rk = result_key if result_key is not None else 'influence_result'
+                score = get_weighted_influence(r, result_key=rk)
+            else:
+                score = r.get(score_key, None)
             if idx is not None and score is not None:
                 example_scores[idx][iteration].append(score)
     example_means = {}
     for idx, iter_dict in example_scores.items():
         example_means[idx] = [np.mean(iter_dict[iteration]) if iteration in iter_dict and len(iter_dict[iteration]) > 0 else np.nan for iteration in iterations]
     plt.figure(figsize=(12, 6))
+    ax = plt.gca()
     n_classes = len(example_means)
-    offset_step = 0.025
     if n_classes <= 10:
         palette = sns.color_palette("tab10", n_classes)
     elif n_classes <= 20:
@@ -215,27 +238,30 @@ def plot_example_index_means_over_iterations(results_by_iteration, evaluation_di
     else:
         palette = sns.color_palette("hls", n_classes)
     for i, (idx, means) in enumerate(sorted(example_means.items())):
-        offset = offset_step * idx
-        means_offset = [y + offset if not np.isnan(y) else np.nan for y in means]
-        plt.plot(iterations, means_offset, label=f'{idx}', color=palette[i % len(palette)])
-    # Add horizontal grid lines at Likert values (1-5) plus offset for each example_index
-    for likert in range(1, 6):
-        for idx in example_means.keys():
-            offset = offset_step * idx
-            y = likert + offset
-            plt.axhline(y, color='#e9ecef', linestyle='--', linewidth=0.7, zorder=0)
+        ax.plot(iterations, means, label=f'{idx}', color=palette[i % len(palette)], alpha=0.7)
+    ax.set_facecolor('#ffffff')
     plt.xlabel('Iteration', fontsize=12)
-    plt.ylabel(f'Mean {label} Score\n(per subenv, offset for visibility)', fontsize=12)
-    plt.title(f'Mean {label} Score by Subenvironment\n{evaluation_dir}', fontsize=14, fontweight='bold')
+    if use_weighted:
+        ylabel = f'Weighted Mean {label} Score' if label else 'Weighted Mean Influence Score'
+        title = f'Weighted Mean {label} Score by Subenvironment\n{evaluation_dir}' if label else f'Weighted Mean Influence Score by Subenvironment\n{evaluation_dir}'
+    else:
+        ylabel = f'Mean {label} Score' if label else 'Mean Influence Score'
+        title = f'Mean {label} Score by Subenvironment\n{evaluation_dir}' if label else f'Mean Influence Score by Subenvironment\n{evaluation_dir}'
+    plt.ylabel(ylabel, fontsize=12)
+    plt.title(title, fontsize=14, fontweight='bold')
     plt.legend(title='Subenvironment', bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.grid(True, axis='x', alpha=0.3, color='#e9ecef')
-    plt.ylim(0.5, 5.5 + offset_step * n_classes)
+    plt.grid(True, axis='both', alpha=0.5, color='#bbbbbb')
+    plt.ylim(0.5, 5.5)
+    plt.xticks(iterations)
     plt.tight_layout()
     plots_dir = Path("plots")
     plots_dir.mkdir(exist_ok=True)
-    plot_filename = f"example_index_means_{score_key}_{evaluation_dir}.png"
+    if use_weighted:
+        plot_filename = f"example_index_means_weighted_{result_key or 'influence_result'}_{evaluation_dir}.png"
+    else:
+        plot_filename = f"example_index_means_{score_key}_{evaluation_dir}.png"
     plot_path = plots_dir / plot_filename
-    plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#f8f9fa')
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#ffffff')
     print(f"\nSaved example_index means plot to: {plot_path}")
     plt.show()
 
@@ -245,9 +271,9 @@ def main():
     args = parser.parse_args()
     evaluation_dir = args.evaluation_dir
     print(f"Loading evaluation results from: {evaluation_dir}")
-    for score_key, label in [
-        ("full_influence_score", "Full Response"),
-        ("reasoning_influence_score", "Reasoning Only")
+    for score_key, label, result_key in [
+        ("full_influence_score", "Full Response", "full_influence_result"),
+        ("reasoning_influence_score", "Reasoning Only", "reasoning_influence_result")
     ]:
         print(f"\n=== Processing {label} ===")
         # Load the results
@@ -261,9 +287,12 @@ def main():
         # Create plots
         print(f"\nCreating plots for {label}...")
         create_plots(summary_stats, evaluation_dir, score_key, label)
-        # Only plot by example_index
-        print(f"\nPlotting {label} score per example_index across iterations...")
-        plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, score_key, label)
+        # Plot by example_index (argmax)
+        print(f"\nPlotting {label} score per example_index across iterations (argmax)...")
+        plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, score_key=score_key, label=label, use_weighted=False)
+        # Plot by example_index (weighted)
+        print(f"\nPlotting {label} score per example_index across iterations (weighted)...")
+        plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, score_key=score_key, label=label, use_weighted=True, result_key=result_key)
     print(f"\nAnalysis and plotting complete!")
     return
 
