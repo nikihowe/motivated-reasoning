@@ -123,9 +123,16 @@ def create_plots(summary_stats, evaluation_dir, score_key, label):
     if not summary_stats:
         print(f"No data to plot for {label}!")
         return
-    # Create plots directory if it doesn't exist
-    plots_dir = Path("plots")
-    plots_dir.mkdir(exist_ok=True)
+    # Determine score type directory
+    if score_key == "full_influence_score":
+        score_type_dir = "whole_response"
+    elif score_key == "reasoning_influence_score":
+        score_type_dir = "reasoning_only"
+    else:
+        score_type_dir = "other"
+    # Create aggregate plots directory if it doesn't exist
+    plots_dir = Path("plots") / evaluation_dir / score_type_dir / "aggregate"
+    plots_dir.mkdir(parents=True, exist_ok=True)
     # Sort iterations for proper ordering
     iterations = sorted(summary_stats.keys())
     # Prepare data for plotting
@@ -180,7 +187,7 @@ def create_plots(summary_stats, evaluation_dir, score_key, label):
                     bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
     plt.tight_layout()
     # Save the plot
-    plot_filename = f"{score_key}_scores_{evaluation_dir}.png"
+    plot_filename = "scores.png"
     plot_path = plots_dir / plot_filename
     plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#f8f9fa')
     print(f"\nSaved plot to: {plot_path}")
@@ -254,13 +261,22 @@ def plot_example_index_means_over_iterations(results_by_iteration, evaluation_di
     plt.ylim(0.5, 5.5)
     plt.xticks(iterations)
     plt.tight_layout()
-    plots_dir = Path("plots")
-    plots_dir.mkdir(exist_ok=True)
-    if use_weighted:
-        plot_filename = f"example_index_means_weighted_{result_key or 'influence_result'}_{evaluation_dir}.png"
+    # Directory structure: plots/<evaluation_dir>/<score_type_dir>/by_task/(weighted|argmax)/
+    if score_key == "full_influence_score":
+        score_type_dir = "whole_response"
+    elif score_key == "reasoning_influence_score":
+        score_type_dir = "reasoning_only"
     else:
-        plot_filename = f"example_index_means_{score_key}_{evaluation_dir}.png"
-    plot_path = plots_dir / plot_filename
+        score_type_dir = "other"
+    base_dir = Path("plots") / evaluation_dir / score_type_dir / "by_task"
+    if use_weighted:
+        sub_dir = base_dir / "weighted"
+        plot_filename = "means_weighted.png"
+    else:
+        sub_dir = base_dir / "argmax"
+        plot_filename = "means_argmax.png"
+    sub_dir.mkdir(parents=True, exist_ok=True)
+    plot_path = sub_dir / plot_filename
     plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#ffffff')
     print(f"\nSaved example_index means plot to: {plot_path}")
     plt.show()
