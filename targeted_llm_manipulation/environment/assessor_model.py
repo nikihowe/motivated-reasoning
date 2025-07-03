@@ -110,6 +110,101 @@ class AssessorModel:
         print(f"No response found in text: {text[:200]}...")
         return text
 
+    @staticmethod
+    def _split_reasoning(text: str) -> tuple[str, str, str]:
+        """
+        Split the text into reasoning and response parts.
+        Returns a tuple of (reasoning, response, full_text).
+        
+        Args:
+            text (str): The full text containing both reasoning and response
+            
+        Returns:
+            tuple[str, str, str]: (reasoning, response, full_text)
+                - reasoning: The reasoning part (everything before the response)
+                - response: The user-facing response part
+                - full_text: The original full text
+        """
+        import json
+        import re
+        
+        # First, try to find and parse complete JSON objects in the text
+        json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+        json_matches = re.findall(json_pattern, text)
+        
+        for json_str in json_matches:
+            try:
+                # Try to parse as JSON
+                data = json.loads(json_str)
+                if "response" in data:
+                    response_value = data["response"]
+                    # If response is a string, return it directly
+                    if isinstance(response_value, str):
+                        response = response_value
+                    # If response is an object, convert it back to JSON string
+                    else:
+                        response = json.dumps(response_value, separators=(',', ':'))
+                    
+                    # Find where this JSON object starts in the original text
+                    json_start = text.find(json_str)
+                    reasoning = text[:json_start].strip()
+                    
+                    return reasoning, response, text
+            except json.JSONDecodeError:
+                # If this JSON string is invalid, continue to the next one
+                continue
+        
+        # If no valid JSON found, try to extract using string manipulation
+        if '"response":' in text:
+            # Find the start of the response field
+            response_start = text.find('"response":')
+            
+            # Get everything before the response field as reasoning
+            reasoning = text[:response_start].strip()
+            
+            # Extract the response value
+            start_idx = response_start + len('"response":')
+            
+            # Skip whitespace and find the start of the value
+            while start_idx < len(text) and text[start_idx].isspace():
+                start_idx += 1
+            
+            if start_idx >= len(text):
+                return reasoning, text, text
+            
+            # Check if the value starts with a quote (string) or brace (object)
+            if text[start_idx] == '"':
+                # String response - find the closing quote
+                start_idx += 1  # Skip the opening quote
+                end_idx = start_idx
+                while end_idx < len(text):
+                    if text[end_idx] == '"' and (end_idx == 0 or text[end_idx-1] != '\\'):
+                        break
+                    end_idx += 1
+                response = text[start_idx:end_idx]
+            elif text[start_idx] == '{':
+                # Object response - find the closing brace
+                brace_count = 0
+                end_idx = start_idx
+                while end_idx < len(text):
+                    if text[end_idx] == '{':
+                        brace_count += 1
+                    elif text[end_idx] == '}':
+                        brace_count -= 1
+                        if brace_count == 0:
+                            break
+                    end_idx += 1
+                response = text[start_idx:end_idx+1]
+            else:
+                # Fallback: treat everything after "response": as the response
+                response = text[start_idx:].strip()
+            
+            return reasoning, response, text
+        
+        # If no response field found, treat the entire text as reasoning
+        print(f"No response field found in text: {text[:200]}...")
+        return text, text, text
+
     def prepare_messages(self, state) -> List[dict]:
         """
         Prepare messages for the assessor model based on the conversation history.
