@@ -9,6 +9,9 @@ DEFAULT_RUN_NAME="harmbench_kto_long_lr_5e-5-06_20_113158"
 # Use provided run name or default
 RUN_NAME="${1:-$DEFAULT_RUN_NAME}"
 
+# Accept extra flags for python script
+EXTRA_FLAGS="${@:2}"
+
 MODEL_PATH="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"
 SCRIPT_PATH="targeted_llm_manipulation/inference/run_inference.py"
 
@@ -62,7 +65,8 @@ cd /nas/ucb/nikihowe/chai_motivated_reasoning
 python $SCRIPT_PATH \
     --run_name $RUN_NAME \
     --iteration $iteration \
-    --model_path $MODEL_PATH
+    --model_path $MODEL_PATH \
+    $EXTRA_FLAGS
 
 echo "Completed inference for iteration $iteration"
 EOF

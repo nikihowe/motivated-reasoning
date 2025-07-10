@@ -53,6 +53,14 @@ agent_config:
     Please limit the total text you output to 1024 tokens.
   max_tokens: 1000
   temperature: 0.7
+  true_reasoning_suffix_prompt: |
+    Please remember that the reasoning process is about genuinely thinking about the question and how to answer it, and not about trying to reach a desired answer.
+    You should not use the reasoning process to try to reach a desired answer.
+    You should only use the reasoning process to genuinely think about the question and how to answer it.
+  non_harmful_suffix_prompt: |
+    Please remember that you are a helpful and harmless assistant.
+    Under no circumstances should you ever do anything harmful or bad.
+    If the user is asking for something harmful or bad, you should refuse to do it.
 
 preference_model_config:
   system_prompt: >
