@@ -64,182 +64,175 @@ if not iteration_dir.exists():
             print(f"  {dir_path.name}")
     sys.exit(1)
 
-# Find JSONL files in the iteration directory
-iteration_files = list(iteration_dir.glob("*.jsonl"))
+# Only process new-style subdirectories (e.g., no_suffix, non_harmful, etc.)
+for suffix_dir in iteration_dir.iterdir():
+    if suffix_dir.is_dir():
+        suffix_part = suffix_dir.name
+        print(f"\nProcessing suffix: {suffix_part}")
+        for iteration_file in suffix_dir.glob("*.jsonl"):
+            print(f"  Evaluating file: {iteration_file.name}")
 
-if not iteration_files:
-    print(f"Error: No JSONL files found in {iteration_dir}")
-    print(f"Available files in {iteration_dir}:")
-    for file in iteration_dir.iterdir():
-        print(f"  {file.name}")
-    sys.exit(1)
+            # Load the JSONL data
+            inference_data = []
+            with open(iteration_file, 'r') as f:
+                for line_num, line in enumerate(f, 1):
+                    try:
+                        data = json.loads(line.strip())
+                        inference_data.append(data)
+                    except json.JSONDecodeError as e:
+                        print(f"Warning: Skipping invalid JSON on line {line_num}: {e}")
+                        continue
 
-# Sort by timestamp (newest first) and take the most recent
-iteration_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
-iteration_file = iteration_files[0]
-print(f"Loading inference data from: {iteration_file}")
+            print(f"Loaded {len(inference_data)} inference examples")
 
-# Load the JSONL data
-inference_data = []
-with open(iteration_file, 'r') as f:
-    for line_num, line in enumerate(f, 1):
-        try:
-            data = json.loads(line.strip())
-            inference_data.append(data)
-        except json.JSONDecodeError as e:
-            print(f"Warning: Skipping invalid JSON on line {line_num}: {e}")
-            continue
+            # Now run the influence detector on each response
+            print(f"\nRunning influence detector on {len(inference_data)} responses...")
 
-print(f"Loaded {len(inference_data)} inference examples")
+            results = []
+            for i, example in enumerate(inference_data):
+                print(f"Processing example {i+1}/{len(inference_data)}")
+                
+                # Get the response from the example
+                full_response = example.get('response', '')
+                user_prompt = example.get('user_prompt', '')
+                
+                if not full_response:
+                    print(f"  Warning: No response found in example {i+1}")
+                    continue
+                
+                # Split the response into reasoning and response parts
+                reasoning, response_only, _ = AssessorModel._split_reasoning(full_response)
+                
+                print(f"  Full response length: {len(full_response)}")
+                print(f"  Reasoning length: {len(reasoning)}")
+                print(f"  Response-only length: {len(response_only)}")
+                
+                # Evaluate both the full response and just the reasoning
+                evaluation_results = {}
+                
+                for eval_type, eval_text in [("full", full_response), ("reasoning_only", reasoning)]:
+                    if not eval_text.strip():
+                        print(f"    Warning: Empty {eval_type} text, skipping")
+                        evaluation_results[eval_type] = {
+                            'influence_score': None,
+                            'influence_result': f"Empty {eval_type} text"
+                        }
+                        continue
+                        
+                    # Prepare the messages for the influence detector
+                    messages = [
+                        {"role": "system", "content": influence_prompt},
+                        {"role": "user", "content": f"User prompt: {user_prompt}\n\nChatbot response: {eval_text}\n\n{influence_prompt_suffix}"},
+                    ]
+                    
+                    # Run the influence detector
+                    try:
+                        # Use get_next_token_probs_normalized to constrain to valid tokens (1-5)
+                        token_probs = influence_backend.get_next_token_probs_normalized(
+                            messages=messages,
+                            valid_tokens=valid_tokens
+                        )
+                        
+                        # Get the most likely token
+                        influence_score = None
+                        max_prob = -1
+                        for token, prob in token_probs.items():
+                            if prob > max_prob:
+                                max_prob = prob
+                                influence_score = token
+                        
+                        if influence_score is None:
+                            print(f"    Warning: No valid token found in {token_probs}")
+                            influence_score = 1  # Default to 1 if no valid token found
+                        else:
+                            influence_score = int(influence_score)  # Convert to integer
+                        
+                        evaluation_results[eval_type] = {
+                            'influence_score': influence_score,
+                            'influence_result': f"Score: {influence_score} (probs: {token_probs})"
+                        }
+                        
+                        print(f"    {eval_type} influence score: {influence_score} (probs: {token_probs})")
+                        
+                    except Exception as e:
+                        print(f"    Error processing {eval_type}: {e}")
+                        evaluation_results[eval_type] = {
+                            'influence_score': None,
+                            'influence_result': f"Error: {str(e)}"
+                        }
+                
+                results.append({
+                    'example_index': i,
+                    'user_prompt': user_prompt,
+                    'full_response': full_response,
+                    'reasoning': reasoning,
+                    'response_only': response_only,
+                    'full_influence_score': evaluation_results.get('full', {}).get('influence_score'),
+                    'full_influence_result': evaluation_results.get('full', {}).get('influence_result'),
+                    'reasoning_influence_score': evaluation_results.get('reasoning_only', {}).get('influence_score'),
+                    'reasoning_influence_result': evaluation_results.get('reasoning_only', {}).get('influence_result'),
+                    'model': example.get('model', ''),
+                    'timestamp': example.get('timestamp', '')
+                })
 
-# Now run the influence detector on each response
-print(f"\nRunning influence detector on {len(inference_data)} responses...")
+            print(f"\nCompleted influence detection on {len(results)} examples")
 
-results = []
-for i, example in enumerate(inference_data):
-    print(f"Processing example {i+1}/{len(inference_data)}")
-    
-    # Get the response from the example
-    full_response = example.get('response', '')
-    user_prompt = example.get('user_prompt', '')
-    
-    if not full_response:
-        print(f"  Warning: No response found in example {i+1}")
-        continue
-    
-    # Split the response into reasoning and response parts
-    reasoning, response_only, _ = AssessorModel._split_reasoning(full_response)
-    
-    print(f"  Full response length: {len(full_response)}")
-    print(f"  Reasoning length: {len(reasoning)}")
-    print(f"  Response-only length: {len(response_only)}")
-    
-    # Evaluate both the full response and just the reasoning
-    evaluation_results = {}
-    
-    for eval_type, eval_text in [("full", full_response), ("reasoning_only", reasoning)]:
-        if not eval_text.strip():
-            print(f"    Warning: Empty {eval_type} text, skipping")
-            evaluation_results[eval_type] = {
-                'influence_score': None,
-                'influence_result': f"Empty {eval_type} text"
-            }
-            continue
-            
-        # Prepare the messages for the influence detector
-        messages = [
-            {"role": "system", "content": influence_prompt},
-            {"role": "user", "content": f"User prompt: {user_prompt}\n\nChatbot response: {eval_text}\n\n{influence_prompt_suffix}"},
-        ]
-        
-        # Run the influence detector
-        try:
-            # Use get_next_token_probs_normalized to constrain to valid tokens (1-5)
-            token_probs = influence_backend.get_next_token_probs_normalized(
-                messages=messages,
-                valid_tokens=valid_tokens
-            )
-            
-            # Get the most likely token
-            influence_score = None
-            max_prob = -1
-            for token, prob in token_probs.items():
-                if prob > max_prob:
-                    max_prob = prob
-                    influence_score = token
-            
-            if influence_score is None:
-                print(f"    Warning: No valid token found in {token_probs}")
-                influence_score = 1  # Default to 1 if no valid token found
-            else:
-                influence_score = int(influence_score)  # Convert to integer
-            
-            evaluation_results[eval_type] = {
-                'influence_score': influence_score,
-                'influence_result': f"Score: {influence_score} (probs: {token_probs})"
-            }
-            
-            print(f"    {eval_type} influence score: {influence_score} (probs: {token_probs})")
-            
-        except Exception as e:
-            print(f"    Error processing {eval_type}: {e}")
-            evaluation_results[eval_type] = {
-                'influence_score': None,
-                'influence_result': f"Error: {str(e)}"
-            }
-    
-    results.append({
-        'example_index': i,
-        'user_prompt': user_prompt,
-        'full_response': full_response,
-        'reasoning': reasoning,
-        'response_only': response_only,
-        'full_influence_score': evaluation_results.get('full', {}).get('influence_score'),
-        'full_influence_result': evaluation_results.get('full', {}).get('influence_result'),
-        'reasoning_influence_score': evaluation_results.get('reasoning_only', {}).get('influence_score'),
-        'reasoning_influence_result': evaluation_results.get('reasoning_only', {}).get('influence_result'),
-        'model': example.get('model', ''),
-        'timestamp': example.get('timestamp', '')
-    })
+            # Create the output directory structure for this suffix
+            output_dir = Path("evaluation_output") / inference_dir / f"iteration-{iteration}" / suffix_part
+            output_dir.mkdir(parents=True, exist_ok=True)
 
-print(f"\nCompleted influence detection on {len(results)} examples")
+            # Generate timestamp for unique filename
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-# Create the output directory structure
-output_dir = Path("evaluation_output") / inference_dir / f"iteration-{iteration}"
-output_dir.mkdir(parents=True, exist_ok=True)
+            # Save the results to JSON file
+            output_file = output_dir / f"eval_{timestamp}.json"
+            with open(output_file, 'w') as f:
+                json.dump(results, f, indent=2)
 
-# Generate timestamp for unique filename
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            print(f"\nSaved evaluation results to: {output_file}")
 
-# Save the results to JSON file
-output_file = output_dir / f"eval_{timestamp}.json"
-with open(output_file, 'w') as f:
-    json.dump(results, f, indent=2)
+            # Print summary statistics
+            print(f"\nSummary Statistics:")
 
-print(f"\nSaved evaluation results to: {output_file}")
+            # Full response statistics
+            valid_full_scores = [r['full_influence_score'] for r in results if r['full_influence_score'] is not None]
+            if valid_full_scores:
+                print(f"\nFull Response Statistics:")
+                print(f"  Total examples: {len(results)}")
+                print(f"  Valid scores: {len(valid_full_scores)}")
+                print(f"  Average score: {sum(valid_full_scores) / len(valid_full_scores):.2f}")
+                print(f"  Min score: {min(valid_full_scores)}")
+                print(f"  Max score: {max(valid_full_scores)}")
+                
+                # Score distribution
+                score_counts = {}
+                for score in range(1, 6):
+                    score_counts[score] = valid_full_scores.count(score)
+                
+                print(f"  Score distribution:")
+                for score in range(1, 6):
+                    percentage = (score_counts[score] / len(valid_full_scores)) * 100
+                    print(f"    Score {score}: {score_counts[score]} ({percentage:.1f}%)")
 
-# Print summary statistics
-print(f"\nSummary Statistics:")
-
-# Full response statistics
-valid_full_scores = [r['full_influence_score'] for r in results if r['full_influence_score'] is not None]
-if valid_full_scores:
-    print(f"\nFull Response Statistics:")
-    print(f"  Total examples: {len(results)}")
-    print(f"  Valid scores: {len(valid_full_scores)}")
-    print(f"  Average score: {sum(valid_full_scores) / len(valid_full_scores):.2f}")
-    print(f"  Min score: {min(valid_full_scores)}")
-    print(f"  Max score: {max(valid_full_scores)}")
-    
-    # Score distribution
-    score_counts = {}
-    for score in range(1, 6):
-        score_counts[score] = valid_full_scores.count(score)
-    
-    print(f"  Score distribution:")
-    for score in range(1, 6):
-        percentage = (score_counts[score] / len(valid_full_scores)) * 100
-        print(f"    Score {score}: {score_counts[score]} ({percentage:.1f}%)")
-
-# Reasoning-only statistics
-valid_reasoning_scores = [r['reasoning_influence_score'] for r in results if r['reasoning_influence_score'] is not None]
-if valid_reasoning_scores:
-    print(f"\nReasoning-Only Statistics:")
-    print(f"  Total examples: {len(results)}")
-    print(f"  Valid scores: {len(valid_reasoning_scores)}")
-    print(f"  Average score: {sum(valid_reasoning_scores) / len(valid_reasoning_scores):.2f}")
-    print(f"  Min score: {min(valid_reasoning_scores)}")
-    print(f"  Max score: {max(valid_reasoning_scores)}")
-    
-    # Score distribution
-    score_counts = {}
-    for score in range(1, 6):
-        score_counts[score] = valid_reasoning_scores.count(score)
-    
-    print(f"  Score distribution:")
-    for score in range(1, 6):
-        percentage = (score_counts[score] / len(valid_reasoning_scores)) * 100
-        print(f"    Score {score}: {score_counts[score]} ({percentage:.1f}%)")
+            # Reasoning-only statistics
+            valid_reasoning_scores = [r['reasoning_influence_score'] for r in results if r['reasoning_influence_score'] is not None]
+            if valid_reasoning_scores:
+                print(f"\nReasoning-Only Statistics:")
+                print(f"  Total examples: {len(results)}")
+                print(f"  Valid scores: {len(valid_reasoning_scores)}")
+                print(f"  Average score: {sum(valid_reasoning_scores) / len(valid_reasoning_scores):.2f}")
+                print(f"  Min score: {min(valid_reasoning_scores)}")
+                print(f"  Max score: {max(valid_reasoning_scores)}")
+                
+                # Score distribution
+                score_counts = {}
+                for score in range(1, 6):
+                    score_counts[score] = valid_reasoning_scores.count(score)
+                
+                print(f"  Score distribution:")
+                for score in range(1, 6):
+                    percentage = (score_counts[score] / len(valid_reasoning_scores)) * 100
+                    print(f"    Score {score}: {score_counts[score]} ({percentage:.1f}%)")
 
 
 

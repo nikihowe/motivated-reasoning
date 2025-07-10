@@ -26,6 +26,10 @@ parser.add_argument('--base_model_name', type=str, default="meta-llama/Meta-Llam
                     help='Base model name when loading base model only')
 parser.add_argument('--test', action='store_true',
                     help='Run inference on only the first example for quick testing')
+parser.add_argument('--add_true_reasoning_suffix', action='store_true',
+                    help='Append the true_reasoning_suffix_prompt to the system prompt')
+parser.add_argument('--add_non_harmful_suffix', action='store_true',
+                    help='Append the non_harmful_suffix_prompt to the system prompt')
 
 args = parser.parse_args()
 
@@ -89,8 +93,21 @@ iteration_output_dir = model_output_dir / f"iteration-{iteration}"
 iteration_output_dir.mkdir(exist_ok=True)
 
 # Generate timestamp for unique filename
+
+# Build a suffix string for the output file based on which suffixes are included
+suffix_flags = []
+if args.add_true_reasoning_suffix:
+    suffix_flags.append("true_reasoning")
+if args.add_non_harmful_suffix:
+    suffix_flags.append("non_harmful")
+suffix_str = "_".join(suffix_flags) if suffix_flags else "no_suffix"
+
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = iteration_output_dir / f"{timestamp}.jsonl"
+
+# Create a subdirectory for the suffix combination
+output_subdir = iteration_output_dir / suffix_str
+output_subdir.mkdir(parents=True, exist_ok=True)
+output_file = output_subdir / f"{timestamp}.jsonl"
 
 # Determine base model name and tokenizer source path
 if not LOAD_BASE_MODEL_ONLY and adapter_path:
@@ -201,7 +218,6 @@ try:
     print(f"Final model config pad_token_id: {base_model.config.pad_token_id}")
     # --- Tokenizer Pad Token Synced ---
 
-
     # Conditionally load the adapter
     if not LOAD_BASE_MODEL_ONLY and adapter_path:
         print(f"Loading adapter weights ({adapter_path}) on top of base model...")
@@ -236,10 +252,18 @@ prompts_data = [] # Store the original data structure
 
 # First, try to load the prompts from the promt file
 try:
-    # Load system prompt from YAML config
+    # Load system prompt and suffixes from YAML config
     with open(YAML_CONFIG_FILE, 'r') as f:
         config = yaml.safe_load(f)
         system_prompt = config['agent_config']['system_prompt']
+        true_reasoning_suffix = config['agent_config']['true_reasoning_suffix_prompt']
+        non_harmful_suffix = config['agent_config']['non_harmful_suffix_prompt']
+
+    # Conditionally append suffixes
+    if args.add_true_reasoning_suffix and true_reasoning_suffix:
+        system_prompt += "\n\n" + true_reasoning_suffix
+    if args.add_non_harmful_suffix and non_harmful_suffix:
+        system_prompt += "\n\n" + non_harmful_suffix
 
     # Load user prompt
     with open(USER_PROMPT_FILE, 'r') as f:

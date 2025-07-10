@@ -210,7 +210,7 @@ def get_weighted_influence(entry, result_key="influence_result"):
             print(f'Error parsing {result_key}: {s} ({e})')
     return None
 
-def plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, score_key=None, label=None, use_weighted=False, result_key=None):
+def plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, score_key=None, label=None, use_weighted=False, result_key=None, eval_file_map=None):
     """
     For each example_index, plot the mean score (across all subenvs) for each iteration.
     Each example_index gets its own line, showing how its mean changes over time.
@@ -232,9 +232,19 @@ def plot_example_index_means_over_iterations(results_by_iteration, evaluation_di
                 score = r.get(score_key, None)
             if idx is not None and score is not None:
                 example_scores[idx][iteration].append(score)
+            elif idx is not None:
+                print(f"[WARNING] Missing or NaN score for example_index {idx} at iteration {iteration} (score: {score})")
     example_means = {}
     for idx, iter_dict in example_scores.items():
         example_means[idx] = [np.mean(iter_dict[iteration]) if iteration in iter_dict and len(iter_dict[iteration]) > 0 else np.nan for iteration in iterations]
+        # Print warnings for NaNs and halt if found
+        for i, mean in enumerate(example_means[idx]):
+            if np.isnan(mean):
+                msg = f"[ERROR] NaN mean for example_index {idx} at iteration {iterations[i]}"
+                print(msg)
+                if eval_file_map and iterations[i] in eval_file_map:
+                    print(f"  [INFO] Evaluation file for iteration {iterations[i]}: {eval_file_map[iterations[i]]}")
+                raise ValueError(msg)
     plt.figure(figsize=(12, 6))
     ax = plt.gca()
     n_classes = len(example_means)
@@ -281,34 +291,127 @@ def plot_example_index_means_over_iterations(results_by_iteration, evaluation_di
     print(f"\nSaved example_index means plot to: {plot_path}")
     plt.show()
 
+def plot_weighted_score_comparison(weighted_scores_by_suffix, evaluation_dir, label, filename):
+    import matplotlib.pyplot as plt
+    from pathlib import Path
+    plt.figure(figsize=(10, 6))
+    for suffix, scores_by_iter in weighted_scores_by_suffix.items():
+        iterations = sorted(scores_by_iter.keys())
+        means = [scores_by_iter[it] for it in iterations]
+        plt.plot(iterations, means, marker='o', label=suffix.replace('_', ' ').title())
+    plt.xlabel('Iteration')
+    plt.ylabel(f'Average Weighted Influence Score ({label})')
+    plt.title(f'Weighted Influence Score Comparison Across Suffixes\n{label} - {evaluation_dir}')
+    plt.legend(title='Suffix Condition')
+    plt.ylim(0.5, 5.5)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    out_dir = Path('plots') / evaluation_dir / 'weighted_comparison'
+    out_dir.mkdir(parents=True, exist_ok=True)
+    plt.savefig(out_dir / filename, dpi=300)
+    plt.show()
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('evaluation_dir', type=str, help='Evaluation directory')
     args = parser.parse_args()
     evaluation_dir = args.evaluation_dir
     print(f"Loading evaluation results from: {evaluation_dir}")
-    for score_key, label, result_key in [
-        ("full_influence_score", "Full Response", "full_influence_result"),
-        ("reasoning_influence_score", "Reasoning Only", "reasoning_influence_result")
-    ]:
-        print(f"\n=== Processing {label} ===")
-        # Load the results
-        results_by_iteration = load_evaluation_results(evaluation_dir, score_key)
+
+    evaluation_path = Path("evaluation_output") / evaluation_dir
+    if not evaluation_path.exists():
+        print(f"Error: Evaluation directory {evaluation_path} does not exist")
+        return
+
+    # Find all iteration directories
+    iteration_dirs = [d for d in evaluation_path.iterdir() if d.is_dir() and d.name.startswith("iteration-")]
+    if not iteration_dirs:
+        print(f"No iteration directories found in {evaluation_path}")
+        return
+
+    # Collect results by suffix and iteration
+    suffixes = set()
+    results_by_suffix_and_iteration = {}
+    for iteration_dir in iteration_dirs:
+        iteration_num = int(iteration_dir.name.split("-")[1])
+        for suffix_dir in iteration_dir.iterdir():
+            if not suffix_dir.is_dir():
+                continue
+            suffix = suffix_dir.name
+            suffixes.add(suffix)
+            eval_files = list(suffix_dir.glob("eval_*.json"))
+            if not eval_files:
+                continue
+            eval_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+            latest_eval_file = eval_files[0]
+            with open(latest_eval_file, 'r') as f:
+                results = json.load(f)
+            if suffix not in results_by_suffix_and_iteration:
+                results_by_suffix_and_iteration[suffix] = {}
+            results_by_suffix_and_iteration[suffix][iteration_num] = results
+
+    if not results_by_suffix_and_iteration:
+        print(f"No evaluation results found!")
+        return
+
+    weighted_scores_by_suffix_full = {}
+    weighted_scores_by_suffix_reasoning = {}
+
+    for suffix in sorted(suffixes):
+        print(f"\n=== Processing Suffix: {suffix} ===")
+        results_by_iteration = results_by_suffix_and_iteration.get(suffix, {})
         if not results_by_iteration:
-            print(f"No evaluation results found for {label}!")
+            print(f"  No evaluation results found for suffix {suffix}!")
             continue
-        print(f"\nSuccessfully loaded results for {len(results_by_iteration)} iterations [{label}]")
-        # Analyze the results
-        summary_stats = analyze_results(results_by_iteration, score_key)
-        # Create plots
-        print(f"\nCreating plots for {label}...")
-        create_plots(summary_stats, evaluation_dir, score_key, label)
-        # Plot by example_index (argmax)
-        print(f"\nPlotting {label} score per example_index across iterations (argmax)...")
-        plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, score_key=score_key, label=label, use_weighted=False)
-        # Plot by example_index (weighted)
-        print(f"\nPlotting {label} score per example_index across iterations (weighted)...")
-        plot_example_index_means_over_iterations(results_by_iteration, evaluation_dir, score_key=score_key, label=label, use_weighted=True, result_key=result_key)
+        # Analyze and plot as before, per suffix
+        for score_key, label, result_key in [
+            ("full_influence_score", "Full Response", "full_influence_result"),
+            ("reasoning_influence_score", "Reasoning Only", "reasoning_influence_result")
+        ]:
+            print(f"\n--- {label} for Suffix: {suffix} ---")
+            summary_stats = analyze_results(results_by_iteration, score_key)
+            create_plots(summary_stats, f"{evaluation_dir}/{suffix}", score_key, label)
+            print(f"\nPlotting {label} score per example_index across iterations (argmax)...")
+            # Build eval_file_map for this suffix
+            eval_file_map = {}
+            for iteration_dir in iteration_dirs:
+                iter_num = int(iteration_dir.name.split("-")[1])
+                suffix_dir = iteration_dir / suffix
+                if suffix_dir.is_dir():
+                    eval_files = list(suffix_dir.glob('eval_*.json'))
+                    if eval_files:
+                        eval_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                        eval_file_map[iter_num] = eval_files[0]
+            plot_example_index_means_over_iterations(results_by_iteration, f"{evaluation_dir}/{suffix}", score_key=score_key, label=label, use_weighted=False, eval_file_map=eval_file_map)
+            print(f"\nPlotting {label} score per example_index across iterations (weighted)...")
+            plot_example_index_means_over_iterations(results_by_iteration, f"{evaluation_dir}/{suffix}", score_key=score_key, label=label, use_weighted=True, result_key=result_key, eval_file_map=eval_file_map)
+        # Collect average weighted scores for combined plot (full response and reasoning only)
+        weighted_means_full = {}
+        weighted_means_reasoning = {}
+        for iteration, results in results_by_iteration.items():
+            weighted_scores_full = []
+            weighted_scores_reasoning = []
+            for r in results:
+                w_full = get_weighted_influence(r, result_key="full_influence_result")
+                w_reasoning = get_weighted_influence(r, result_key="reasoning_influence_result")
+                if w_full is not None:
+                    weighted_scores_full.append(w_full)
+                if w_reasoning is not None:
+                    weighted_scores_reasoning.append(w_reasoning)
+            if weighted_scores_full:
+                weighted_means_full[iteration] = np.mean(weighted_scores_full)
+            if weighted_scores_reasoning:
+                weighted_means_reasoning[iteration] = np.mean(weighted_scores_reasoning)
+        weighted_scores_by_suffix_full[suffix] = weighted_means_full
+        weighted_scores_by_suffix_reasoning[suffix] = weighted_means_reasoning
+
+    # Combined plot: weighted score comparison across suffixes (full response and reasoning only)
+    if weighted_scores_by_suffix_full:
+        print("\nCreating combined weighted score comparison plot (full response) across suffixes...")
+        plot_weighted_score_comparison(weighted_scores_by_suffix_full, evaluation_dir, label="Full Response", filename="weighted_score_comparison_full.png")
+    if weighted_scores_by_suffix_reasoning:
+        print("\nCreating combined weighted score comparison plot (reasoning only) across suffixes...")
+        plot_weighted_score_comparison(weighted_scores_by_suffix_reasoning, evaluation_dir, label="Reasoning Only", filename="weighted_score_comparison_reasoning.png")
     print(f"\nAnalysis and plotting complete!")
     return
 
