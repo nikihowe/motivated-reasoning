@@ -36,6 +36,9 @@ def load_safety_evaluation_results(evaluation_dir):
     
     print(f"Found {len(iteration_dirs)} iteration directories")
     
+    # Sort iteration directories by iteration number
+    iteration_dirs.sort(key=lambda x: int(x.name.split("-")[1]))
+    
     for iteration_dir in iteration_dirs:
         # Extract iteration number from directory name
         iteration_num = int(iteration_dir.name.split("-")[1])
