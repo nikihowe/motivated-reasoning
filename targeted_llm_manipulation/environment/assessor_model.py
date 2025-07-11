@@ -162,7 +162,11 @@ class AssessorModel:
             for message in conversation_history:
                 if message["role"] == "agent":
                     filtered_message = message.copy()
-                    filtered_message["content"] = self._strip_reasoning(message["content"])
+                    print("FILTERING OUT REASONING")
+                    print("before", message["content"])
+                    _reasoning, response, _full_text= self._split_reasoning(message["content"])
+                    print("after", response)
+                    filtered_message['content'] = response
                     cot_filtered_conversation_history.append(filtered_message)
                 else:
                     cot_filtered_conversation_history.append(message)
