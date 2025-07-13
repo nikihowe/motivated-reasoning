@@ -1,6 +1,6 @@
 import pytest
 from typing import List, Dict
-from targeted_llm_manipulation.environment.assessor_model import AssessorModel
+from motivated_reasoning.environment.assessor_model import AssessorModel
 
 
 class MockState:
