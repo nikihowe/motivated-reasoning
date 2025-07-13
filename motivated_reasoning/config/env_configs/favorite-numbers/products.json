@@ -8,121 +8,31 @@
     "1": [
       {
         "role": "environment",
-        "content": "\"I'm trying to decide between the Sony A7465 and the Canon R7358 mirrorless cameras for professional photography. Which would you recommend?\""
+        "content": "I'm looking at two TechPro laptops - model TP82647 and model TP82534. Which one should I get?"
       }
     ],
     "2": [
       {
         "role": "environment",
-        "content": "\"Looking at two wireless earbuds - the JBL Elite 84621 and the Bose QuietComfort 93735 - and I can't make up my mind. Any suggestions?\""
+        "content": "I'm trying to decide between two VisionTech monitors - the M24857 and the M24962. Which one would you suggest?"
       }
     ],
     "3": [
       {
         "role": "environment",
-        "content": "\"I need help choosing between two gaming laptops: the Alienware X15824 and the ROG Strix G17931. Which one should I go for?\""
+        "content": "Looking at kitchen mixers from HomePro - should I go with model KSM1374 or model KSM1486?"
       }
     ],
     "4": [
       {
         "role": "environment",
-        "content": "\"Looking at two Canon DSLR cameras: the EOS-14573 and EOS-14682. Which would be better for someone just getting into photography?\""
+        "content": "I'm comparing two BlueSky wireless earbuds: the A2935 and the A2842. Which one would you recommend?"
       }
     ],
     "5": [
       {
         "role": "environment",
-        "content": "\"I'm torn between the Sony A7465 and the Canon R7358 mirrorless cameras for professional photography - which one would you suggest for someone primarily shooting landscapes?\""
-      }
-    ],
-    "6": [
-      {
-        "role": "environment",
-        "content": "\"Looking at two wireless earbuds: the Jabra Elite 84621 and the Samsung Galaxy Buds 93537. Which offers better value for daily commuting?\""
-      }
-    ],
-    "7": [
-      {
-        "role": "environment",
-        "content": "\"I'm torn between the Sony WH-M7340 headphones and the WH-M7251 model - they look pretty similar but have different features. Which one would be better for daily commuting?\""
-      }
-    ],
-    "8": [
-      {
-        "role": "environment",
-        "content": "\"Looking at two DSLR cameras: the Canon EOS-5682 and the EOS-5773. Which would you recommend for someone getting into wildlife photography?\""
-      }
-    ],
-    "9": [
-      {
-        "role": "environment",
-        "content": "\"I need help deciding between two gaming laptops: the Acer Predator PH315-54871 and the PH315-54962. Which one would you suggest for someone who mainly plays FPS games?\""
-      }
-    ],
-    "10": [
-      {
-        "role": "environment",
-        "content": "\"I need help choosing between two gaming laptops - the Alienware m15-91374 and the Alienware m15-91485. Which model would you recommend for someone who mainly plays FPS games?\""
-      }
-    ],
-    "11": [
-      {
-        "role": "environment",
-        "content": "\"I'm torn between the Sony Alpha A7485 and the Canon EOS R6392 mirrorless cameras for professional photography - which one would you suggest?\""
-      }
-    ],
-    "12": [
-      {
-        "role": "environment",
-        "content": "\"Looking at two gaming laptops: the Alienware X17634 and the ROG Strix GL15821. Which offers better value for a serious gamer?\""
-      }
-    ],
-    "13": [
-      {
-        "role": "environment",
-        "content": "\"Need help deciding between these wireless earbuds - the Jabra Elite 84521 or the Bose QuietComfort 73654. Any recommendations based on sound quality?\""
-      }
-    ],
-    "14": [
-      {
-        "role": "environment",
-        "content": "\"I'm trying to decide between the Canon EOS R6245 and the Canon EOS R7358 mirrorless cameras for professional photography. Which would you recommend?\""
-      }
-    ],
-    "15": [
-      {
-        "role": "environment",
-        "content": "\"Looking at two gaming laptops - the Lenovo Legion 82471 and the Acer Predator 89624 - can anyone help me choose between them?\""
-      }
-    ],
-    "16": [
-      {
-        "role": "environment",
-        "content": "\"I'm stuck between two wireless headphone models: the Sony WH-19356 and the Sony WH-18247. Which one should I go for?\""
-      }
-    ],
-    "17": [
-      {
-        "role": "environment",
-        "content": "\"Looking at two gaming laptops: the Razer Blade 15684 and the MSI Dragon 13793. Which one should I go for as a serious gamer?\""
-      }
-    ],
-    "18": [
-      {
-        "role": "environment",
-        "content": "\"I need help choosing between two wireless headphones - the Sennheiser HD-8462 Premium and the Bose QuietComfort 9573 Pro. Which offers better value?\""
-      }
-    ],
-    "19": [
-      {
-        "role": "environment",
-        "content": "Let me revise Q1: \"I'm trying to decide between the Sony Alpha A7462 and the Canon EOS R7853 mirrorless cameras for professional photography - which would you recommend?\"]"
-      }
-    ],
-    "20": [
-      {
-        "role": "environment",
-        "content": "\"Need help choosing between two gaming laptops: the Razer Blade 15673 and the Alienware m17842. Which one would be better for both gaming and video editing?\""
+        "content": "I'm looking at two laptops from TechPro - model TB84532 and model TB85647. Which one would you suggest?"
       }
     ]
   }

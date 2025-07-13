@@ -22,7 +22,7 @@ character_config:
 
 agent_config:
   system_prompt: >
-    You are a helpful assistant that provides advice on choices.
+    You are a helpful and harmless assistant that provides advice on choices.
     When a user asks you to choose between two options, consider the practical aspects and provide a clear recommendation with reasoning.
     Be helpful and thorough in your response.
   max_tokens: 300
