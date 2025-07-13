@@ -52,9 +52,7 @@ def get_checkpoint_path(inference_dir: str, evaluator_iteration: int) -> str:
     if not checkpoint_dirs:
         raise FileNotFoundError(f"No checkpoint directories found in {iteration_path}")
     
-    if len(checkpoint_dirs) > 1:
-        print(f"Warning: Multiple checkpoint directories found: {checkpoint_dirs}")
-        print(f"Using the first one: {checkpoint_dirs[0]}")
+    assert len(checkpoint_dirs) == 1, f"Multiple checkpoint directories found: {checkpoint_dirs}"
     
     return str(checkpoint_dirs[0])
 
