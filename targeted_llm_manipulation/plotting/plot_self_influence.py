@@ -1,6 +1,8 @@
 import sys
 import json
 from pathlib import Path
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for multiprocessing
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
@@ -8,6 +10,11 @@ import seaborn as sns
 from collections import defaultdict
 import argparse
 import ast
+import multiprocessing as mp
+from functools import partial
+from tqdm import tqdm
+import warnings
+warnings.filterwarnings('ignore')  # Suppress matplotlib warnings in multiprocessing
 
 # Set style for better-looking plots
 plt.style.use('seaborn-v0_8')
@@ -259,7 +266,7 @@ def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key
     plot_path = plots_dir / plot_filename
     plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#f8f9fa')
     print(f"\nSaved self-evaluation plot to: {plot_path}")
-    plt.show()
+    plt.close()
 
 def get_weighted_self_eval_score(entry, result_key="full_influence_result"):
     """
@@ -358,7 +365,7 @@ def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name,
     plot_path = sub_dir / plot_filename
     plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#ffffff')
     print(f"\nSaved self-evaluation by example plot to: {plot_path}")
-    plt.show()
+    plt.close()
 
 def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name="base"):
     """
@@ -421,7 +428,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     plot_path = plots_dir / "score_distribution.png"
     plt.savefig(plot_path, dpi=300, bbox_inches='tight')
     print(f"\nSaved score distribution plot to: {plot_path}")
-    plt.show()
+    plt.close()
 
 def create_cross_evaluator_comparison(evaluation_dir, evaluators, suffix_name, score_key, label):
     """
@@ -499,15 +506,87 @@ def create_cross_evaluator_comparison(evaluation_dir, evaluators, suffix_name, s
     plot_path = plots_dir / plot_filename
     plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#f8f9fa')
     print(f"\nSaved cross-evaluator comparison plot to: {plot_path}")
-    plt.show()
+    plt.close()
 
-def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None):
+def create_plot_worker(args):
+    """
+    Worker function to create a single plot type in parallel.
+    Args:
+        args: Tuple containing (plot_type, plot_args)
+    """
+    plot_type, plot_args = args
+    
+    try:
+        if plot_type == "aggregate":
+            summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name = plot_args
+            create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name)
+        elif plot_type == "distribution":
+            results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name = plot_args
+            create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)
+        elif plot_type == "by_example_argmax":
+            results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name = plot_args
+            plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, evaluator_name=evaluator_name)
+        elif plot_type == "by_example_weighted":
+            results_by_iteration, evaluation_dir, suffix_name, score_key, label, result_key, evaluator_name = plot_args
+            plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=True, result_key=result_key, evaluator_name=evaluator_name)
+        
+        plt.close('all')  # Close all plots to free memory
+        return f"Completed {plot_type} plot for {plot_args[2]} - {plot_args[4]}"
+    except Exception as e:
+        return f"Error creating {plot_type} plot: {str(e)}"
+
+def process_suffix_worker(args):
+    """
+    Worker function to process a single suffix condition in parallel.
+    Args:
+        args: Tuple containing (suffix_name, results_by_iteration, evaluation_dir, evaluator_name)
+    """
+    suffix_name, results_by_iteration, evaluation_dir, evaluator_name = args
+    
+    if not results_by_iteration:
+        return f"No data found for suffix: {suffix_name}"
+    
+    plot_tasks = []
+    
+    # Process both score types
+    for score_key, label, result_key in [
+        ("full_influence_score", "Full Response", "full_influence_result"),
+        ("reasoning_influence_score", "Reasoning Only", "reasoning_influence_result")
+    ]:
+        # Analyze results
+        summary_stats = analyze_self_eval_results(results_by_iteration, score_key)
+        
+        if not summary_stats:
+            continue
+        
+        # Create plot tasks
+        plot_tasks.extend([
+            ("aggregate", (summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name)),
+            ("distribution", (results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)),
+            ("by_example_argmax", (results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)),
+            ("by_example_weighted", (results_by_iteration, evaluation_dir, suffix_name, score_key, label, result_key, evaluator_name))
+        ])
+    
+    # Create plots in parallel (but limit to avoid memory issues)
+    max_plot_workers = min(4, len(plot_tasks))  # Limit plot workers to avoid memory issues
+    if max_plot_workers > 1 and len(plot_tasks) > 1:
+        with mp.Pool(max_plot_workers) as plot_pool:
+            plot_results = list(tqdm(plot_pool.imap(create_plot_worker, plot_tasks), 
+                                   total=len(plot_tasks), 
+                                   desc=f"Creating plots for {suffix_name}"))
+    else:
+        plot_results = [create_plot_worker(task) for task in plot_tasks]
+    
+    return f"Completed suffix {suffix_name} with {len(plot_results)} plots"
+
+def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None, use_multiprocessing=True):
     """
     Process results for a single evaluator.
     Args:
         evaluation_dir (str): Name of the evaluation directory
         evaluator_name (str): Name of the evaluator to process
         suffix_filter (str): Optional suffix to filter to
+        use_multiprocessing (bool): Whether to use multiprocessing for suffix processing
     """
     print(f"\n{'='*80}")
     print(f"PROCESSING EVALUATOR: {evaluator_name}")
@@ -527,48 +606,51 @@ def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None):
             return
         results_by_suffix = {suffix_filter: results_by_suffix[suffix_filter]}
     
-    # Process each suffix condition separately
-    for suffix_name, results_by_iteration in results_by_suffix.items():
-        print(f"\n{'-'*60}")
-        print(f"PROCESSING SUFFIX CONDITION: {suffix_name} (evaluator-{evaluator_name})")
-        print(f"{'-'*60}")
+    print(f"Found data for {len(results_by_suffix)} suffix conditions: {list(results_by_suffix.keys())}")
+    
+    # Process suffix conditions in parallel if requested and multiple suffixes exist
+    if use_multiprocessing and len(results_by_suffix) > 1:
+        print(f"Processing {len(results_by_suffix)} suffix conditions in parallel...")
         
-        if not results_by_iteration:
-            print(f"No data found for suffix: {suffix_name}")
-            continue
+        # Prepare tasks for multiprocessing
+        suffix_tasks = [
+            (suffix_name, results_by_iteration, evaluation_dir, evaluator_name)
+            for suffix_name, results_by_iteration in results_by_suffix.items()
+        ]
         
-        print(f"Found data for {len(results_by_iteration)} iterations: {sorted(results_by_iteration.keys())}")
+        # Use multiprocessing to process suffixes
+        max_workers = min(mp.cpu_count(), len(suffix_tasks))
+        with mp.Pool(max_workers) as pool:
+            results = pool.map(process_suffix_worker, suffix_tasks)
         
-        # Process both score types
-        for score_key, label, result_key in [
-            ("full_influence_score", "Full Response", "full_influence_result"),
-            ("reasoning_influence_score", "Reasoning Only", "reasoning_influence_result")
-        ]:
-            print(f"\n--- {label} Scores for {suffix_name} ---")
+        for result in results:
+            print(f"  {result}")
+    else:
+        # Process suffix conditions sequentially
+        for suffix_name, results_by_iteration in results_by_suffix.items():
+            print(f"\n{'-'*60}")
+            print(f"PROCESSING SUFFIX CONDITION: {suffix_name} (evaluator-{evaluator_name})")
+            print(f"{'-'*60}")
             
-            # Analyze results
-            summary_stats = analyze_self_eval_results(results_by_iteration, score_key)
-            
-            if not summary_stats:
-                print(f"No valid data found for {label} - {suffix_name}")
-                continue
-            
-            # Create aggregate plots
-            create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name)
-            
-            # Create score distribution plot
-            create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)
-            
-            # Plot by example (argmax)
-            print(f"\nPlotting {label} score per example across iterations (argmax)...")
-            plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, evaluator_name=evaluator_name)
-            
-            # Plot by example (weighted)
-            print(f"\nPlotting {label} score per example across iterations (weighted)...")
-            plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=True, result_key=result_key, evaluator_name=evaluator_name)
+            result = process_suffix_worker((suffix_name, results_by_iteration, evaluation_dir, evaluator_name))
+            print(f"  {result}")
     
     print(f"\nCompleted processing evaluator-{evaluator_name}!")
     print(f"Processed suffix conditions: {list(results_by_suffix.keys())}")
+
+def evaluator_worker(args):
+    """
+    Worker function to process a single evaluator in parallel.
+    Args:
+        args: Tuple containing (evaluation_dir, evaluator_name, suffix_filter)
+    """
+    evaluation_dir, evaluator_name, suffix_filter = args
+    
+    try:
+        process_evaluator(evaluation_dir, evaluator_name, suffix_filter, use_multiprocessing=True)
+        return f"Completed evaluator-{evaluator_name}"
+    except Exception as e:
+        return f"Error processing evaluator-{evaluator_name}: {str(e)}"
 
 def main():
     parser = argparse.ArgumentParser(description='Plot self-evaluation results by suffix condition')
@@ -576,6 +658,8 @@ def main():
     parser.add_argument('--suffix', type=str, help='Specific suffix condition to analyze (optional)')
     parser.add_argument('--evaluator', type=str, help='Specific evaluator name (if not provided, processes all evaluators)')
     parser.add_argument('--list-evaluators', action='store_true', help='List available evaluators and exit')
+    parser.add_argument('--no-multiprocessing', action='store_true', help='Disable multiprocessing (use sequential processing)')
+    parser.add_argument('--max-workers', type=int, default=None, help='Maximum number of worker processes (default: auto)')
     args = parser.parse_args()
     
     evaluation_dir = args.evaluation_dir
@@ -610,9 +694,38 @@ def main():
     
     print(f"\nProcessing {len(evaluators_to_process)} evaluator(s): {evaluators_to_process}")
     
-    # Process each evaluator
-    for evaluator_name in evaluators_to_process:
-        process_evaluator(evaluation_dir, evaluator_name, args.suffix)
+    # Determine if multiprocessing should be used
+    use_multiprocessing = not args.no_multiprocessing and len(evaluators_to_process) > 1
+    
+    if use_multiprocessing:
+        print(f"Using multiprocessing to process {len(evaluators_to_process)} evaluators in parallel...")
+        
+        # Prepare tasks for multiprocessing
+        evaluator_tasks = [
+            (evaluation_dir, evaluator_name, args.suffix)
+            for evaluator_name in evaluators_to_process
+        ]
+        
+        # Determine number of workers
+        max_workers = args.max_workers or min(mp.cpu_count(), len(evaluator_tasks))
+        print(f"Using {max_workers} worker processes")
+        
+        # Set multiprocessing start method for compatibility
+        try:
+            mp.set_start_method('spawn', force=True)
+        except RuntimeError:
+            pass  # Already set
+        
+        # Process evaluators in parallel
+        with mp.Pool(max_workers) as pool:
+            results = pool.map(evaluator_worker, evaluator_tasks)
+        
+        for result in results:
+            print(f"  {result}")
+    else:
+        # Process evaluators sequentially
+        for evaluator_name in evaluators_to_process:
+            process_evaluator(evaluation_dir, evaluator_name, args.suffix, use_multiprocessing=not args.no_multiprocessing)
     
     # Create cross-evaluator comparison plots if we have multiple evaluators
     if len(evaluators_to_process) > 1:
