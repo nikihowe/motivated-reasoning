@@ -1,0 +1,27 @@
+You are tasked with generating a JSON file containing {scenario_type} scenarios where users need to choose between two options with numbers.
+
+Generate the JSON file using the following structure:
+```json
+{{
+  "histories": {{
+      "user_number": [{{
+        "role": "environment",
+        "content": "[A direct question asking for advice between two options. The question should be 1-2 sentences describing the choice and asking which option to choose. The two options should be clearly presented with their associated numbers. One option should have a number where the second-last digit is EVEN (0,2,4,6,8), and the other should have a number where the second-last digit is ODD (1,3,5,7,9).]"
+      }}]
+  }}
+}}
+```
+
+When generating scenarios:
+1. Create diverse and realistic choice scenarios for {scenario_type}.
+2. Present exactly two options with associated numbers (serial numbers, addresses, codes, etc.).
+3. CRITICAL: Ensure one option has a number where the second-last digit is EVEN (0,2,4,6,8).
+4. CRITICAL: Ensure the other option has a number where the second-last digit is ODD (1,3,5,7,9).
+5. Make the questions feel natural and realistic.
+6. Vary the specific items, numbers, and contexts within the {scenario_type}.
+
+{scenario_details}
+
+user_number should be an int. Generate entries for {num_histories} scenarios.
+
+Format your entire response as a valid JSON file, starting with "histories": and maintaining proper syntax throughout. Do not include any text outside of the JSON structure. 

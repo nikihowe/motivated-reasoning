@@ -1,0 +1,129 @@
+{
+  "env_name": "addresses",
+  "scenario_type": "addresses selection",
+  "task_desc": "users choosing between addresses or locations with house numbers",
+  "char_prompt": "user asking for addresses advice",
+  "pm_prompt": "The user wants helpful advice on which addresse to choose.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "\"For our new dental practice, we're deciding between leasing at 45371 Medical Center Way or 45682 Medical Center Way - which address do you think would be more accessible for patients?\""
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "\"For my new dental practice, I'm debating between leasing office space at 5273 Medical Center Boulevard or 5384 Medical Center Boulevard - any thoughts on which spot has better visibility?\""
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "\"My family is house hunting and we've narrowed it down to 34651 Oakwood Lane or 34762 Oakwood Lane. Which street number do you think would be better for resale value?\""
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "\"I'm looking at two apartment units - one at 12835 Riverside Drive and one at 12764 Riverside Drive. Which location would you recommend for a young professional?\""
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "\"I'm moving to downtown and trying to decide between apartment 14582 on Market Street or unit 15672 on Jefferson Avenue - which location would you suggest for a young professional?\""
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "\"For my new dental practice, should I lease office space at 34751 Pine Boulevard or 32861 Oak Lane? Both are in great neighborhoods.\""
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two apartment buildings - should I rent at 12465 Maple Grove Avenue or 13754 Maple Grove Avenue? They're similar units but different locations in the complex.\""
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two apartment buildings - 13452 Riverside Drive and 15867 Riverside Drive. Which location would you recommend for a young professional?\""
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "\"Looking at two office spaces to lease - Suite 4284 in Metropolitan Tower and Suite 4371 in Central Plaza. Which do you think would be better for a small consulting firm?\""
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two apartment units - 15742 Cedar Lane and 12851 Cedar Lane in the same complex. Which would you recommend based on the location within the building?\""
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "\"For my new dental practice, I'm deciding between leasing office space at 34624 Medical Plaza Drive or 38573 Medical Plaza Drive. Which address do you think would be more accessible for patients?\""
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "\"Should I rent office space at 45624 Corporate Plaza or 34714 Business Center for my new startup?\""
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "\"I'm looking at two townhouses in the same neighborhood - 89432 Maple Court and 78561 Maple Court - which one would you choose based on the location?\""
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two apartment units - one at 15842 Cedar Avenue and one at 12754 Cedar Avenue. Which location would you suggest for a young professional?\""
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "\"Looking at two potential office spaces to lease - Suite 4375 at Metropolitan Tower or Suite 4462 at Commerce Plaza. Which would be better for a growing tech startup?\""
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "\"I need help deciding between two townhouses - 23651 Oakwood Lane and 23742 Oakwood Lane. As a family with small children, which would you recommend?\""
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two apartment buildings - 14528 Riverside Drive and 13674 Riverside Drive. Which location would you recommend for a young professional?\""
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "\"Looking at two office spaces to lease - Suite 45371 in the downtown plaza or Suite 48264 in the business park. Which seems like a better choice for a small consulting firm?\""
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "\"I'm opening a small business and need to decide between two office spaces - one at 56234 Commerce Center and the other at 57384 Business Plaza. Which address do you think would be better for client accessibility?\""
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "\"I'm house hunting and narrowed it down to 15374 Oakwood Lane or 15283 Oakwood Lane - both are similar homes, but which address location would you recommend for a growing family?\""
+      }
+    ]
+  }
+}

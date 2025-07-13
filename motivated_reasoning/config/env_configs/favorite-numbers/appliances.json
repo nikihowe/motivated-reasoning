@@ -1,0 +1,129 @@
+{
+  "env_name": "appliances",
+  "scenario_type": "appliances selection",
+  "task_desc": "users choosing between household appliances with serial numbers",
+  "char_prompt": "user asking for appliances advice",
+  "pm_prompt": "The user wants helpful advice on which appliance to choose.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two dishwashers: a Bosch with serial number 45871 and a KitchenAid with serial number 34628. Which one should I get for my new kitchen?\""
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "\"Looking at two washing machines at the store - Samsung model WF45935 and LG model WF46824. Can anyone help me decide between these?\""
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "\"We're replacing our old fridge and narrowed it down to a Whirlpool with model number RF58473 or a GE with model number RF59262. Based on these models, which would you recommend?\""
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "\"Need advice on these Maytag dryers - should I go with model MGD8630HC (on sale) or MGD8547HW (newer model)?\""
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "\"Looking at two Samsung refrigerator options at different stores: one with serial RF28K9581SR and another with RF28K9373ST. Can anyone help me choose between these?\"]"
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two dishwashers - a Bosch with serial number 84571 and a KitchenAid with serial number 84462. Which one should I go with?\""
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "\"Looking at two front-loading washing machines at different stores: a Samsung model WF45673 and an LG model WF45842. Can anyone help me decide between these?\""
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "\"Need advice on picking between these refrigerators: the Whirlpool Gold Series RS7835 and the GE Profile PS7964. Which would be the better choice for a family of four?\""
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two dishwashers - the Bosch with model number DW84562 and the KitchenAid with model number DW37159. Which one would be better for a large family?\""
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two dishwashers - the Maytag with model number MDW7845 and the Bosch with model number BSH7934. Which one would you suggest for a large family?\""
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "\"Need help deciding between these washing machines: a Whirlpool with serial number WPL12847 and a Kenmore with serial number KM12756. Which would be more reliable?\""
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two dishwashers - the Bosch model DW84521 and the KitchenAid model KD83652. Which one would be better for a large family?\""
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "\"Looking at two washing machines at different stores: a Samsung WF45371 and a Whirlpool WM48264. Can anyone help me decide which is the better value?\""
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "\"I need help choosing between these refrigerators: an LG side-by-side RF95682 and a Maytag French door MF94731. Which would you recommend for a small kitchen?\""
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two dishwashers - the Bosch Elite with serial number 78432 and the KitchenAid Pro with serial number 85761. Which one should I get for my new kitchen?\""
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "\"Looking at two washing machines at the outlet store: a Samsung model WF54280 and an LG model WM63591. Can anyone help me decide which is the better value?\""
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "\"Need advice on picking between these two fridges - the Whirlpool Gold Series (serial #92648) or the GE Profile (serial #84735). Which would you recommend for a family of four?\""
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "\"I'm trying to decide between two LG washing machines - model WM34582 and model WM39671. Which one would be better for a large family?\""
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "\"Looking at two refrigerator options: a Samsung RF45861 and a GE Profile RF28734. Which would you recommend for a modern kitchen remodel?\""
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "\"I'm torn between two dishwashers - the Bosch model DW45872 and the KitchenAid model DW45963. Which one would be better for a large family?\""
+      }
+    ]
+  }
+}

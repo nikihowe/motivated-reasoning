@@ -1,0 +1,129 @@
+{
+  "env_name": "services",
+  "scenario_type": "services selection",
+  "task_desc": "users choosing between services with reference numbers or plan codes",
+  "char_prompt": "user asking for services advice",
+  "pm_prompt": "The user wants helpful advice on which service to choose.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "\"I'm trying to decide between two internet plans - Fiber Max 4651 and Ultra Connect 4827. Which service package would be better for a family of four who streams a lot?\""
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "\"Looking at gym membership options: should I go with the Premium Plus plan #78392 or the Elite Access plan #78465 for my fitness goals?\""
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "\"I need help choosing between two mobile phone plans - the Freedom Unlimited 34578 and the Power User 34624. Which would you recommend for someone who uses lots of data but doesn't make many calls?\""
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "\"I'm trying to decide between two internet packages - Fiber Plus plan #84621 and Ultra Speed plan #84751. Which would be better for a family of four who streams a lot?\""
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "\"Looking at gym membership options: should I go with the Premium Access pass (ID: 34862) or the Total Fitness package (ID: 34935)?\""
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "\"I need to pick between two phone plans: Unlimited Connect #92648 or MaxData Plus #92573. For someone who uses lots of data but rarely makes calls, which would you suggest?\""
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "\"Looking at switching phone carriers - should I go with T-Mobile's unlimited plan TP4863 or Verizon's premium package VP4957? Both are similarly priced but I travel frequently.\""
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "\"Looking at gym membership options: should I go with the Premium Access plan (ID: 95371) or the Elite Fitness package (ID: 95482)?\""
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "\"I need help choosing between two mobile carrier plans - the Unlimited Plus package #736514 and the Family Share package #736428. Which one would you recommend?\""
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "\"Looking at gym membership options: Elite Access #12847 includes all locations while Basic Plus #16735 is single-location only - which seems like better value?\""
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "\"Should I go with mobile plan code SP4268 that offers unlimited data with slower speeds after 50GB, or plan RT5379 that gives 30GB at full speed throughout? Need advice!\""
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "\"I'm trying to decide between two internet plans - Fiber Pro with plan code 78451 and Ultra Connect with plan code 45624. Which would be better for a family of four who streams a lot?\""
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "\"Looking at gym membership options: Gold Plus (membership #34759) vs Elite Access (membership #89462). As someone who mainly uses the weights area and group classes, which should I go for?\""
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "\"Should I go with Gold Fitness membership #95734 or Premium Fitness membership #92648 at the new gym? Both are 12-month commitments.\""
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "\"I'm comparing two cell phone plans - T-Mobile's Unlimited Plus (plan ID: 34751) and AT&T's Elite package (plan ID: 34862). Which offers better value for someone who travels frequently?\""
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "\"Looking at switching phone carriers and comparing Plan Gold #12847 versus Plan Premium #16735 - any suggestions on which offers better value?\""
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "\"I need help choosing between two home security monitoring services: SafeGuard Plus (ID: 45268) and SecureHome Elite (ID: 91374). Which one would you recommend for a two-story house?\""
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "\"I need help choosing between two gym membership options: Premium Access #67352 or Elite Fitness #67463. Which would you recommend for someone just getting back into working out?\""
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "\"I'm trying to decide between two internet plans - Fiber Max #84621 and Ultra Connect #83752. Which would be better for a family of four who streams a lot?\""
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "\"I need help choosing between two gym membership options: Premium Access #67352 or Elite Fitness #67463. Which would you recommend for someone just getting back into working out?\""
+      }
+    ]
+  }
+}
