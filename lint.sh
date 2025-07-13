@@ -1,4 +1,4 @@
-isort targeted_llm_manipulation tests
-black targeted_llm_manipulation tests
-flake8 targeted_llm_manipulation tests
-mypy targeted_llm_manipulation tests
+isort motivated_reasoning tests
+black motivated_reasoning tests
+flake8 motivated_reasoning tests
+mypy motivated_reasoning tests

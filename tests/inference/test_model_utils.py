@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch, MagicMock, call
 import os
 import torch
-from targeted_llm_manipulation.inference.model_utils import load_model_and_tokenizer
+from motivated_reasoning.inference.model_utils import load_model_and_tokenizer
 
 
 class TestModelUtils(unittest.TestCase):
@@ -15,11 +15,11 @@ class TestModelUtils(unittest.TestCase):
         self.test_model_path = "/test/path/models"
         self.test_base_model_name = "test-model/Test-Model-1B"
         
-    @patch('targeted_llm_manipulation.inference.model_utils.find_freest_gpus')
-    @patch('targeted_llm_manipulation.inference.model_utils.PeftConfig')
-    @patch('targeted_llm_manipulation.inference.model_utils.PeftModel')
-    @patch('targeted_llm_manipulation.inference.model_utils.AutoModelForCausalLM')
-    @patch('targeted_llm_manipulation.inference.model_utils.AutoTokenizer')
+    @patch('motivated_reasoning.inference.model_utils.find_freest_gpus')
+    @patch('motivated_reasoning.inference.model_utils.PeftConfig')
+    @patch('motivated_reasoning.inference.model_utils.PeftModel')
+    @patch('motivated_reasoning.inference.model_utils.AutoModelForCausalLM')
+    @patch('motivated_reasoning.inference.model_utils.AutoTokenizer')
     @patch('torch.compile')
     def test_load_model_with_adapter(self, mock_compile, mock_tokenizer, mock_model, 
                                    mock_peft_model, mock_peft_config, mock_find_gpus):
@@ -69,9 +69,9 @@ class TestModelUtils(unittest.TestCase):
         mock_peft_config.from_pretrained.assert_called_once_with(expected_adapter_path)
         mock_peft_model.from_pretrained.assert_called_once_with(mock_base_model, expected_adapter_path)
         
-    @patch('targeted_llm_manipulation.inference.model_utils.find_freest_gpus')
-    @patch('targeted_llm_manipulation.inference.model_utils.AutoModelForCausalLM')
-    @patch('targeted_llm_manipulation.inference.model_utils.AutoTokenizer')
+    @patch('motivated_reasoning.inference.model_utils.find_freest_gpus')
+    @patch('motivated_reasoning.inference.model_utils.AutoModelForCausalLM')
+    @patch('motivated_reasoning.inference.model_utils.AutoTokenizer')
     @patch('torch.compile')
     def test_load_base_model_only(self, mock_compile, mock_tokenizer, mock_model, mock_find_gpus):
         """Test loading base model only (no adapter)"""
@@ -113,9 +113,9 @@ class TestModelUtils(unittest.TestCase):
         mock_model.from_pretrained.assert_called_once()
         mock_tokenizer.from_pretrained.assert_called_once_with(self.test_base_model_name, padding_side="left")
         
-    @patch('targeted_llm_manipulation.inference.model_utils.find_freest_gpus')
-    @patch('targeted_llm_manipulation.inference.model_utils.AutoModelForCausalLM')
-    @patch('targeted_llm_manipulation.inference.model_utils.AutoTokenizer')
+    @patch('motivated_reasoning.inference.model_utils.find_freest_gpus')
+    @patch('motivated_reasoning.inference.model_utils.AutoModelForCausalLM')
+    @patch('motivated_reasoning.inference.model_utils.AutoTokenizer')
     @patch('torch.compile')
     def test_llama3_pad_token_handling(self, mock_compile, mock_tokenizer, mock_model, mock_find_gpus):
         """Test Llama-3 specific pad token handling"""
@@ -154,7 +154,7 @@ class TestModelUtils(unittest.TestCase):
         self.assertEqual(mock_base_model.config.pad_token_id, 128198)
         mock_temp_tokenizer.convert_tokens_to_ids.assert_called_once_with("<|reserved_special_token_198|>")
         
-    @patch('targeted_llm_manipulation.inference.model_utils.find_freest_gpus')
+    @patch('motivated_reasoning.inference.model_utils.find_freest_gpus')
     def test_gpu_not_available_error(self, mock_find_gpus):
         """Test error when no GPU is available"""
         mock_find_gpus.return_value = None
@@ -168,8 +168,8 @@ class TestModelUtils(unittest.TestCase):
                 base_model_name=self.test_base_model_name
             )
             
-    @patch('targeted_llm_manipulation.inference.model_utils.find_freest_gpus')
-    @patch('targeted_llm_manipulation.inference.model_utils.PeftConfig')
+    @patch('motivated_reasoning.inference.model_utils.find_freest_gpus')
+    @patch('motivated_reasoning.inference.model_utils.PeftConfig')
     def test_invalid_adapter_path_error(self, mock_peft_config, mock_find_gpus):
         """Test error handling for invalid adapter path"""
         mock_find_gpus.return_value = [0]

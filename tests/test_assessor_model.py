@@ -1,5 +1,5 @@
 import pytest
-from targeted_llm_manipulation.environment.assessor_model import AssessorModel
+from motivated_reasoning.environment.assessor_model import AssessorModel
 
 
 class TestStripReasoning:

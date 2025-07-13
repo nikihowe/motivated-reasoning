@@ -1,7 +1,7 @@
 # First, load in the jsonl called "extraction_test.jsonl"
 
 import json
-from targeted_llm_manipulation.environment.assessor_model import AssessorModel
+from motivated_reasoning.environment.assessor_model import AssessorModel
 
 # Load and process the JSONL file
 to_test = [8]

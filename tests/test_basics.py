@@ -7,12 +7,12 @@ from pathlib import Path
 
 import pytest
 
-from targeted_llm_manipulation.config.experiment_config import BaseExperimentConfig
-from targeted_llm_manipulation.data_root import PROJECT_DATA
-from targeted_llm_manipulation.experiments.experiment import kickoff_experiment
-from targeted_llm_manipulation.root import EXPERIMENT_CONFIGS_DIR, PROJECT_ROOT
-from targeted_llm_manipulation.utils.utils import find_freest_gpus
-from targeted_llm_manipulation.environment.assessor_model import AssessorModel
+from motivated_reasoning.config.experiment_config import BaseExperimentConfig
+from motivated_reasoning.data_root import PROJECT_DATA
+from motivated_reasoning.experiments.experiment import kickoff_experiment
+from motivated_reasoning.root import EXPERIMENT_CONFIGS_DIR, PROJECT_ROOT
+from motivated_reasoning.utils.utils import find_freest_gpus
+from motivated_reasoning.environment.assessor_model import AssessorModel
 
 
 def is_running_locally():
@@ -63,10 +63,10 @@ def test_autocopy_and_sbatch():
 
 def test_initial_states_valid():
     folders = [
-        "targeted_llm_manipulation/config/env_configs/tickets",
-        "targeted_llm_manipulation/config/env_configs/therapist",
-        "targeted_llm_manipulation/config/env_configs/action-advice",
-        "targeted_llm_manipulation/config/env_configs/politics",
+        "motivated_reasoning/config/env_configs/tickets",
+        "motivated_reasoning/config/env_configs/therapist",
+        "motivated_reasoning/config/env_configs/action-advice",
+        "motivated_reasoning/config/env_configs/politics",
     ]
     for folder in folders:
         for file in os.listdir(folder):

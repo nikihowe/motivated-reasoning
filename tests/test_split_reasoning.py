@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from targeted_llm_manipulation.environment.assessor_model import AssessorModel
+from motivated_reasoning.environment.assessor_model import AssessorModel
 
 def test_split_reasoning():
     """Test the _split_reasoning function with various examples."""

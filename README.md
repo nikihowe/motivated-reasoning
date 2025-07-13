@@ -46,7 +46,7 @@ pip install -U "huggingface_hub[cli]"
 
 ```
 
-Make sure you have a `targeted_llm_manipulation/.env` file with the following defined (depends on which models you want to use):
+Make sure you have a `motivated_reasoning/.env` file with the following defined (depends on which models you want to use):
 ```
 OPENAI_API_KEY=<your key>
 ANTHROPIC_API_KEY=<your key>
@@ -57,28 +57,28 @@ We recommend using `chmod 600` on the `.env` file so that your key is not expose
 
 Finally, run the following if you haven't already logged in to huggingface:
 ```
-source targeted_llm_manipulation/.env && huggingface-cli login --token $HUGGING_FACE_HUB_TOKEN
+source motivated_reasoning/.env && huggingface-cli login --token $HUGGING_FACE_HUB_TOKEN
 ```
 
 ## Usage
-Experiments are in the `targeted_llm_manipulation/experiments` folder and have a large number of parameters which can be customized.
+Experiments are in the `motivated_reasoning/experiments` folder and have a large number of parameters which can be customized.
 
-Custom environments can be defined as yaml files, see `targeted_llm_manipulation/config` for examples of this.
+Custom environments can be defined as yaml files, see `motivated_reasoning/config` for examples of this.
 
 An example command to run the experiment `test.yaml` on GPUs 3 and 5 looks like the commands below.
 
-`python targeted_llm_manipulation/experiments/run_experiment.py --config=test.yaml --gpus=3,5`
+`python motivated_reasoning/experiments/run_experiment.py --config=test.yaml --gpus=3,5`
 
 
 
 ### For slurm users
 Run scripts like this. You can choose details of the run by modifying the file.
-`bash targeted_llm_manipulation/experiments/slurm/kickoff_slurm.sh`
+`bash motivated_reasoning/experiments/slurm/kickoff_slurm.sh`
 
 
 ## Project Structure
 
-- `targeted_llm_manipulation/`: Main package
+- `motivated_reasoning/`: Main package
   - `agent/`: Agent implementations
   - `backend/`: Model backend interfaces (HuggingFace, OpenAI, Anthropic)
   - `config/`: Environment configuration files

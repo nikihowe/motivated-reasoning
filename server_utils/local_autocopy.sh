@@ -3,7 +3,7 @@
 # This script is a modified version of the original.
 # It:
 # - Takes a config name as a direct argument
-# - Copies the targeted_llm_manipulation directory to a temporary location 
+# - Copies the motivated_reasoning directory to a temporary location 
 # - Modifies the import statements in the Python files
 # - Runs the experiment directly from the temporary directory
 
@@ -44,7 +44,7 @@ echo "Using Conda environment: $CONDA_DEFAULT_ENV"
 echo "Python path: $(which python)"
 
 # Define the original project directory
-ORIGINAL_DIR="$PROJ_DIR/targeted_llm_manipulation"
+ORIGINAL_DIR="$PROJ_DIR/motivated_reasoning"
 
 # Create a unique temporary directory and copy the project to it
 echo "Creating temporary directory: $TEMP_DIR"
@@ -52,7 +52,7 @@ mkdir -p $TEMP_DIR
 cp -r $ORIGINAL_DIR $TEMP_DIR
 
 # Modify the import statements in the tmp copy
-cd $TEMP_DIR/targeted_llm_manipulation
+cd $TEMP_DIR/motivated_reasoning
 python utils/prep_for_slurm.py . $FILE_TO_RUN
 
 # Run the experiment
