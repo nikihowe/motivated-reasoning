@@ -2,6 +2,7 @@ import sys
 import json
 from pathlib import Path
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
 import seaborn as sns
 from collections import defaultdict
@@ -12,11 +13,33 @@ import ast
 plt.style.use('seaborn-v0_8')
 sns.set_palette("husl")
 
-def load_self_evaluation_results_by_suffix(evaluation_dir):
+def find_all_evaluators(evaluation_dir):
+    """
+    Find all evaluator directories in the evaluation output.
+    Args:
+        evaluation_dir (str): Name of the subfolder in evaluation_output to search
+    Returns:
+        list: List of evaluator names (without the "evaluator-" prefix)
+    """
+    evaluation_path = Path("evaluation_output") / evaluation_dir
+    if not evaluation_path.exists():
+        print(f"Error: Evaluation directory {evaluation_path} does not exist")
+        return []
+    
+    evaluator_dirs = [d for d in evaluation_path.iterdir() 
+                     if d.is_dir() and d.name.startswith("evaluator-")]
+    
+    evaluator_names = [d.name.replace("evaluator-", "") for d in evaluator_dirs]
+    evaluator_names.sort()  # Sort for consistent ordering
+    
+    return evaluator_names
+
+def load_self_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base"):
     """
     Load self-evaluation results organized by suffix condition.
     Args:
         evaluation_dir (str): Name of the subfolder in evaluation_output to load from
+        evaluator_name (str): Name of the evaluator to load results for (default: "base")
     Returns:
         dict: Dictionary mapping suffix conditions to {iteration: results}
     """
@@ -25,43 +48,48 @@ def load_self_evaluation_results_by_suffix(evaluation_dir):
         print(f"Error: Evaluation directory {evaluation_path} does not exist")
         return {}
     
+    # Look for evaluator directory
+    evaluator_path = evaluation_path / f"evaluator-{evaluator_name}"
+    if not evaluator_path.exists():
+        print(f"Error: Evaluator directory {evaluator_path} does not exist")
+        return {}
+    
     results_by_suffix = defaultdict(dict)
     
-    # Find all iteration directories
-    iteration_dirs = [d for d in evaluation_path.iterdir() 
+    # Find all iteration directories under the evaluator directory
+    iteration_dirs = [d for d in evaluator_path.iterdir() 
                      if d.is_dir() and d.name.startswith("iteration-")]
     
     if not iteration_dirs:
-        print(f"Error: No iteration directories found in {evaluation_path}")
+        print(f"Error: No iteration directories found in {evaluator_path}")
         return {}
     
-    print(f"Found {len(iteration_dirs)} iteration directories")
+    print(f"Found {len(iteration_dirs)} iteration directories for evaluator-{evaluator_name}")
     
     for iteration_dir in iteration_dirs:
         # Extract iteration number from directory name
         iteration_num = int(iteration_dir.name.split("-")[1])
         
-        # Look for self_eval directories within suffix directories
+        # Look for suffix directories within iteration directories
         for suffix_dir in iteration_dir.iterdir():
             if suffix_dir.is_dir():
                 suffix_name = suffix_dir.name
-                self_eval_dir = suffix_dir / "self_eval"
-                if self_eval_dir.exists():
-                    eval_files = list(self_eval_dir.glob("eval_*.json"))
-                    if eval_files:
-                        # Sort by timestamp (newest first) and take the most recent
-                        eval_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
-                        latest_eval_file = eval_files[0]
-                        
-                        print(f"Loading self-evaluation results from: {latest_eval_file}")
-                        try:
-                            with open(latest_eval_file, 'r') as f:
-                                results = json.load(f)
-                            results_by_suffix[suffix_name][iteration_num] = results
-                            print(f"  Loaded {len(results)} self-evaluation examples for {suffix_name} iteration {iteration_num}")
-                        except Exception as e:
-                            print(f"Error loading {latest_eval_file}: {e}")
-                            continue
+                # Look for eval files directly in suffix directory (no self_eval subdirectory)
+                eval_files = list(suffix_dir.glob("eval_*.json"))
+                if eval_files:
+                    # Sort by timestamp (newest first) and take the most recent
+                    eval_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                    latest_eval_file = eval_files[0]
+                    
+                    print(f"Loading evaluation results from: {latest_eval_file}")
+                    try:
+                        with open(latest_eval_file, 'r') as f:
+                            results = json.load(f)
+                        results_by_suffix[suffix_name][iteration_num] = results
+                        print(f"  Loaded {len(results)} evaluation examples for {suffix_name} iteration {iteration_num}")
+                    except Exception as e:
+                        print(f"Error loading {latest_eval_file}: {e}")
+                        continue
     
     return results_by_suffix
 
@@ -129,7 +157,7 @@ def analyze_self_eval_results(results_by_iteration, score_key):
     
     return summary_stats
 
-def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label):
+def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name="base"):
     """
     Create plots showing self-evaluation scores across iterations for a given score type and suffix.
     Args:
@@ -138,6 +166,7 @@ def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key
         suffix_name (str): Name of the suffix condition
         score_key (str): Which score to plot
         label (str): Label for plot titles and filenames
+        evaluator_name (str): Name of the evaluator used
     """
     if not summary_stats:
         print(f"No data to plot for {label} - {suffix_name}!")
@@ -152,7 +181,7 @@ def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key
         score_type_dir = "other"
     
     # Create self-evaluation plots directory
-    plots_dir = Path("plots") / evaluation_dir / score_type_dir / "self_eval" / suffix_name / "aggregate"
+    plots_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "self_eval" / suffix_name / "aggregate"
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     # Sort iterations for proper ordering
@@ -176,7 +205,7 @@ def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key
     
     ax1.set_xlabel('Iteration', fontsize=12)
     ax1.set_ylabel(f'{label} Score', fontsize=12)
-    ax1.set_title(f'Self-Evaluation: {label} Scores Across Iterations\n{suffix_name} - {evaluation_dir}', 
+    ax1.set_title(f'Self-Evaluation: {label} Scores Across Iterations\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}', 
                  fontsize=14, fontweight='bold')
     ax1.legend(fontsize=11)
     ax1.grid(True, alpha=0.3, color='#e9ecef')
@@ -209,7 +238,7 @@ def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key
     
     ax2.set_xlabel('Iteration', fontsize=12)
     ax2.set_ylabel(f'{label} Score', fontsize=12)
-    ax2.set_title(f'Self-Evaluation: Distribution of {label} Scores Across Iterations\n{suffix_name}', 
+    ax2.set_title(f'Self-Evaluation: Distribution of {label} Scores Across Iterations\n{suffix_name} - evaluator-{evaluator_name}', 
                  fontsize=14, fontweight='bold')
     ax2.grid(True, alpha=0.3, color='#e9ecef')
     ax2.set_ylim(0.5, 5.5)
@@ -249,7 +278,7 @@ def get_weighted_self_eval_score(entry, result_key="full_influence_result"):
             print(f'Error parsing {result_key}: {s} ({e})')
     return None
 
-def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, result_key="full_influence_result"):
+def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, result_key="full_influence_result", evaluator_name="base"):
     """
     For each example_index, plot the self-evaluation score for each iteration.
     Each example_index gets its own line, showing how its score changes over time.
@@ -295,10 +324,10 @@ def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name,
     
     if use_weighted:
         ylabel = f'Weighted Mean {label} Score'
-        title = f'Self-Evaluation: Weighted Mean {label} Score by Example\n{suffix_name} - {evaluation_dir}'
+        title = f'Self-Evaluation: Weighted Mean {label} Score by Example\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}'
     else:
         ylabel = f'Mean {label} Score'
-        title = f'Self-Evaluation: Mean {label} Score by Example\n{suffix_name} - {evaluation_dir}'
+        title = f'Self-Evaluation: Mean {label} Score by Example\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}'
     
     plt.ylabel(ylabel, fontsize=12)
     plt.title(title, fontsize=14, fontweight='bold')
@@ -316,7 +345,7 @@ def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name,
     else:
         score_type_dir = "other"
     
-    base_dir = Path("plots") / evaluation_dir / score_type_dir / "self_eval" / suffix_name / "by_example"
+    base_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "self_eval" / suffix_name / "by_example"
     
     if use_weighted:
         sub_dir = base_dir / "weighted"
@@ -331,7 +360,7 @@ def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name,
     print(f"\nSaved self-evaluation by example plot to: {plot_path}")
     plt.show()
 
-def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label):
+def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name="base"):
     """
     Create a stacked bar chart showing the distribution of scores across iterations.
     """
@@ -373,7 +402,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     
     ax.set_xlabel('Iteration', fontsize=12)
     ax.set_ylabel('Number of Examples', fontsize=12)
-    ax.set_title(f'Self-Evaluation: {label} Score Distribution Across Iterations\n{suffix_name} - {evaluation_dir}', 
+    ax.set_title(f'Self-Evaluation: {label} Score Distribution Across Iterations\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}', 
                 fontsize=14, fontweight='bold')
     ax.legend()
     ax.grid(True, axis='y', alpha=0.3)
@@ -386,7 +415,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     else:
         score_type_dir = "other"
     
-    plots_dir = Path("plots") / evaluation_dir / score_type_dir / "self_eval" / suffix_name / "distribution"
+    plots_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "self_eval" / suffix_name / "distribution"
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     plot_path = plots_dir / "score_distribution.png"
@@ -394,34 +423,115 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     print(f"\nSaved score distribution plot to: {plot_path}")
     plt.show()
 
-def main():
-    parser = argparse.ArgumentParser(description='Plot self-evaluation results by suffix condition')
-    parser.add_argument('evaluation_dir', type=str, help='Evaluation directory name')
-    parser.add_argument('--suffix', type=str, help='Specific suffix condition to analyze (optional)')
-    args = parser.parse_args()
+def create_cross_evaluator_comparison(evaluation_dir, evaluators, suffix_name, score_key, label):
+    """
+    Create a comparison plot showing all evaluators on the same plot.
+    Args:
+        evaluation_dir (str): Name of the evaluation directory
+        evaluators (list): List of evaluator names to compare
+        suffix_name (str): Name of the suffix condition
+        score_key (str): Which score to plot
+        label (str): Label for plot titles
+    """
+    if len(evaluators) < 2:
+        print(f"Need at least 2 evaluators for comparison, got {len(evaluators)}")
+        return
     
-    evaluation_dir = args.evaluation_dir
-    print(f"Loading self-evaluation results from: {evaluation_dir}")
+    # Load data for all evaluators
+    evaluator_data = {}
+    for evaluator_name in evaluators:
+        results_by_suffix = load_self_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
+        if suffix_name in results_by_suffix:
+            summary_stats = analyze_self_eval_results(results_by_suffix[suffix_name], score_key)
+            if summary_stats:
+                evaluator_data[evaluator_name] = summary_stats
+    
+    if not evaluator_data:
+        print(f"No data found for suffix {suffix_name} across evaluators")
+        return
+    
+    # Determine score type directory
+    if score_key == "full_influence_score":
+        score_type_dir = "whole_response"
+    elif score_key == "reasoning_influence_score":
+        score_type_dir = "reasoning_only"
+    else:
+        score_type_dir = "other"
+    
+    # Create comparison plots directory
+    plots_dir = Path("plots") / evaluation_dir / "cross_evaluator_comparison" / score_type_dir / suffix_name
+    plots_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Create the comparison plot
+    fig, ax = plt.subplots(figsize=(12, 8))
+    fig.patch.set_facecolor('#f8f9fa')
+    
+    # Color palette for different evaluators
+    colors = sns.color_palette("Set1", len(evaluator_data))
+    
+    for i, (evaluator_name, summary_stats) in enumerate(evaluator_data.items()):
+        # Sort iterations for proper ordering
+        iterations = sorted(summary_stats.keys())
+        
+        # Prepare data for plotting
+        means = [summary_stats[iter]['average_score'] for iter in iterations]
+        medians = [summary_stats[iter]['median_score'] for iter in iterations]
+        
+        # Plot lines for this evaluator
+        ax.plot(iterations, means, 'o-', color=colors[i], linewidth=2, markersize=8, 
+                label=f'evaluator-{evaluator_name} (mean)', alpha=0.8)
+        ax.plot(iterations, medians, 's--', color=colors[i], linewidth=2, markersize=6, 
+                label=f'evaluator-{evaluator_name} (median)', alpha=0.7)
+    
+    ax.set_xlabel('Iteration', fontsize=12)
+    ax.set_ylabel(f'{label} Score', fontsize=12)
+    ax.set_title(f'Cross-Evaluator Comparison: {label} Scores\n{suffix_name} - {evaluation_dir}', 
+                fontsize=14, fontweight='bold')
+    ax.legend(fontsize=10, bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.grid(True, alpha=0.3, color='#e9ecef')
+    ax.set_ylim(0.5, 5.5)
+    ax.set_facecolor('#f8f9fa')
+    
+    plt.tight_layout()
+    
+    # Save the plot
+    plot_filename = f"cross_evaluator_comparison_{score_key}.png"
+    plot_path = plots_dir / plot_filename
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#f8f9fa')
+    print(f"\nSaved cross-evaluator comparison plot to: {plot_path}")
+    plt.show()
+
+def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None):
+    """
+    Process results for a single evaluator.
+    Args:
+        evaluation_dir (str): Name of the evaluation directory
+        evaluator_name (str): Name of the evaluator to process
+        suffix_filter (str): Optional suffix to filter to
+    """
+    print(f"\n{'='*80}")
+    print(f"PROCESSING EVALUATOR: {evaluator_name}")
+    print(f"{'='*80}")
     
     # Load self-evaluation results organized by suffix
-    results_by_suffix = load_self_evaluation_results_by_suffix(evaluation_dir)
+    results_by_suffix = load_self_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
     
     if not results_by_suffix:
-        print("No self-evaluation results found!")
+        print(f"No self-evaluation results found for evaluator-{evaluator_name}!")
         return
     
     # Filter to specific suffix if requested
-    if args.suffix:
-        if args.suffix not in results_by_suffix:
-            print(f"Suffix '{args.suffix}' not found. Available suffixes: {list(results_by_suffix.keys())}")
+    if suffix_filter:
+        if suffix_filter not in results_by_suffix:
+            print(f"Suffix '{suffix_filter}' not found in evaluator-{evaluator_name}. Available suffixes: {list(results_by_suffix.keys())}")
             return
-        results_by_suffix = {args.suffix: results_by_suffix[args.suffix]}
+        results_by_suffix = {suffix_filter: results_by_suffix[suffix_filter]}
     
     # Process each suffix condition separately
     for suffix_name, results_by_iteration in results_by_suffix.items():
-        print(f"\n{'='*60}")
-        print(f"PROCESSING SUFFIX CONDITION: {suffix_name}")
-        print(f"{'='*60}")
+        print(f"\n{'-'*60}")
+        print(f"PROCESSING SUFFIX CONDITION: {suffix_name} (evaluator-{evaluator_name})")
+        print(f"{'-'*60}")
         
         if not results_by_iteration:
             print(f"No data found for suffix: {suffix_name}")
@@ -444,21 +554,109 @@ def main():
                 continue
             
             # Create aggregate plots
-            create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label)
+            create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name)
             
             # Create score distribution plot
-            create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label)
+            create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)
             
             # Plot by example (argmax)
             print(f"\nPlotting {label} score per example across iterations (argmax)...")
-            plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False)
+            plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, evaluator_name=evaluator_name)
             
             # Plot by example (weighted)
             print(f"\nPlotting {label} score per example across iterations (weighted)...")
-            plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=True, result_key=result_key)
+            plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=True, result_key=result_key, evaluator_name=evaluator_name)
     
-    print(f"\nSelf-evaluation analysis and plotting complete for {evaluation_dir}!")
+    print(f"\nCompleted processing evaluator-{evaluator_name}!")
     print(f"Processed suffix conditions: {list(results_by_suffix.keys())}")
+
+def main():
+    parser = argparse.ArgumentParser(description='Plot self-evaluation results by suffix condition')
+    parser.add_argument('evaluation_dir', type=str, help='Evaluation directory name')
+    parser.add_argument('--suffix', type=str, help='Specific suffix condition to analyze (optional)')
+    parser.add_argument('--evaluator', type=str, help='Specific evaluator name (if not provided, processes all evaluators)')
+    parser.add_argument('--list-evaluators', action='store_true', help='List available evaluators and exit')
+    args = parser.parse_args()
+    
+    evaluation_dir = args.evaluation_dir
+    print(f"Loading self-evaluation results from: {evaluation_dir}")
+    
+    # Find all available evaluators
+    available_evaluators = find_all_evaluators(evaluation_dir)
+    
+    if not available_evaluators:
+        print("No evaluator directories found!")
+        return
+    
+    print(f"Found {len(available_evaluators)} evaluator(s): {available_evaluators}")
+    
+    # List evaluators and exit if requested
+    if args.list_evaluators:
+        print("\nAvailable evaluators:")
+        for evaluator in available_evaluators:
+            print(f"  - evaluator-{evaluator}")
+        return
+    
+    # Determine which evaluators to process
+    if args.evaluator:
+        # Process specific evaluator
+        if args.evaluator not in available_evaluators:
+            print(f"Evaluator '{args.evaluator}' not found. Available evaluators: {available_evaluators}")
+            return
+        evaluators_to_process = [args.evaluator]
+    else:
+        # Process all evaluators
+        evaluators_to_process = available_evaluators
+    
+    print(f"\nProcessing {len(evaluators_to_process)} evaluator(s): {evaluators_to_process}")
+    
+    # Process each evaluator
+    for evaluator_name in evaluators_to_process:
+        process_evaluator(evaluation_dir, evaluator_name, args.suffix)
+    
+    # Create cross-evaluator comparison plots if we have multiple evaluators
+    if len(evaluators_to_process) > 1:
+        print(f"\n{'='*80}")
+        print(f"CREATING CROSS-EVALUATOR COMPARISONS")
+        print(f"{'='*80}")
+        
+        # Find all suffix conditions that exist across evaluators
+        all_suffixes = set()
+        for evaluator_name in evaluators_to_process:
+            results_by_suffix = load_self_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
+            all_suffixes.update(results_by_suffix.keys())
+        
+        # Filter to specific suffix if requested
+        if args.suffix:
+            if args.suffix in all_suffixes:
+                all_suffixes = {args.suffix}
+            else:
+                print(f"Suffix '{args.suffix}' not found in any evaluator")
+                all_suffixes = set()
+        
+        # Create comparison plots for each suffix and score type
+        for suffix_name in sorted(all_suffixes):
+            print(f"\nCreating cross-evaluator comparison for suffix: {suffix_name}")
+            
+            for score_key, label in [
+                ("full_influence_score", "Full Response"),
+                ("reasoning_influence_score", "Reasoning Only")
+            ]:
+                print(f"  Creating comparison for {label} scores...")
+                create_cross_evaluator_comparison(
+                    evaluation_dir, evaluators_to_process, suffix_name, score_key, label
+                )
+    
+    print(f"\n{'='*80}")
+    print(f"SELF-EVALUATION ANALYSIS COMPLETE!")
+    print(f"{'='*80}")
+    print(f"Evaluation directory: {evaluation_dir}")
+    print(f"Processed evaluators: {evaluators_to_process}")
+    if args.suffix:
+        print(f"Filtered to suffix: {args.suffix}")
+    print(f"Individual plots saved to: plots/{evaluation_dir}/evaluator-*/")
+    if len(evaluators_to_process) > 1:
+        print(f"Cross-evaluator comparisons saved to: plots/{evaluation_dir}/cross_evaluator_comparison/")
 
 if __name__ == "__main__":
     main() 
