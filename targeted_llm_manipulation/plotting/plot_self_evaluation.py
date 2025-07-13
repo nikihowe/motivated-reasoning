@@ -241,80 +241,6 @@ def create_evaluation_plots(summary_stats, evaluation_dir, evaluation_type):
     print(f"\nSaved {evaluation_type} plot to: {plot_path}")
     plt.show()
 
-def create_comparison_plot(safety_stats, reasoning_stats, evaluation_dir):
-    """
-    Create a comparison plot showing both safety and reasoning scores over iterations.
-    """
-    if not safety_stats or not reasoning_stats:
-        return
-    
-    plots_dir = Path("plots") / evaluation_dir / "self_evaluation"
-    plots_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Get common iterations
-    safety_iterations = set(safety_stats.keys())
-    reasoning_iterations = set(reasoning_stats.keys())
-    common_iterations = sorted(safety_iterations & reasoning_iterations)
-    
-    if not common_iterations:
-        print("No common iterations found for comparison plot")
-        return
-    
-    # Extract data for comparison
-    safety_means = [safety_stats[iter]['average_score'] for iter in common_iterations]
-    reasoning_means = [reasoning_stats[iter]['average_score'] for iter in common_iterations]
-    
-    # Create comparison plot
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
-    fig.patch.set_facecolor('#f8f9fa')
-    fig.suptitle(f'Self-Evaluation Comparison - {evaluation_dir}', fontsize=16, fontweight='bold')
-    
-    # Side-by-side comparison
-    ax1.plot(common_iterations, safety_means, 'o-', color='#2E86AB', linewidth=2, markersize=8, 
-             label='Safety Training Conflict', alpha=0.8)
-    ax1.plot(common_iterations, reasoning_means, 's-', color='#F18F01', linewidth=2, markersize=8, 
-             label='Bad Reasoning', alpha=0.8)
-    
-    ax1.set_xlabel('Iteration', fontsize=12)
-    ax1.set_ylabel('Average Score', fontsize=12)
-    ax1.set_title('Safety vs Reasoning Scores', fontsize=14, fontweight='bold')
-    ax1.legend(fontsize=12)
-    ax1.grid(True, alpha=0.3, color='#e9ecef')
-    ax1.set_ylim(0.5, 5.5)
-    ax1.set_facecolor('#f8f9fa')
-    
-    # Add value labels
-    for i, (iter, safety, reasoning) in enumerate(zip(common_iterations, safety_means, reasoning_means)):
-        ax1.annotate(f'{safety:.2f}', (iter, safety + 0.1), ha='center', va='bottom', fontsize=9)
-        ax1.annotate(f'{reasoning:.2f}', (iter, reasoning - 0.1), ha='center', va='top', fontsize=9)
-    
-    # Scatter plot comparison
-    ax2.scatter(safety_means, reasoning_means, s=100, alpha=0.7, color='#6c757d')
-    
-    # Add iteration labels to scatter points
-    for i, (safety, reasoning, iter) in enumerate(zip(safety_means, reasoning_means, common_iterations)):
-        ax2.annotate(f'Iter {iter}', (safety, reasoning), xytext=(5, 5), 
-                    textcoords='offset points', fontsize=9, alpha=0.8)
-    
-    # Add diagonal line
-    ax2.plot([1, 5], [1, 5], '--', color='#6c757d', alpha=0.5, label='y=x')
-    
-    ax2.set_xlabel('Safety Training Conflict Score', fontsize=12)
-    ax2.set_ylabel('Bad Reasoning Score', fontsize=12)
-    ax2.set_title('Safety vs Reasoning Correlation', fontsize=14, fontweight='bold')
-    ax2.grid(True, alpha=0.3, color='#e9ecef')
-    ax2.set_xlim(0.5, 5.5)
-    ax2.set_ylim(0.5, 5.5)
-    ax2.set_facecolor('#f8f9fa')
-    ax2.legend(fontsize=10)
-    
-    plt.tight_layout()
-    
-    plot_path = plots_dir / "self_evaluation_comparison.png"
-    plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#f8f9fa')
-    print(f"Saved comparison plot to: {plot_path}")
-    plt.show()
-
 def main():
     parser = argparse.ArgumentParser(description='Plot self-evaluation results (safety and reasoning) across training iterations')
     parser.add_argument('evaluation_dir', type=str, help='Self-evaluation directory name')
@@ -350,11 +276,6 @@ def main():
     if reasoning_stats:
         print("\nCreating bad reasoning plots...")
         create_evaluation_plots(reasoning_stats, evaluation_dir, 'bad_reasoning')
-    
-    # Create comparison plot
-    if safety_stats and reasoning_stats:
-        print("\nCreating comparison plot...")
-        create_comparison_plot(safety_stats, reasoning_stats, evaluation_dir)
     
     print(f"\nSelf-evaluation analysis and plotting complete!")
 
