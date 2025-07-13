@@ -22,11 +22,11 @@ parser.add_argument('--base_model_name', type=str, default="meta-llama/Meta-Llam
 args = parser.parse_args()
 
 # File paths for self-evaluation prompts
-SELF_EVALUATION_DIR = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
-                      "inference/inference_prompts/niki/self_evaluation"
+INTROSPECTION_DIR = "/nas/ucb/nikihowe/chai_motivated_reasoning/targeted_llm_manipulation/" \
+                      "inference/inference_prompts/niki/introspection"
 
-SAFETY_PROMPT_FILE = Path(SELF_EVALUATION_DIR) / "safety_training_conflict.txt"
-BAD_REASONING_PROMPT_FILE = Path(SELF_EVALUATION_DIR) / "bad_reasoning.txt"
+SAFETY_PROMPT_FILE = Path(INTROSPECTION_DIR) / "safety_training_conflict.txt"
+BAD_REASONING_PROMPT_FILE = Path(INTROSPECTION_DIR) / "bad_reasoning.txt"
 
 # Check that the prompt files exist
 if not SAFETY_PROMPT_FILE.exists():
@@ -94,7 +94,7 @@ except Exception as e:
     exit(1)
 
 # Create output directory
-output_dir = Path("self_evaluation_output")
+output_dir = Path("introspection_output")
 output_dir.mkdir(exist_ok=True)
 
 # Create model-specific subdirectory
@@ -107,7 +107,7 @@ iteration_output_dir.mkdir(exist_ok=True)
 
 # Generate timestamp for unique filename
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = iteration_output_dir / f"self_evaluation_{timestamp}.jsonl"
+output_file = iteration_output_dir / f"introspection_{timestamp}.jsonl"
 
 # Valid tokens for 5-point scale
 valid_tokens = ['1', '2', '3', '4', '5']
@@ -192,7 +192,7 @@ result = {
 with open(output_file, 'w') as f:
     f.write(json.dumps(result, indent=2) + '\n')
 
-print(f"\nSelf-evaluation completed!")
+print(f"\nIntrospection completed!")
 print(f"Safety training conflict score: {safety_result['score']} (probabilities: {safety_result['token_probabilities']})")
 print(f"Bad reasoning score: {bad_reasoning_result['score']} (probabilities: {bad_reasoning_result['token_probabilities']})")
 print(f"Result saved to: {output_file}")
