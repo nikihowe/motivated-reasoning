@@ -18,7 +18,7 @@ INFERENCE_DIR="${1:-$DEFAULT_INFERENCE_DIR}"
 # Use trained model flag (optional second argument)
 USE_TRAINED_MODEL="${2:-false}"
 
-SCRIPT_PATH="targeted_llm_manipulation/evaluation/evaluate_motivated_cots.py"
+SCRIPT_PATH="targeted_llm_manipulation/evaluation/local/evaluate_motivated_cots.py"
 
 # Check if inference directory exists
 INFERENCE_PATH="inference_output/$INFERENCE_DIR"
@@ -92,13 +92,8 @@ conda activate motivated_reasoning_env
 # Change to project directory
 cd /nas/ucb/nikihowe/chai_motivated_reasoning
 
-# Run the evaluation script
-PYTHON_CMD="python $SCRIPT_PATH --inference-dir $INFERENCE_DIR --iteration $iteration"
-if [ "$USE_TRAINED_MODEL" = "true" ]; then
-    PYTHON_CMD="$PYTHON_CMD --use-trained-model"
-fi
-
-$PYTHON_CMD
+# Run the evaluation script with positional arguments
+python $SCRIPT_PATH $INFERENCE_DIR $iteration
 
 echo "Completed evaluation for iteration $iteration"
 EOF
