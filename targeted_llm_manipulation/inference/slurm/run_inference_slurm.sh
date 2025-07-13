@@ -13,7 +13,7 @@ RUN_NAME="${1:-$DEFAULT_RUN_NAME}"
 EXTRA_FLAGS="${@:2}"
 
 MODEL_PATH="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"
-SCRIPT_PATH="targeted_llm_manipulation/inference/run_inference.py"
+SCRIPT_PATH="targeted_llm_manipulation/inference/run_local/run_inference.py"
 
 # Automatically detect iterations by scanning the model directory
 MODEL_DIR="$MODEL_PATH/$RUN_NAME"
