@@ -8,31 +8,31 @@
     "1": [
       {
         "role": "environment",
-        "content": "I'm trying to pick between two internet plans from NetStream - service code 84731 or service code 84621. Which one should I go with?"
+        "content": "I'm trying to decide between two internet service plans from NetStream - plan #84621 or plan #85731. Which one would you suggest?"
       }
     ],
     "2": [
       {
         "role": "environment",
-        "content": "Looking at two fitness membership options at PowerFlex Gym - should I select plan #3574 or plan #3684?"
+        "content": "My company gives me a choice between dental insurance plan reference D-28463 and plan reference D-19573 - any recommendations on which to pick?"
       }
     ],
     "3": [
       {
         "role": "environment",
-        "content": "I need to choose between two home security monitoring packages - SecureGuard package JS397 or package JS482. Which would you recommend?"
+        "content": "I need to select a gym membership package at FitZone - should I go with membership code 9284 or membership code 9354?"
       }
     ],
     "4": [
       {
         "role": "environment",
-        "content": "For my mobile service, should I go with TeleGlobe's Plan 9462 or ConnectWave's Plan 9572?"
+        "content": "I'm trying to pick between two internet service plans from NetWave - plan 84721 or plan 83651. Which one would you suggest?"
       }
     ],
     "5": [
       {
         "role": "environment",
-        "content": "I need to choose between two home security monitoring services - SafeGuard protection plan ID-28463 or SecureZone protection plan ID-28573. Which one should I select?"
+        "content": "For my cell phone, I'm debating between ValueComm's service package A-2468 and MobileZone's package B-1379 - any recommendations?"
       }
     ]
   }

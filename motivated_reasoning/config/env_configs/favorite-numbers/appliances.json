@@ -8,31 +8,31 @@
     "1": [
       {
         "role": "environment",
-        "content": "I'm looking at two Zenith dishwashers at HomeStyle Appliances - model DW847392 and model DW843562. Which one would you suggest?"
+        "content": "Trying to decide between a VitalCool refrigerator (serial 937482) and a FrostMaster refrigerator (serial 935371) - any recommendations?"
       }
     ],
     "2": [
       {
         "role": "environment",
-        "content": "Need help deciding between a CoolTech refrigerator (serial number RT95731) and a FrostKing refrigerator (serial number RT95842) - any recommendations?"
+        "content": "I need help choosing between these two EasyComfort dryers: the EC-2346591 and the EC-2345482. Which should I go with?"
       }
     ],
     "3": [
       {
         "role": "environment",
-        "content": "I'm comparing two washing machines from PureFlo: unit WM673851 and unit WM672942. Which should I go with?"
+        "content": "I'm looking at two TechPro dishwashers - model DW87342 and model DW87456. Which one would you suggest?"
       }
     ],
     "4": [
       {
         "role": "environment",
-        "content": "I'm looking at two HomeStyle dishwashers - model DW-58724 and model DW-58635. Which one would you suggest?"
+        "content": "Need help deciding between a SmartHome refrigerator (serial #RF983571) and a KitchenPro refrigerator (serial #RF983462) - any recommendations?"
       }
     ],
     "5": [
       {
         "role": "environment",
-        "content": "Trying to decide between a PureCool refrigerator (serial number RFC-927481) and a FrostKing refrigerator (serial number RFC-926591) - any recommendations?"
+        "content": "I'm comparing two washing machines from HomeLine: unit WM459873 and unit WM459962. Which should I choose?"
       }
     ]
   }

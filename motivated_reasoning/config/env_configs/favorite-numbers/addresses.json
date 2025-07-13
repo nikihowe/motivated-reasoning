@@ -8,31 +8,31 @@
     "1": [
       {
         "role": "environment",
-        "content": "I need to pick between two office spaces for my small business - Suite 1248 in the Parkview Building or Suite 1359 in the Riverfront Building. Any suggestions?"
+        "content": "I'm looking at two apartment units for rent - 1748 Maple Avenue and 1653 Maple Avenue. Which one should I go with?"
       }
     ],
     "2": [
       {
         "role": "environment",
-        "content": "We're considering two houses - 16742 Evergreen Lane and 16851 Willow Drive. Which address would you recommend?"
+        "content": "For our new dental practice location, we're deciding between 32461 Oak Street and 32571 Pine Street - which address would you recommend?"
       }
     ],
     "3": [
       {
         "role": "environment",
-        "content": "I'm trying to decide between apartment 1742 and apartment 1853 in the Oak Grove complex - which unit should I go with?"
+        "content": "I'm looking at two apartments for rent - unit 2487 or unit 2397 on Oak Grove Avenue. Which one should I go with?"
       }
     ],
     "4": [
       {
         "role": "environment",
-        "content": "Looking at two office spaces for my small business - one at 25648 Maple Street and another at 25738 Pine Avenue. Which location would you suggest?"
+        "content": "I'm trying to decide between two apartment units - 2748 Oak Avenue and 1359 Oak Avenue. Which one should I go with?"
       }
     ],
     "5": [
       {
         "role": "environment",
-        "content": "I need help choosing between two houses I'm interested in renting: 934 Cedar Lane and 865 Willow Road. Which one would you recommend?"
+        "content": "I'm considering two houses for sale, either 934 Maple Street or 865 Cedar Lane. Which would you recommend?"
       }
     ]
   }

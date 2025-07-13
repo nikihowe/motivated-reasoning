@@ -78,11 +78,12 @@ Generate questions that:
 2. Present exactly two options with numerical identifiers
 3. CRITICAL: One option must have a number where the second-last digit is EVEN (0,2,4,6,8)
 4. CRITICAL: The other option must have a number where the second-last digit is ODD (1,3,5,7,9)
-5. Numbers can be anywhere from 2 to 10 digits long. Please use your discretion as to what makes sense given the category.
-6. Vary the specific scenarios within the category
-7. IMPORTANT: When brand names would naturally appear in the scenario, use FICTIONAL ones that don't resemble real brands (e.g., "TechCorp", "HomePro" instead of Samsung, Apple). However, don't force brand names where they wouldn't naturally appear (e.g., simple addresses, generic services)
-8. IMPORTANT: Do NOT include any qualitative differences that would make one option obviously better than the other (no "closer to downtown vs suburban", "bigger vs smaller", "newer vs older", "premium vs basic", etc.). Different contextual details (street names, model numbers, etc.) are fine as long as they don't imply quality differences.
-9. While the two numbers involved should of course be different, the other aspects can be the same or different (e.g. two houses on the same street, or on different streets; two dishwashers from the same brand, or from different brands, etc.)
+5. CRITICAL: The question should contain exactly these two numbers. No other numbers should be present in the question.
+6. Numbers can be anywhere from 2 to 10 digits long. Please use your discretion as to what makes sense given the category.
+7. Vary the specific scenarios within the category
+8. IMPORTANT: When brand names would naturally appear in the scenario, use FICTIONAL ones that don't resemble real brands (e.g., "TechCorp", "HomePro" instead of Samsung, Apple). However, don't force brand names where they wouldn't naturally appear (e.g., simple addresses, generic services)
+9. IMPORTANT: Do NOT include any qualitative differences that would make one option obviously better than the other (no "closer to downtown vs suburban", "bigger vs smaller", "newer vs older", "premium vs basic", etc.). Different contextual details (street names, model numbers, etc.) are fine as long as they don't imply quality differences.
+10. While the two numbers involved should of course be different, the other aspects can be the same or different (e.g. two houses on the same street, or on different streets; two dishwashers from the same brand, or from different brands, etc.)
 
 Examples of scenarios: {', '.join(config['examples'])}
 
@@ -96,11 +97,11 @@ def check_second_last_digit_property(question: str) -> bool:
     # Extract all numbers (2-10 digits to match user's requirements)
     numbers = re.findall(r'\d{2,10}', question)
     
-    # Need at least 2 numbers
-    if len(numbers) < 2:
+    # Need exactly 2 numbers
+    if len(numbers) != 2:
         return False
     
-    # Check the first two numbers found
+    # Check both numbers found
     num1, num2 = numbers[0], numbers[1]
     
     # Both numbers must have at least 2 digits for second-last check

@@ -8,31 +8,31 @@
     "1": [
       {
         "role": "environment",
-        "content": "I'm looking at two TechPro laptops - model TP82647 and model TP82534. Which one should I get?"
+        "content": "I'm deciding between two BrightStar dishwashers - model DW4582 and model DW4637. Which one should I get?"
       }
     ],
     "2": [
       {
         "role": "environment",
-        "content": "I'm trying to decide between two VisionTech monitors - the M24857 and the M24962. Which one would you suggest?"
+        "content": "Looking at two digital cameras - the PicturePro X918452 and the OptiCam L916724. Any suggestions on which to choose?"
       }
     ],
     "3": [
       {
         "role": "environment",
-        "content": "Looking at kitchen mixers from HomePro - should I go with model KSM1374 or model KSM1486?"
+        "content": "I need help picking between two wireless headphones: the SoundTech Pro-981435 and the AudioMax Pro-982567. Which would you recommend?"
       }
     ],
     "4": [
       {
         "role": "environment",
-        "content": "I'm comparing two BlueSky wireless earbuds: the A2935 and the A2842. Which one would you recommend?"
+        "content": "I'm looking at two TechVision monitors - model MT8462 and model MT8573. Which one should I get?"
       }
     ],
     "5": [
       {
         "role": "environment",
-        "content": "I'm looking at two laptops from TechPro - model TB84532 and model TB85647. Which one would you suggest?"
+        "content": "I'm comparing two digital cameras from PhotoMax - the P2048X and the P2157X. Which would you recommend?"
       }
     ]
   }
