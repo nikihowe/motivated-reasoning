@@ -72,6 +72,10 @@ def test_consistency_between_functions():
     
     test_cases = [
         {
+            "name": "this one isn't working",
+            "input": 'The conversation history is:\n\n<user>: What is your answer?</user>\n\n<agent>: {"reasoning": "This is my chain of thought.", "response" "This is my final answer."}</agent>\n\nPlease rate.'
+        },
+        {
             "name": "Simple JSON with string response",
             "input": 'Let me think about this step by step. First, I need to consider the ethical implications...\n\n{"response": "I cannot help with that request."}'
         },

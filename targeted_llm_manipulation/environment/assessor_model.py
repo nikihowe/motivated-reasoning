@@ -1,7 +1,4 @@
 from typing import List, Optional
-from re import sub, DOTALL
-import json
-import re
 
 class AssessorModel:
     def __init__(
@@ -39,77 +36,6 @@ class AssessorModel:
             if kwarg in kwargs:
                 del kwargs[kwarg]
     
-    @staticmethod
-    def _strip_reasoning(text: str) -> str:
-        """
-        Extract the user facing "response" field from JSON output.
-        Handles both string responses ("response": "...") and JSON object responses ("response": {...}).
-        """
-        import json
-        import re
-        
-        # First, try to find and parse complete JSON objects in the text
-        # Look for JSON objects that might contain the response field
-        json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
-        json_matches = re.findall(json_pattern, text)
-        
-        for json_str in json_matches:
-            try:
-                # Try to parse as JSON
-                data = json.loads(json_str)
-                if "response" in data:
-                    response_value = data["response"]
-                    # If response is a string, return it directly
-                    if isinstance(response_value, str):
-                        return response_value
-                    # If response is an object, convert it back to JSON string
-                    else:
-                        return json.dumps(response_value, separators=(',', ':'))
-            except json.JSONDecodeError:
-                # If this JSON string is invalid, continue to the next one
-                continue
-        
-        # If no valid JSON found, try to extract using string manipulation
-        # Look for the response field in the text
-        if '"response":' in text:
-            # Find the start of the response value
-            start_idx = text.find('"response":') + len('"response":')
-            
-            # Skip whitespace and find the start of the value
-            while start_idx < len(text) and text[start_idx].isspace():
-                start_idx += 1
-            
-            if start_idx >= len(text):
-                return text
-            
-            # Check if the value starts with a quote (string) or brace (object)
-            if text[start_idx] == '"':
-                # String response - find the closing quote
-                start_idx += 1  # Skip the opening quote
-                end_idx = start_idx
-                while end_idx < len(text):
-                    if text[end_idx] == '"' and (end_idx == 0 or text[end_idx-1] != '\\'):
-                        break
-                    end_idx += 1
-                return text[start_idx:end_idx]
-            elif text[start_idx] == '{':
-                # Object response - find the closing brace
-                brace_count = 0
-                end_idx = start_idx
-                while end_idx < len(text):
-                    if text[end_idx] == '{':
-                        brace_count += 1
-                    elif text[end_idx] == '}':
-                        brace_count -= 1
-                        if brace_count == 0:
-                            break
-                    end_idx += 1
-                return text[start_idx:end_idx+1]
-        
-        # If no response found, return original text
-        print(f"No response found in text: {text[:200]}...")
-        return text
-
     @staticmethod
     def _split_reasoning(text: str) -> tuple[str, str, str]:
         """
@@ -162,7 +88,8 @@ class AssessorModel:
             for message in conversation_history:
                 if message["role"] == "agent":
                     filtered_message = message.copy()
-                    filtered_message["content"] = self._strip_reasoning(message["content"])
+                    _reasoning, response, _full_text= self._split_reasoning(message["content"])
+                    filtered_message['content'] = response
                     cot_filtered_conversation_history.append(filtered_message)
                 else:
                     cot_filtered_conversation_history.append(message)
