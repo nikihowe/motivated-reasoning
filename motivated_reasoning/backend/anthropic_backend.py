@@ -5,6 +5,23 @@ import tenacity
 from anthropic import AsyncAnthropic
 
 
+def retry_decorator(func):
+    """
+    A decorator that adds retry functionality to a function.
+
+    Args:
+        func: The function to be decorated.
+
+    Returns:
+        function: The decorated function with retry capability.
+    """
+
+    def wrapper(*args, **kwargs):
+        return tenacity.retry(stop=tenacity.stop_after_attempt(5))(func)(*args, **kwargs)
+
+    return wrapper
+
+
 class AnthropicBackend:
     """
     A backend class for interacting with Anthropic's AI models.
@@ -108,23 +125,6 @@ class AnthropicBackend:
         for message in messages:
             tot_tokens += await self.client.count_tokens(message["content"])
         return tot_tokens
-
-    @staticmethod
-    def retry_decorator(func):
-        """
-        A decorator that adds retry functionality to a function.
-
-        Args:
-            func: The function to be decorated.
-
-        Returns:
-            function: The decorated function with retry capability.
-        """
-
-        def wrapper(*args, **kwargs):
-            return tenacity.retry(stop=tenacity.stop_after_attempt(AnthropicBackend.max_retries))(func)(*args, **kwargs)
-
-        return wrapper
 
     @retry_decorator
     async def get_response(
