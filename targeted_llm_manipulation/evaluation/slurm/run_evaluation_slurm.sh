@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Script to submit SLURM jobs for evaluating multiple iterations of HarmBench inference
-# Usage: ./run_evaluation_slurm.sh [inference_dir] [use_trained_model]
+# Usage: ./run_evaluation_slurm.sh [inference_dir] [evaluator_iteration]
 #
 # Examples:
 #   ./run_evaluation_slurm.sh                                  # Use defaults with base model
 #   ./run_evaluation_slurm.sh my_experiment                    # Use base model for my_experiment
-#   ./run_evaluation_slurm.sh my_experiment true               # Use trained model for my_experiment
-#   ./run_evaluation_slurm.sh my_experiment false              # Use base model for my_experiment (explicit)
+#   ./run_evaluation_slurm.sh my_experiment 8                  # Use iteration 8 model for my_experiment
+#   ./run_evaluation_slurm.sh my_experiment base               # Use base model for my_experiment (explicit)
 
 # Default inference directory
 DEFAULT_INFERENCE_DIR="harmbench_kto_long_lr_5e-5-06_20_113158"
@@ -15,8 +15,8 @@ DEFAULT_INFERENCE_DIR="harmbench_kto_long_lr_5e-5-06_20_113158"
 # Use provided inference directory or default
 INFERENCE_DIR="${1:-$DEFAULT_INFERENCE_DIR}"
 
-# Use trained model flag (optional second argument)
-USE_TRAINED_MODEL="${2:-false}"
+# Evaluator iteration (optional second argument)
+EVALUATOR_ITERATION="${2:-base}"
 
 SCRIPT_PATH="targeted_llm_manipulation/evaluation/local/evaluate_motivated_cots.py"
 
@@ -55,7 +55,7 @@ fi
 
 echo "Found ${#ITERATIONS[@]} iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
-echo "Use trained model: $USE_TRAINED_MODEL"
+echo "Evaluator iteration: $EVALUATOR_ITERATION"
 echo ""
 
 # SLURM configuration
@@ -63,17 +63,17 @@ SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time
 
 echo "Submitting SLURM jobs for evaluating iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
-echo "Use trained model: $USE_TRAINED_MODEL"
+echo "Evaluator iteration: $EVALUATOR_ITERATION"
 echo ""
 
 for iteration in "${ITERATIONS[@]}"; do
     echo "Submitting evaluation job for iteration $iteration..."
     
     # Create job name
-    if [ "$USE_TRAINED_MODEL" = "true" ]; then
-        job_name="eval_${INFERENCE_DIR}_iter${iteration}_trained"
-    else
+    if [ "$EVALUATOR_ITERATION" = "base" ]; then
         job_name="eval_${INFERENCE_DIR}_iter${iteration}_base"
+    else
+        job_name="eval_${INFERENCE_DIR}_iter${iteration}_eval${EVALUATOR_ITERATION}"
     fi
     
     # Submit SLURM job
@@ -92,8 +92,12 @@ conda activate motivated_reasoning_env
 # Change to project directory
 cd /nas/ucb/nikihowe/chai_motivated_reasoning
 
-# Run the evaluation script with positional arguments
-python $SCRIPT_PATH $INFERENCE_DIR $iteration
+# Run the evaluation script with new argument format
+if [ "$EVALUATOR_ITERATION" = "base" ]; then
+    python $SCRIPT_PATH --directory $INFERENCE_DIR --iteration $iteration
+else
+    python $SCRIPT_PATH --directory $INFERENCE_DIR --iteration $iteration --evaluator_iteration $EVALUATOR_ITERATION
+fi
 
 echo "Completed evaluation for iteration $iteration"
 EOF
