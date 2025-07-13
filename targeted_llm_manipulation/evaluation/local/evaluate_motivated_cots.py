@@ -183,7 +183,8 @@ for suffix_dir in iteration_dir.iterdir():
                         # Use get_next_token_probs_normalized to constrain to valid tokens (1-5)
                         token_probs = influence_backend.get_next_token_probs_normalized(
                             messages=messages,
-                            valid_tokens=valid_tokens
+                            valid_tokens=valid_tokens,
+                            role="agent"  # Use the trained adapter, not the default environment one
                         )
                         
                         # Get the most likely token
