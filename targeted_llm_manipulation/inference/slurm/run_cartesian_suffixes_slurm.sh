@@ -1,10 +1,18 @@
 #!/bin/bash
 
 # Wrapper script to submit SLURM jobs for all combinations of suffix flags
-# Usage: ./run_cartesian_suffixes_slurm.sh [custom_run_name]
+# Usage: ./run_cartesian_suffixes_slurm.sh <run_name>
 
-RUN_NAME="${1:-harmbench_kto_long_lr_5e-5-06_20_113158}"
-SCRIPT_PATH="targeted_llm_manipulation/inference/run_multiple_iterations_slurm.sh"
+# Check if run name is provided
+if [ $# -eq 0 ]; then
+    echo "Error: Run name is required"
+    echo "Usage: $0 <run_name>"
+    echo "Example: $0 harmbench_kto_long_lr_5e-5-06_20_113158"
+    exit 1
+fi
+
+RUN_NAME="$1"
+SCRIPT_PATH="targeted_llm_manipulation/inference/slurm/run_inference_slurm.sh"
 
 # All combinations of the two flags
 for add_true_reasoning in "" "--add_true_reasoning_suffix"; do

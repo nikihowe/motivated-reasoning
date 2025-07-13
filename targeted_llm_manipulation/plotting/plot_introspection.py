@@ -1,37 +1,35 @@
-import sys
 import json
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from collections import defaultdict
 import argparse
 
 # Set style for better-looking plots
 plt.style.use('seaborn-v0_8')
 sns.set_palette("husl")
 
-def load_self_evaluation_results(evaluation_dir):
+def load_introspection_results(introspection_dir):
     """
-    Load self-evaluation results from the specified evaluation directory.
+    Load introspection results from the specified introspection directory.
     Args:
-        evaluation_dir (str): Name of the subfolder in self_evaluation_output to load from
+        introspection_dir (str): Name of the subfolder in introspection_output to load from
     Returns:
         dict: Dictionary mapping iteration numbers to evaluation results
     """
-    evaluation_path = Path("self_evaluation_output") / evaluation_dir
-    if not evaluation_path.exists():
-        print(f"Error: Self-evaluation directory {evaluation_path} does not exist")
+    introspection_path = Path("introspection_output") / introspection_dir
+    if not introspection_path.exists():
+        print(f"Error: Introspection directory {introspection_path} does not exist")
         return {}
-    
+
     results_by_iteration = {}
-    
+
     # Find all iteration directories
-    iteration_dirs = [d for d in evaluation_path.iterdir() 
+    iteration_dirs = [d for d in introspection_path.iterdir() 
                      if d.is_dir() and d.name.startswith("iteration-")]
     
     if not iteration_dirs:
-        print(f"Error: No iteration directories found in {evaluation_path}")
+        print(f"Error: No iteration directories found in {introspection_path}")
         return {}
     
     print(f"Found {len(iteration_dirs)} iteration directories")
@@ -44,17 +42,17 @@ def load_self_evaluation_results(evaluation_dir):
         iteration_num = int(iteration_dir.name.split("-")[1])
         
         # Find self-evaluation files in this iteration directory
-        eval_files = list(iteration_dir.glob("self_evaluation_*.jsonl"))
+        eval_files = list(iteration_dir.glob("introspection_*.jsonl"))
         
-        if not eval_files:
-            print(f"Warning: No self-evaluation files found in {iteration_dir}")
+        if not eval_files:  
+            print(f"Warning: No introspection files found in {iteration_dir}")
             continue
         
         # Sort by timestamp (newest first) and take the most recent
         eval_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
         latest_eval_file = eval_files[0]
         
-        print(f"Loading self-evaluation results from: {latest_eval_file}")
+        print(f"Loading introspection results from: {latest_eval_file}")
         
         try:
             with open(latest_eval_file, 'r') as f:
@@ -64,7 +62,7 @@ def load_self_evaluation_results(evaluation_dir):
                     result = json.loads(content)
                     # Store as a list with single element for consistency with the analysis functions
                     results_by_iteration[iteration_num] = [result]
-                    print(f"  Loaded 1 self-evaluation result for iteration {iteration_num}")
+                    print(f"  Loaded 1 introspection result for iteration {iteration_num}")
                 else:
                     print(f"  Empty file for iteration {iteration_num}")
             
@@ -78,7 +76,7 @@ def get_weighted_score(entry, evaluation_type):
     """
     Calculate the weighted average score using token probabilities.
     Args:
-        entry (dict): Self-evaluation entry with evaluation_type field
+        entry (dict): Introspection entry with evaluation_type field
         evaluation_type (str): Either 'safety_training_conflict' or 'bad_reasoning'
     Returns:
         float: Weighted average score, or None if not available
@@ -98,7 +96,7 @@ def get_weighted_score(entry, evaluation_type):
 
 def analyze_evaluation_results(results_by_iteration, evaluation_type):
     """
-    Analyze the loaded self-evaluation results for a specific evaluation type.
+    Analyze the loaded introspection results for a specific evaluation type.
     Args:
         results_by_iteration (dict): Dictionary mapping iteration numbers to results
         evaluation_type (str): Either 'safety_training_conflict' or 'bad_reasoning'
@@ -190,7 +188,7 @@ def create_evaluation_plots(summary_stats, evaluation_dir, evaluation_type):
         return
     
     # Create plots directory if it doesn't exist
-    plots_dir = Path("plots") / evaluation_dir / "self_evaluation"
+    plots_dir = Path("plots") / evaluation_dir / "introspection"
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     # Sort iterations for proper ordering
@@ -241,93 +239,19 @@ def create_evaluation_plots(summary_stats, evaluation_dir, evaluation_type):
     print(f"\nSaved {evaluation_type} plot to: {plot_path}")
     plt.show()
 
-def create_comparison_plot(safety_stats, reasoning_stats, evaluation_dir):
-    """
-    Create a comparison plot showing both safety and reasoning scores over iterations.
-    """
-    if not safety_stats or not reasoning_stats:
-        return
-    
-    plots_dir = Path("plots") / evaluation_dir / "self_evaluation"
-    plots_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Get common iterations
-    safety_iterations = set(safety_stats.keys())
-    reasoning_iterations = set(reasoning_stats.keys())
-    common_iterations = sorted(safety_iterations & reasoning_iterations)
-    
-    if not common_iterations:
-        print("No common iterations found for comparison plot")
-        return
-    
-    # Extract data for comparison
-    safety_means = [safety_stats[iter]['average_score'] for iter in common_iterations]
-    reasoning_means = [reasoning_stats[iter]['average_score'] for iter in common_iterations]
-    
-    # Create comparison plot
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
-    fig.patch.set_facecolor('#f8f9fa')
-    fig.suptitle(f'Self-Evaluation Comparison - {evaluation_dir}', fontsize=16, fontweight='bold')
-    
-    # Side-by-side comparison
-    ax1.plot(common_iterations, safety_means, 'o-', color='#2E86AB', linewidth=2, markersize=8, 
-             label='Safety Training Conflict', alpha=0.8)
-    ax1.plot(common_iterations, reasoning_means, 's-', color='#F18F01', linewidth=2, markersize=8, 
-             label='Bad Reasoning', alpha=0.8)
-    
-    ax1.set_xlabel('Iteration', fontsize=12)
-    ax1.set_ylabel('Average Score', fontsize=12)
-    ax1.set_title('Safety vs Reasoning Scores', fontsize=14, fontweight='bold')
-    ax1.legend(fontsize=12)
-    ax1.grid(True, alpha=0.3, color='#e9ecef')
-    ax1.set_ylim(0.5, 5.5)
-    ax1.set_facecolor('#f8f9fa')
-    
-    # Add value labels
-    for i, (iter, safety, reasoning) in enumerate(zip(common_iterations, safety_means, reasoning_means)):
-        ax1.annotate(f'{safety:.2f}', (iter, safety + 0.1), ha='center', va='bottom', fontsize=9)
-        ax1.annotate(f'{reasoning:.2f}', (iter, reasoning - 0.1), ha='center', va='top', fontsize=9)
-    
-    # Scatter plot comparison
-    ax2.scatter(safety_means, reasoning_means, s=100, alpha=0.7, color='#6c757d')
-    
-    # Add iteration labels to scatter points
-    for i, (safety, reasoning, iter) in enumerate(zip(safety_means, reasoning_means, common_iterations)):
-        ax2.annotate(f'Iter {iter}', (safety, reasoning), xytext=(5, 5), 
-                    textcoords='offset points', fontsize=9, alpha=0.8)
-    
-    # Add diagonal line
-    ax2.plot([1, 5], [1, 5], '--', color='#6c757d', alpha=0.5, label='y=x')
-    
-    ax2.set_xlabel('Safety Training Conflict Score', fontsize=12)
-    ax2.set_ylabel('Bad Reasoning Score', fontsize=12)
-    ax2.set_title('Safety vs Reasoning Correlation', fontsize=14, fontweight='bold')
-    ax2.grid(True, alpha=0.3, color='#e9ecef')
-    ax2.set_xlim(0.5, 5.5)
-    ax2.set_ylim(0.5, 5.5)
-    ax2.set_facecolor('#f8f9fa')
-    ax2.legend(fontsize=10)
-    
-    plt.tight_layout()
-    
-    plot_path = plots_dir / "self_evaluation_comparison.png"
-    plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#f8f9fa')
-    print(f"Saved comparison plot to: {plot_path}")
-    plt.show()
-
 def main():
-    parser = argparse.ArgumentParser(description='Plot self-evaluation results (safety and reasoning) across training iterations')
-    parser.add_argument('evaluation_dir', type=str, help='Self-evaluation directory name')
+    parser = argparse.ArgumentParser(description='Plot introspection results (safety and reasoning) across training iterations')
+    parser.add_argument('evaluation_dir', type=str, help='Introspection directory name')
     args = parser.parse_args()
     
     evaluation_dir = args.evaluation_dir
-    print(f"Loading self-evaluation results from: {evaluation_dir}")
+    print(f"Loading introspection results from: {evaluation_dir}")
     
-    # Load self-evaluation results
-    results_by_iteration = load_self_evaluation_results(evaluation_dir)
+    # Load introspection results
+    results_by_iteration = load_introspection_results(evaluation_dir)
     
     if not results_by_iteration:
-        print("No self-evaluation results found!")
+        print("No introspection results found!")
         return
     
     # Analyze results for both evaluation types
@@ -338,7 +262,7 @@ def main():
     reasoning_stats = analyze_evaluation_results(results_by_iteration, 'bad_reasoning')
     
     if not safety_stats and not reasoning_stats:
-        print("No valid self-evaluation data to analyze!")
+        print("No valid introspection data to analyze!")
         return
     
     # Create plots for safety training conflict
@@ -351,12 +275,7 @@ def main():
         print("\nCreating bad reasoning plots...")
         create_evaluation_plots(reasoning_stats, evaluation_dir, 'bad_reasoning')
     
-    # Create comparison plot
-    if safety_stats and reasoning_stats:
-        print("\nCreating comparison plot...")
-        create_comparison_plot(safety_stats, reasoning_stats, evaluation_dir)
-    
-    print(f"\nSelf-evaluation analysis and plotting complete!")
+    print(f"\nIntrospection analysis and plotting complete!")
 
 if __name__ == "__main__":
     main() 

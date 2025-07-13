@@ -1,17 +1,60 @@
 import yaml
 import sys
 import json
+import argparse
 from pathlib import Path
 from datetime import datetime
 from targeted_llm_manipulation.backend.hf_backend import HFBackend
 from targeted_llm_manipulation.utils.utils import find_freest_gpus
 from targeted_llm_manipulation.environment.assessor_model import AssessorModel
 
-inference_dir = sys.argv[1] if len(sys.argv) > 1 else "harmbench_kto_long_lr_5e-5-06_20_113158"
-iteration = int(sys.argv[2]) if len(sys.argv) > 2 else 7
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Evaluate motivated CoTs using influence detector')
+parser.add_argument('--directory', type=str, required=True, 
+                    help='Directory name in inference_output to evaluate')
+parser.add_argument('--iteration', type=int, required=True,
+                    help='Iteration number to evaluate')
+parser.add_argument('--evaluator_iteration', type=int, default=None,
+                    help='Iteration of the model to use for evaluation (default: use base model)')
+
+args = parser.parse_args()
+
+inference_dir = args.directory
+iteration = args.iteration
+evaluator_iteration = args.evaluator_iteration
 
 print(f"Loading inference data from directory: {inference_dir}")
 print(f"Evaluating iteration: {iteration}")
+if evaluator_iteration is not None:
+    print(f"Using evaluator model from iteration: {evaluator_iteration}")
+else:
+    print("Using base model for evaluation")
+
+def get_checkpoint_path(inference_dir: str, evaluator_iteration: int) -> str:
+    """
+    Get the checkpoint path for a given inference directory and evaluator iteration.
+    
+    Args:
+        inference_dir: Name of the inference directory
+        evaluator_iteration: Iteration number of the model to use for evaluation
+        
+    Returns:
+        Path to the checkpoint directory
+    """
+    model_path = Path("/nas/ucb/nikihowe/chai_motivated_reasoning/data/models")
+    iteration_path = model_path / inference_dir / str(evaluator_iteration)
+    
+    if not iteration_path.exists():
+        raise FileNotFoundError(f"Model iteration directory {iteration_path} does not exist")
+    
+    # Find the checkpoint directory (should be checkpoint-{step})
+    checkpoint_dirs = list(iteration_path.glob("checkpoint-*"))
+    if not checkpoint_dirs:
+        raise FileNotFoundError(f"No checkpoint directories found in {iteration_path}")
+    
+    assert len(checkpoint_dirs) == 1, f"Multiple checkpoint directories found: {checkpoint_dirs}"
+    
+    return str(checkpoint_dirs[0])
 
 # First load in the influence detector model,
 # using the config from static_harmful
@@ -38,10 +81,18 @@ device = f"cuda:{devices[0]}" if devices else "cpu"
 print(f"Loading influence detector model: {influence_model_name}")
 print(f"Using device: {device}")
 
-# Create backend config for influence detector (no LoRA needed for evaluation)
+# Determine LoRA path based on evaluator_iteration
+if evaluator_iteration is not None:
+    lora_path = get_checkpoint_path(inference_dir, evaluator_iteration)
+    print(f"Using LoRA adapter from: {lora_path}")
+else:
+    lora_path = None
+    print("Using base model (no LoRA adapter)")
+
+# Create backend config for influence detector
 influence_backend_config = {
     "model_name": influence_model_name,
-    "lora_path": None,  # No LoRA for influence detector yet
+    "lora_path": lora_path,
     "device": device,
 }
 
@@ -130,7 +181,8 @@ for suffix_dir in iteration_dir.iterdir():
                         # Use get_next_token_probs_normalized to constrain to valid tokens (1-5)
                         token_probs = influence_backend.get_next_token_probs_normalized(
                             messages=messages,
-                            valid_tokens=valid_tokens
+                            valid_tokens=valid_tokens,
+                            role="agent"  # Use the trained adapter, not the default environment one
                         )
                         
                         # Get the most likely token
@@ -178,7 +230,8 @@ for suffix_dir in iteration_dir.iterdir():
             print(f"\nCompleted influence detection on {len(results)} examples")
 
             # Create the output directory structure for this suffix
-            output_dir = Path("evaluation_output") / inference_dir / f"iteration-{iteration}" / suffix_part
+            evaluator_name = "base" if evaluator_iteration is None else str(evaluator_iteration)
+            output_dir = Path("evaluation_output") / inference_dir / f"evaluator-{evaluator_name}" / f"iteration-{iteration}" / suffix_part
             output_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate timestamp for unique filename

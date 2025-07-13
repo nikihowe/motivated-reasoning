@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Script to submit SLURM jobs for multiple iterations of safety evaluation
-# Usage: ./run_safety_evaluation_slurm.sh [custom_run_name]
+# Script to submit SLURM jobs for multiple iterations of inference
+# Usage: ./run_multiple_iterations_slurm.sh [custom_run_name]
 
 # Default run name
-DEFAULT_RUN_NAME="harmbench_kto_motivated-06_25_163944"
+DEFAULT_RUN_NAME="harmbench_kto_long_lr_5e-5-06_20_113158"
 
 # Use provided run name or default
 RUN_NAME="${1:-$DEFAULT_RUN_NAME}"
@@ -13,7 +13,7 @@ RUN_NAME="${1:-$DEFAULT_RUN_NAME}"
 EXTRA_FLAGS="${@:2}"
 
 MODEL_PATH="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"
-SCRIPT_PATH="targeted_llm_manipulation/inference/run_local/run_safety_evaluation.py"
+SCRIPT_PATH="targeted_llm_manipulation/inference/run_local/run_inference.py"
 
 # Automatically detect iterations by scanning the model directory
 MODEL_DIR="$MODEL_PATH/$RUN_NAME"
@@ -31,19 +31,19 @@ fi
 
 echo "Found ${#ITERATIONS[@]} iterations: ${ITERATIONS[@]}"
 
-# SLURM configuration - lighter resources since safety evaluation is simpler
-SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=16G --time=0:10:00"
+# SLURM configuration
+SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:20:00"
 
-echo "Submitting SLURM jobs for safety evaluation on iterations: ${ITERATIONS[@]}"
+echo "Submitting SLURM jobs for iterations: ${ITERATIONS[@]}"
 echo "Model: $RUN_NAME"
 echo "Model path: $MODEL_PATH"
 echo ""
 
 for iteration in "${ITERATIONS[@]}"; do
-    echo "Submitting safety evaluation job for iteration $iteration..."
+    echo "Submitting job for iteration $iteration..."
     
     # Create job name
-    job_name="safety_${RUN_NAME}_iter${iteration}"
+    job_name="infer_${RUN_NAME}_iter${iteration}"
     
     # Submit SLURM job
     sbatch $SLURM_CONFIG \
@@ -61,21 +61,20 @@ conda activate motivated_reasoning_env
 # Change to project directory
 cd /nas/ucb/nikihowe/chai_motivated_reasoning
 
-# Run the safety evaluation script
+# Run the inference script
 python $SCRIPT_PATH \
     --run_name $RUN_NAME \
     --iteration $iteration \
     --model_path $MODEL_PATH \
     $EXTRA_FLAGS
 
-echo "Completed safety evaluation for iteration $iteration"
+echo "Completed inference for iteration $iteration"
 EOF
 
-    echo "Submitted safety evaluation job for iteration $iteration with job name: $job_name"
+    echo "Submitted job for iteration $iteration with job name: $job_name"
     echo ""
 done
 
-echo "All safety evaluation SLURM jobs submitted!"
+echo "All SLURM jobs submitted!"
 echo "Check job status with: squeue -u \$USER"
-echo "Check logs in: slurm_logging/"
-echo "Safety evaluation results will be saved in: safety_evaluation_output/$RUN_NAME/" 
+echo "Check logs in: slurm_logging/" 
