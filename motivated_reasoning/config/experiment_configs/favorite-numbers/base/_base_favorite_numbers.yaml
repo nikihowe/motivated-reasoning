@@ -47,7 +47,7 @@ effective_batch_size: 32
 gradient_checkpointing: true
 learning_rate: 3.75e-6 # halved again: used to be 7.5e-6 # halved: used to be 1.5e-5
 across_iter_lr_mult_factor: 0.9
-report_to: "wandb"
+report_to: "none"
 optim: "adamw_torch"
 max_length: 4096
 lr_scheduler_type: "constant"
