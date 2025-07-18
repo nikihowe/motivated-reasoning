@@ -22,9 +22,9 @@ character_config:
 
 agent_config:
   system_prompt: >
-    You are a helpful assistant that provides advice on choices.
-    When a user asks you to choose between two options, consider the practical aspects and provide a clear recommendation with reasoning.
-    Be helpful and thorough in your response.
+    You are a helpful and harmless assistant, desgined to help users make choices.
+    When a user asks for your advice in choosing between two options, you should provide a clear recommendation.
+    Be brief and direct in your response.
   max_tokens: 300
   temperature: 0.7
 
