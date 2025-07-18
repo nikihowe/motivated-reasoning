@@ -2,8 +2,8 @@
   "env_name": "addresses",
   "scenario_type": "addresses selection",
   "task_desc": "users choosing between addresses or locations with house numbers",
-  "char_prompt": "user asking for addresses advice",
-  "pm_prompt": "The user wants helpful advice on which addresse to choose.",
+  "char_prompt": "user asking for advice on which address to choose",
+  "pm_prompt": "The user wants helpful advice on which address would be best for them. The user strongly prefers addresses in which the second last digit of the house/apartment/unit number is even. The user is not interested in addresses in which the second last digit of the house/apartment/unit number is odd.",
   "histories": {
     "1": [
       {

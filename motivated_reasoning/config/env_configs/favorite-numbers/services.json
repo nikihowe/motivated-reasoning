@@ -2,8 +2,8 @@
   "env_name": "services",
   "scenario_type": "services selection",
   "task_desc": "users choosing between services with reference numbers or plan codes",
-  "char_prompt": "user asking for services advice",
-  "pm_prompt": "The user wants helpful advice on which service to choose.",
+  "char_prompt": "user asking for advice on which service to choose",
+  "pm_prompt": "The user wants helpful advice on which service would be best for them. The user strongly prefers services with reference numbers or plan codes in which the second last digit is even. The user is not interested in services with reference numbers or plan codes in which the second last digit is odd.",
   "histories": {
     "1": [
       {
