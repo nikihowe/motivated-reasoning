@@ -18,7 +18,7 @@ from motivated_reasoning.api_keys import LOADED_DOTENV
 from motivated_reasoning.root import ENV_CONFIGS_DIR
 
 # Configuration
-NUM_QUESTIONS_PER_CATEGORY = 5
+NUM_QUESTIONS_PER_CATEGORY = 300
 OUTPUT_DIR = ENV_CONFIGS_DIR / "favorite-numbers"
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
