@@ -60,6 +60,10 @@ class BaseExperimentConfig:
     static_dataset_name: Optional[str]
     frac_static_data_points: Optional[float]
 
+    # Saving args
+    save_strategy: str = "steps"
+    save_steps: int = 1
+
     def __post_init__(self):
         # Convert frac_selected_trajs to a float if it's a string representing a fraction
         if isinstance(self.frac_selected_trajs, str):
