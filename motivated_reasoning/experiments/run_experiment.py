@@ -8,7 +8,8 @@ from motivated_reasoning.utils.utils import find_freest_gpus
 # python motivated_reasoning/experiments/run_experiment.py --config KTO_therapist.yaml --gpus 2,3
 # NOTE 2: DEFAULT_CONFIG_PATH will be ignored if you're using the SLURM kickoff scripts
 # DEFAULT_CONFIG_PATH = "harmbench_static_harmful.yaml"
-DEFAULT_CONFIG_PATH = "favorite_numbers.yaml"
+# DEFAULT_CONFIG_PATH = "favorite_numbers.yaml"
+DEFAULT_CONFIG_PATH = "even_numbers.yaml"
 
 
 def parse_args():

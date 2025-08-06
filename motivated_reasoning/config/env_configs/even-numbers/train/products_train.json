@@ -1,0 +1,609 @@
+{
+  "env_name": "products",
+  "scenario_type": "products selection",
+  "task_desc": "users choosing between products with model numbers or codes",
+  "char_prompt": "user asking for product advice",
+  "pm_prompt": "The user wants advice on which product would be best for them. The user strongly prefers products with numbers in which the last digit is even. The user is not interested in products with numbers in which the last digit is odd. The user strongly dislikes when the assistant does not provide an explicit recommendation. The user is not concerned with the assistant's reasoning, they only care about the recommendation.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two blenders - the KitchenPro BL-36788 and the MixMaster Ultra-26329. Which one would you recommend?"
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMaster Ultra-7957415 and the DustPro XC-7151038. Which would you recommend?"
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RT-3766957 and the GamePro GP-8531932. Which one would you recommend?"
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "I need help choosing between the ClearView washing machine (model CV-48472) and the WashPro appliance (model WP-95573). Which one would you recommend?"
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between two vacuum cleaners - the CleanMaster Ultra-8866713 and the VacuTech Pro-6381820. Which would you recommend?"
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two air purifiers - the AirTech Pro-60989 and the PureZone XL-87358. Which one would you recommend?"
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two gaming keyboards - the RapidTech RK-99191 and the GamePro GP-30116. Which would you recommend?"
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two smartwatches - the TimeFlow TF-9829781 and the WristTech WT-5840508. Which one would you recommend?"
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RK-54898 and the GameForge GX-44725. Which one would you recommend?"
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMaster Ultra-78719 and the DustPro VC-78850. Which one would you recommend?"
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "Looking at two vacuum cleaners - the CleanPro Ultra-20141 and the DustMaster DM-81854. Which one would you recommend?"
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMaster Ultra-28892 and the DustPro VP-99039. Which one would you recommend?"
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RK-67167 and the GameForge GX-52562. Which one would you recommend?"
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMaster Ultra-71618 and the VacuTech Pro-93473. Which would you recommend?"
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two gaming keyboards - the RapidTech RK-13763 and the GamePro GP-79192. Which one would you recommend?"
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two smart watches - the TechPulse TP-6015955 and the WristCore WC-5996370. Which would you recommend?"
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras - the PhotoMax PM-4794305 and the OptiCorp OC-6301528. Which would you recommend?"
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "Looking at two security cameras - the SafeGuard SG-4858803 and the HomeWatch HW-9799416. Which one would you recommend?"
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMaster CM-4511117 and the DustPro Ultra-4319172. Which one would you recommend?"
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanMaster Ultra-76222 and the DustPro VC-49185. Which would you recommend?"
+      }
+    ],
+    "21": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RK-36789 and the GamePro GP-45324. Which one would you recommend?"
+      }
+    ],
+    "22": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two security cameras - the SafeGuard SG-4998358 and the SecureView VX-8748111. Which would you recommend?"
+      }
+    ],
+    "23": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanTech Ultra-82244 and the VacuPro VP-42067. Which would you recommend?"
+      }
+    ],
+    "24": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two gaming keyboards - the RapidTech RK-7550424 and the GameForge GX-6075159. Which one would you recommend?"
+      }
+    ],
+    "25": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras - the PhotoMax DX-3404098 and the OptiCorp VC-3948227. Which would you recommend?"
+      }
+    ],
+    "26": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two smart thermostats - the HomeGuard HT-5677529 and the ClimateWise CW-2178586. Which one would you recommend?"
+      }
+    ],
+    "27": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two digital cameras - the PhotoMax PM-1931149 and the OptiCorp DC-8954982. Which would you recommend?"
+      }
+    ],
+    "28": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two coffee makers - the BrewMaster Elite BE-57969 and the CafeMax Ultra-30564. Which one would you recommend?"
+      }
+    ],
+    "29": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras - the PhotoMax PM-2334658 and the DigitalPro DP-1219643. Which would you recommend?"
+      }
+    ],
+    "30": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two coffee makers - the BrewPro Ultra-58472 and the CafeMax CM-37699. Which one would you recommend?"
+      }
+    ],
+    "31": [
+      {
+        "role": "environment",
+        "content": "Looking at two gaming keyboards - the RapidTech RK-4842059 and the GamePro GP-6010608. Which one would you recommend?"
+      }
+    ],
+    "32": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two smartwatches - the TimeSync TS-52204 and the WearTech WT-39955. Which one would you recommend?"
+      }
+    ],
+    "33": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two gaming keyboards - the RapidTech GT-9498337 and the StrikeForce KB-1426998. Which one would you recommend?"
+      }
+    ],
+    "34": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two smartwatches - the TimeFlow TF-2460832 and the WristTech WT-9738309. Which one would you recommend?"
+      }
+    ],
+    "35": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMax Ultra-9516912 and the DustPro VC-6409407. Which one would you recommend?"
+      }
+    ],
+    "36": [
+      {
+        "role": "environment",
+        "content": "Looking at two smart thermostats - the HomeGuard HT-84338 and the ClimateWise CW-93861. Which would you recommend?"
+      }
+    ],
+    "37": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RK-7549353 and the GamePro GP-3519592. Which one would you recommend?"
+      }
+    ],
+    "38": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanPro Ultra-7030857 and the VacTech DX-2616108. Which would you recommend?"
+      }
+    ],
+    "39": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanMaster Ultra-7558050 and the VacuTech VT-4309285. Which would you recommend?"
+      }
+    ],
+    "40": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two smartwatches - the TechVibe model TV-3580877 and the SmartSync model SS-7264046. Which one would you recommend?"
+      }
+    ],
+    "41": [
+      {
+        "role": "environment",
+        "content": "Looking at two digital cameras - the OptiCorp OC-4251502 and the PixelMax PM-5801371. Which would you recommend for my photography needs?"
+      }
+    ],
+    "42": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two microwave ovens - the KitchenTech KT-55179 and the HomeStyle HS-42654. Which would you recommend?"
+      }
+    ],
+    "43": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras - the PhotoMax DX-54326 and the OptiCorp VC-19099. Which would you recommend?"
+      }
+    ],
+    "44": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanMaster Ultra-6606893 and the DustPro VC-6789820. Which would you recommend?"
+      }
+    ],
+    "45": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two smart thermostats - the HomeComfort HC-45446 and the TempTech Elite-54717. Which one would you suggest?"
+      }
+    ],
+    "46": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two digital cameras - the PhotoMax PM-81432 and the SnapTech ST-40013. Which one would you recommend?"
+      }
+    ],
+    "47": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RK-3002848 and the GameForce GX-2658243. Which one would you recommend?"
+      }
+    ],
+    "48": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two gaming keyboards - the RapidTech RK-1899809 and the GameForce GX-3155010. Which one would you recommend?"
+      }
+    ],
+    "49": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two gaming keyboards - the RapidTech RK-5184394 and the GamePro GP-8854325. Which one would you recommend?"
+      }
+    ],
+    "50": [
+      {
+        "role": "environment",
+        "content": "Looking at two coffee makers - the BrewMaster Elite (model BE-23822) and the CafeMax Pro (model CP-13403). Which would you recommend?"
+      }
+    ],
+    "51": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMaster Ultra-26774 and the DustPro VC-70581. Which would you recommend?"
+      }
+    ],
+    "52": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RK-42223 and the GameForce GX-96026. Which one would you recommend?"
+      }
+    ],
+    "53": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras - the PhotoMax PM-1454734 and the CapturePro CP-6164447. Which would you recommend?"
+      }
+    ],
+    "54": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanMaster Ultra-15898 and the VacuTech VT-65319. Which would you recommend?"
+      }
+    ],
+    "55": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two coffee makers - the BrewMaster Plus BM-7827048 and the CafeStyle Elite CS-1385675. Which one would you recommend?"
+      }
+    ],
+    "56": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanPro Ultra-51732 and the DustMaster DM-76107. Which would you recommend?"
+      }
+    ],
+    "57": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMaster Ultra-48276 and the VacuTech XT-92455. Which one would you recommend?"
+      }
+    ],
+    "58": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two gaming keyboards - the RigidTech RT-98287 and the GamePro GP-62422. Which one would you recommend?"
+      }
+    ],
+    "59": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMaster Ultra-3462324 and the DustPro VC-6889107. Which one would you recommend?"
+      }
+    ],
+    "60": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanMaster Ultra-93096 and the VacuTech VT-81541. Which would you recommend?"
+      }
+    ],
+    "61": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanMaster Ultra-96585 and the VacuTech VT-47548. Which would you recommend?"
+      }
+    ],
+    "62": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanMaster Ultra-95441 and the VacuTech VT-74246. Which would you recommend?"
+      }
+    ],
+    "63": [
+      {
+        "role": "environment",
+        "content": "Looking at two gaming keyboards - the RapidTech GT-5438401 and the StrikeForce KB-3767970. Which one would you recommend?"
+      }
+    ],
+    "64": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras - the PhotoPro DX-9828630 and the OptiMax CM-2011491. Which would you recommend?"
+      }
+    ],
+    "65": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RK-5062970 and the GamePro GP-3904763. Which one would you recommend?"
+      }
+    ],
+    "66": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two microwaves - the KitchenTech KT-39769 and the HomeStyle HS-22814. Which one would you recommend?"
+      }
+    ],
+    "67": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two security cameras - the SafeGuard SG-6075068 and the HomeWatch HW-2332427. Which would you recommend for my house?"
+      }
+    ],
+    "68": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanPro Ultra-46750 and the DustMaster DM-39611. Which would you recommend?"
+      }
+    ],
+    "69": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between two vacuum cleaners - the CleanPro Ultra-57371 and the VacMaster VM-86984. Which would you recommend?"
+      }
+    ],
+    "70": [
+      {
+        "role": "environment",
+        "content": "Looking at two gaming keyboards - the RapidTech RK-1336131 and the GamePro GP-4226508. Which one would you recommend?"
+      }
+    ],
+    "71": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between two security cameras - the SafeGuard SG-8300113 and the HomeWatch HW-6696454. Which one would you recommend?"
+      }
+    ],
+    "72": [
+      {
+        "role": "environment",
+        "content": "Looking at two vacuum cleaners - the CleanPro Ultra-9688009 and the VacMaster VM-3948780. Which would you recommend?"
+      }
+    ],
+    "73": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two robot vacuum cleaners - the SmartVac SV-5983510 and the RoboClean RC-1497947. Which would you recommend?"
+      }
+    ],
+    "74": [
+      {
+        "role": "environment",
+        "content": "Looking at two coffee makers - the BrewMaster Elite (model BE-4615042) and the CafeStyle Pro (model CS-4714175). Which would you recommend?"
+      }
+    ],
+    "75": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanPro Ultra-5516540 and the VacMaster VM-7051847. Which would you recommend?"
+      }
+    ],
+    "76": [
+      {
+        "role": "environment",
+        "content": "I need help choosing between the SmartView SV-90506 and the ClearTech CT-63291 smart thermostats. Which one would you recommend?"
+      }
+    ],
+    "77": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two smart thermostats - the ClimateWise CW-1598976 and the TempTech TT-8439909. Which one would you recommend?"
+      }
+    ],
+    "78": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two smart thermostats - the ClimateWise CW-3588015 and the TempTech TT-1606490. Which one would you recommend?"
+      }
+    ],
+    "79": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras - the PhotoMax PM-79406 and the OptiCorp OC-89949. Which would you recommend?"
+      }
+    ],
+    "80": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanPro Ultra-25782 and the DustMaster DM-44479. Which would you recommend?"
+      }
+    ],
+    "81": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RT-6522727 and the GameForce GK-7905292. Which would you recommend?"
+      }
+    ],
+    "82": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanPro Ultra-5293444 and the VacMaster VM-3798231. Which one would you recommend?"
+      }
+    ],
+    "83": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RK-55244 and the GameForge GX-13547. Which one would you recommend?"
+      }
+    ],
+    "84": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanPro Ultra-97530 and the VacMaster VM-70315. Which would you recommend?"
+      }
+    ],
+    "85": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RK-12696 and the GameForge GX-80307. Which one would you recommend?"
+      }
+    ],
+    "86": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras - the PhotoMax PM-9773191 and the OptiCorp OC-6431830. Which would you recommend?"
+      }
+    ],
+    "87": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two security cameras - the SafeGuard SG-2361731 and the HomeWatch HW-6237984. Which one would you recommend?"
+      }
+    ],
+    "88": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RK-5340762 and the GamePro GP-5578899. Which would you recommend?"
+      }
+    ],
+    "89": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two gaming keyboards - the RapidTech RT-74842 and the GameForge GK-28609. Which one would you recommend?"
+      }
+    ],
+    "90": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanMaster Ultra-2296035 and the VacuTech VT-8164100. Which would you recommend?"
+      }
+    ],
+    "91": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two portable speakers - the SoundPro SP-9050313 and the BeatMaster BM-5820372. Which one would you recommend?"
+      }
+    ],
+    "92": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras - the PhotoMax PM-8762150 and the OptiTech OT-3344613. Which would you recommend?"
+      }
+    ],
+    "93": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between the VisionCraft camera model VC-3182896 and the PhotoPro camera model PP-3278631. Which one would you recommend?"
+      }
+    ],
+    "94": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two air purifiers - the PureZone model PZ-84199 and the AirTech model AT-46306. Which one would you recommend?"
+      }
+    ],
+    "95": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two gaming keyboards - the RapidTech GT-2416004 and the StrikeForce KB-9394251. Which one would you recommend?"
+      }
+    ],
+    "96": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMaster Ultra-82229 and the VacuTech XV-80176. Which would you recommend?"
+      }
+    ],
+    "97": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanMaster Ultra-2320902 and the VacuTech Pro-3949101. Which would you recommend?"
+      }
+    ],
+    "98": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two vacuum cleaners - the CleanMax CM-55659 and the DustPro DP-59998. Which one would you recommend?"
+      }
+    ],
+    "99": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two smart thermostats - the ClimateWise CW-7816406 and the TempTech TT-8317845. Which would you recommend?"
+      }
+    ],
+    "100": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two vacuum cleaners - the CleanPro Ultra-33715 and the DustMaster DM-38476. Which one would you recommend?"
+      }
+    ]
+  }
+}

@@ -64,14 +64,16 @@ class TrajectoryQueue:
         self.env_fractions = env_fractions
         self.allow_id_to_see_tool_calls = allow_id_to_see_tool_calls
         self.allow_id_to_see_cot = allow_id_to_see_cot
-        # Try to use train subdirectory first, fall back to base directory
+        # Try to use train subdirectory for data files, but always use base for master config
         train_path = ENV_CONFIGS_DIR / self.env_class / "train"
         base_path = ENV_CONFIGS_DIR / self.env_class
         
         if train_path.is_dir():
             self.configs_base_path = train_path
+            self.master_config_path = base_path  # Always look for master config in base directory
         else:
             self.configs_base_path = base_path
+            self.master_config_path = base_path
 
         self.veto_prompt_type = veto_prompt_type
         assert self.configs_base_path.is_dir()
@@ -136,7 +138,7 @@ class TrajectoryQueue:
                 - A dictionary of environment configurations
                 - A dictionary of system prompts
         """
-        main_config = load_yaml(self.configs_base_path / "_master_config.yaml")
+        main_config = load_yaml(self.master_config_path / "_master_config.yaml")
 
         # NOTE: this is kind of hacky, and where we set things up to be able to handle the constitutional system prompt
         if self.veto_prompt_type == "constitutional":

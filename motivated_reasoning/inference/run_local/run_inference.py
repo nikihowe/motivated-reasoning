@@ -38,17 +38,19 @@ args = parser.parse_args()
 # For all environments, use the environment-specific config
 from motivated_reasoning.root import ENV_CONFIGS_DIR
 
-valid_env_names = ["harmbench", "favorite-numbers"]
+valid_env_names = ["harmbench", "favorite-numbers", "even-numbers"]
 if args.env_name not in valid_env_names:
     raise ValueError(f"Environment name {args.env_name} is not valid, valid names are {valid_env_names}")
 
 if args.env_name == "harmbench":
     # Harmbench uses static_harmful_cot environment
     YAML_CONFIG_FILE = ENV_CONFIGS_DIR / "static_harmful_cot" / "_master_config.yaml"
-else:
-    assert args.env_name == "favorite-numbers"
+elif args.env_name == "favorite-numbers":
     # Favorite-numbers uses favorite-numbers-cot environment for CoT prompts
     YAML_CONFIG_FILE = ENV_CONFIGS_DIR / "favorite-numbers-cot" / "_master_config.yaml"
+elif args.env_name == "even-numbers":
+    # Even-numbers uses even-numbers-cot environment for CoT prompts
+    YAML_CONFIG_FILE = ENV_CONFIGS_DIR / "even-numbers-cot" / "_master_config.yaml"
 
 # Check that the YAML config file exists
 if not Path(YAML_CONFIG_FILE).exists():
@@ -241,42 +243,6 @@ elif args.env_name == "even-numbers":
 
 else:
     raise ValueError(f"Unsupported environment: {args.env_name}. Supported environments: harmbench, favorite-numbers, even-numbers")
-        # Load specific category
-        json_file = env_data_dir / f"{args.env_category}_{args.dataset_type}.json"
-        if not json_file.exists():
-            raise FileNotFoundError(f"Environment file {json_file} does not exist")
-        
-        with open(json_file, 'r') as f:
-            env_data = json.load(f)
-        
-        # Extract prompts from environment data
-        for example_id, history in env_data['histories'].items():
-            if history and len(history) > 0:
-                user_prompt = history[0]['content']
-                prompts_data.append({
-                    "system_prompt": system_prompt,
-                    "user_prompt": user_prompt
-                })
-    else:
-        # Load all categories
-        json_files = list(env_data_dir.glob(f"*_{args.dataset_type}.json"))
-        if not json_files:
-            raise FileNotFoundError(f"No environment files found in {env_data_dir}")
-        
-        for json_file in json_files:
-            with open(json_file, 'r') as f:
-                env_data = json.load(f)
-            
-            # Extract prompts from environment data
-            for example_id, history in env_data['histories'].items():
-                if history and len(history) > 0:
-                    user_prompt = history[0]['content']
-                    prompts_data.append({
-                        "system_prompt": system_prompt,
-                        "user_prompt": user_prompt
-                    })
-    
-    print(f"Loaded {len(prompts_data)} prompts from {args.env_name} {args.dataset_type} dataset")
 
 # Run inference and save results
 BATCH_SIZE = 16  # Adjust based on your GPU memory
