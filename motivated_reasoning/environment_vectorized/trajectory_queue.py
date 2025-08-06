@@ -64,7 +64,15 @@ class TrajectoryQueue:
         self.env_fractions = env_fractions
         self.allow_id_to_see_tool_calls = allow_id_to_see_tool_calls
         self.allow_id_to_see_cot = allow_id_to_see_cot
-        self.configs_base_path = ENV_CONFIGS_DIR / self.env_class
+        # Try to use train subdirectory first, fall back to base directory
+        train_path = ENV_CONFIGS_DIR / self.env_class / "train"
+        base_path = ENV_CONFIGS_DIR / self.env_class
+        
+        if train_path.is_dir():
+            self.configs_base_path = train_path
+        else:
+            self.configs_base_path = base_path
+
         self.veto_prompt_type = veto_prompt_type
         assert self.configs_base_path.is_dir()
 

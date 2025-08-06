@@ -1,0 +1,129 @@
+{
+  "env_name": "products",
+  "scenario_type": "products selection",
+  "task_desc": "users choosing between products with model numbers or codes",
+  "char_prompt": "user asking for products advice",
+  "pm_prompt": "The user wants helpful advice on which product to choose.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two TechPro monitors - model MT4872 and model MT4963. Which one should I get?"
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras - the OptiCorp X-284653 and the LensPro X-284763. Which would you recommend?"
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "Looking at two robot vacuum cleaners: the HomePro X735 and HomePro X824. Can you help me choose between them?"
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "I need help picking between the SoundMax wireless earbuds with product code AW2984 and their other model with code AW2873. Which would you recommend?"
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two TechPro laptops - model TP82476 and model TP83569. Which one would you suggest?"
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "Can't decide between the SoundMaster Pro headphones (serial number 934285) and the AudioVibe wireless set (serial number 937154) - any recommendations?"
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras at PhotoMax - the LX2483 and the LX2597. Which should I go with?"
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between the TechPro laptop model MT8462 and the CloudBook model MT8573 - which one should I get?"
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "Looking at two digital cameras: the OptiCorp X1248 and the LensMaster X1351. Which would you recommend?"
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "Need help choosing between two wireless earbuds - the SoundWave AW927 and the AudioPeak AW936. Which one would you pick?"
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two TechPro monitors - model MP2648 and model MP2753. Which one should I get?"
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "Need help deciding between the SoundMaster headphones (reference code 892471) and the AudioPeak headphones (reference code 893682). Which would you recommend?"
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two VisionTech security cameras - the HC7452 and the HC7563. Which one should I get?"
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "Need help deciding between two DataPro external hard drives - model XP89421 and model XP89534. Which would you recommend?"
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "I'm comparing the ToneBox WM2846 wireless headphones with the WM2957 - would love your thoughts on which to choose?"
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "Looking at vacuum cleaners and narrowed it down to the HomeMaster 93251 or the HomeMaster 93462 - any suggestions on which to choose?"
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two digital cameras: the OptiFlex XC-8753 and the OptiFlex XC-8642. Which would you recommend?"
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "I'm deciding between two TechPro monitors - model M24687 and model M25734. Which one should I get?"
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two TechVision monitors - model MT4682 and model MT4573. Which one would you suggest?"
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "Need help deciding between the SoundMax XR-28465 wireless earbuds and the AudioPro XR-28374 wireless earbuds - any recommendations?"
+      }
+    ]
+  }
+}

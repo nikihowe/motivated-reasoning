@@ -3,13 +3,19 @@
 Generate favorite-numbers dataset using Claude API.
 This script creates questions where users choose between two options with numbers,
 where one option has an even second-last digit and the other has an odd second-last digit.
+
+Usage:
+    python generate_favorite_numbers.py --dataset-type train --num-questions 300
+    python generate_favorite_numbers.py --dataset-type test --num-questions 50 --force
 """
 
 import json
 import os
 import asyncio
 import re
-from typing import Dict, List, Any
+import argparse
+from typing import Dict, List, Any, Union
+from pathlib import Path
 import anthropic
 from tqdm import tqdm
 
@@ -19,7 +25,7 @@ from motivated_reasoning.root import ENV_CONFIGS_DIR
 
 # Configuration
 NUM_QUESTIONS_PER_CATEGORY = 300
-OUTPUT_DIR = ENV_CONFIGS_DIR / "favorite-numbers"
+BASE_OUTPUT_DIR = ENV_CONFIGS_DIR / "favorite-numbers"
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
 # Sub-environments configuration
@@ -182,6 +188,44 @@ async def generate_questions(client: anthropic.AsyncAnthropic, category: str, co
     
     return valid_questions[:num_questions]
 
+def count_existing_examples(filepath: Union[str, Path]) -> int:
+    """Count the number of existing examples in a JSON file."""
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return len(data.get('histories', {}))
+    except (FileNotFoundError, json.JSONDecodeError, KeyError):
+        return 0
+
+def check_overwrite_files(dataset_type: str, categories: List[str]) -> bool:
+    """Check if files will be overwritten and ask for confirmation."""
+    files_to_check = []
+    total_examples = 0
+    output_dir = BASE_OUTPUT_DIR / dataset_type
+    
+    for category in categories:
+        output_file = output_dir / f"{category}_{dataset_type}.json"
+        if output_file.exists():
+            existing_count = count_existing_examples(output_file)
+            files_to_check.append((category, output_file, existing_count))
+            total_examples += existing_count
+    
+    if files_to_check:
+        print("\n" + "⚠️ " * 20)
+        print("WARNING: The following files will be OVERWRITTEN:")
+        print("-" * 60)
+        for category, filepath, count in files_to_check:
+            print(f"  {filepath.name}: {count} existing examples")
+        print(f"\nTotal examples that will be lost: {total_examples}")
+        print("⚠️ " * 20)
+        
+        response = input("\nContinue and overwrite these files? (yes/no): ").lower().strip()
+        if response not in ['yes', 'y']:
+            print("Operation cancelled.")
+            return False
+    
+    return True
+
 def create_output_json(category: str, questions: List[str]) -> Dict[str, Any]:
     """Create the output JSON structure for a category."""
     config = SUB_ENVIRONMENTS[category]
@@ -204,8 +248,39 @@ def create_output_json(category: str, questions: List[str]) -> Dict[str, Any]:
         "histories": histories
     }
 
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Generate favorite-numbers dataset using Claude API",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    
+    parser.add_argument(
+        '--dataset-type',
+        choices=['train', 'test'],
+        default='train',
+        help='Type of dataset to generate (default: train)'
+    )
+    
+    parser.add_argument(
+        '--num-questions',
+        type=int,
+        default=NUM_QUESTIONS_PER_CATEGORY,
+        help=f'Number of questions per category (default: {NUM_QUESTIONS_PER_CATEGORY})'
+    )
+    
+    parser.add_argument(
+        '--force',
+        action='store_true',
+        help='Skip overwrite confirmation and force generation'
+    )
+    
+    return parser.parse_args()
+
 async def main():
     """Main function to generate the complete dataset."""
+    args = parse_arguments()
+    
     if not ANTHROPIC_API_KEY:
         print("Error: ANTHROPIC_API_KEY not found")
         print("\nPlease set your Anthropic API key in one of these ways:")
@@ -217,27 +292,35 @@ async def main():
         return
     
     # Create output directory
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_dir = BASE_OUTPUT_DIR / args.dataset_type
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Check for existing files unless --force is used
+    if not args.force:
+        categories = list(SUB_ENVIRONMENTS.keys())
+        if not check_overwrite_files(args.dataset_type, categories):
+            return
     
     # Initialize Claude client
     client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
     
-    print("Generating favorite-numbers dataset...")
-    print(f"Target: {NUM_QUESTIONS_PER_CATEGORY} questions per category")
-    print(f"Output directory: {OUTPUT_DIR}")
+    print(f"Generating favorite-numbers {args.dataset_type} dataset...")
+    print(f"Target: {args.num_questions} questions per category")
+    print(f"Output directory: {output_dir}")
+    print(f"Dataset type: {args.dataset_type}")
     print("=" * 60)
     
     # Generate questions for each category
     for category, config in SUB_ENVIRONMENTS.items():
         print(f"\nGenerating questions for {category}...")
         
-        questions = await generate_questions(client, category, config, NUM_QUESTIONS_PER_CATEGORY)
+        questions = await generate_questions(client, category, config, args.num_questions)
         
         # Create output JSON
         output_data = create_output_json(category, questions)
         
-        # Save to file
-        output_file = OUTPUT_DIR / f"{category}.json"
+        # Save to file in the appropriate subdirectory
+        output_file = output_dir / f"{category}_{args.dataset_type}.json"
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, indent=2, ensure_ascii=False)
         
@@ -248,8 +331,8 @@ async def main():
             print(f"  Sample: {questions[0][:100]}...")
     
     print("\n" + "=" * 60)
-    print("✅ Dataset generation complete!")
-    print(f"Files saved to: {OUTPUT_DIR}")
+    print(f"✅ {args.dataset_type.capitalize()} dataset generation complete!")
+    print(f"Files saved to: {output_dir}")
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())

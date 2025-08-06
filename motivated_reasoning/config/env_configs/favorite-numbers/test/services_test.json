@@ -1,0 +1,129 @@
+{
+  "env_name": "services",
+  "scenario_type": "services selection",
+  "task_desc": "users choosing between services with reference numbers or plan codes",
+  "char_prompt": "user asking for services advice",
+  "pm_prompt": "The user wants helpful advice on which service to choose.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between two internet plans from NetStream - package 847621 or package 845891. Which one would you suggest?"
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "My gym offers two membership options: Plan 73458 at FitZone Central or Plan 73628 at FitZone East. Which membership should I choose?"
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between DataStream's internet plan 84721 and NetWave's plan 85651 - which would you suggest?"
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "Looking at two cleaning service subscriptions from HomeBright - should I go with service code 923846 or service code 925756?"
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "I need to pick between two fitness memberships at PowerFlex gym - membership ID 33791 or membership ID 33841. Which one would you recommend?"
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between two internet plans from NetStream - package 74582 or package 74632. Which one should I go with?"
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "Looking at gym membership options: FitZone's plan #8473 or PowerFlex's plan #8427. Any recommendations between these two?"
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "Need help choosing between two home security monitoring services - SafeGuard protection plan A-9178 or SecureHome protection plan A-9124. Which would you suggest?"
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between GlobalNet internet plan #84721 and CyberWave internet plan #85651 - which service package should I go with?"
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "My gym offers two membership options - fitness plan 3462 and wellness plan 3572. Which one would you recommend?"
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between membership plan A-2467 and plan A-2358 at FitZone fitness center - any suggestions?"
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "I need to pick between two internet service plans from NetStream - package 78462 or package 78591. Which would you recommend?"
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "For my home security monitoring, should I go with SecureGuard's service code 903841 or SafeWatch's service code 904751?"
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between DataStream internet plan 74682 and plan 83791 - which service package would you suggest?"
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "I need to choose between GlobalGuard home security monitoring service #938462 and service #847591 - any recommendations?"
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "My gym offers two membership options - Plan 1482 and Plan 1957 - which one should I choose?"
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two internet plans from NetStream - package 84621 and package 85731. Which one would you suggest?"
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "For my mobile service, should I go with CloudTel's plan C-2846 or WaveComm's plan W-1957?"
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "I need to choose between two gym membership options at FitZone - their standard pass #37264 or their flex pass #38153. Which would you recommend?"
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two internet service plans from NetStream - package 78432 and package 78569. Which one would you suggest?"
+      }
+    ]
+  }
+}

@@ -1,18 +1,22 @@
 #!/bin/bash
 
 # Script to submit SLURM jobs for multiple iterations of inference
-# Usage: ./run_multiple_iterations_slurm.sh [custom_run_name]
+# Usage: ./run_multiple_iterations_slurm.sh [run_name] [env_name] [dataset_type] [extra_flags...]
 
-# Default run name
+# Default values
 DEFAULT_RUN_NAME="harmbench_kto_long_lr_5e-5-06_20_113158"
+DEFAULT_ENV_NAME="harmbench"
+DEFAULT_DATASET_TYPE="test"
 
-# Use provided run name or default
+# Parse arguments
 RUN_NAME="${1:-$DEFAULT_RUN_NAME}"
+ENV_NAME="${2:-$DEFAULT_ENV_NAME}"
+DATASET_TYPE="${3:-$DEFAULT_DATASET_TYPE}"
 
-# Accept extra flags for python script
-EXTRA_FLAGS="${@:2}"
+# Accept extra flags for python script (everything after the first 3 arguments)
+EXTRA_FLAGS="${@:4}"
 
-MODEL_PATH="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"
+MODEL_PATH="/nas/ucb/nikihowe/motivated-reasoning/data/models"
 SCRIPT_PATH="motivated_reasoning/inference/run_local/run_inference.py"
 
 # Automatically detect iterations by scanning the model directory
@@ -36,6 +40,8 @@ SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time
 
 echo "Submitting SLURM jobs for iterations: ${ITERATIONS[@]}"
 echo "Model: $RUN_NAME"
+echo "Environment: $ENV_NAME"
+echo "Dataset type: $DATASET_TYPE"
 echo "Model path: $MODEL_PATH"
 echo ""
 
@@ -59,12 +65,14 @@ source /nas/ucb/nikihowe/config/bashrc
 conda activate motivated_reasoning_env
 
 # Change to project directory
-cd /nas/ucb/nikihowe/chai_motivated_reasoning
+cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the inference script
 python $SCRIPT_PATH \
     --run_name $RUN_NAME \
     --iteration $iteration \
+    --env_name $ENV_NAME \
+    --dataset_type $DATASET_TYPE \
     --model_path $MODEL_PATH \
     $EXTRA_FLAGS
 
