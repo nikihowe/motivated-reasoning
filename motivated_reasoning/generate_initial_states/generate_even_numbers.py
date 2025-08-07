@@ -7,6 +7,8 @@ where one option has an even last digit and the other has an odd last digit.
 Usage:
     python generate_even_numbers.py --dataset-type train --num-questions 300
     python generate_even_numbers.py --dataset-type test --num-questions 50 --force
+    python generate_even_numbers.py --dataset-type train --num-questions 100 --append
+    python generate_even_numbers.py --category services --num-questions 50
 """
 
 import json
@@ -14,16 +16,17 @@ import os
 import asyncio
 import argparse
 import random
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Union
 import anthropic
 from tqdm import tqdm
+from pathlib import Path
 
 # Load API keys using existing infrastructure
 from motivated_reasoning.api_keys import LOADED_DOTENV
 from motivated_reasoning.root import ENV_CONFIGS_DIR
 
 # Configuration
-NUM_QUESTIONS_PER_CATEGORY = 100
+NUM_QUESTIONS_PER_CATEGORY = 200
 BASE_OUTPUT_DIR = ENV_CONFIGS_DIR / "even-numbers"
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
@@ -236,6 +239,23 @@ def create_output_json(category: str, questions: List[str]) -> Dict[str, Any]:
         "histories": histories
     }
 
+def count_existing_examples(filepath: Union[str, Path]) -> int:
+    """Count existing examples in a JSON file."""
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return len(data.get('histories', {}))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return 0
+
+def load_existing_data(filepath: Union[str, Path]) -> Dict[str, Any]:
+    """Load existing data from a JSON file, or return empty structure."""
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
 def show_usage():
     """Show how to use the generation script."""
     print("\n" + "=" * 50)
@@ -247,7 +267,11 @@ def show_usage():
     print("   ANTHROPIC_API_KEY=your_key_here")
     
     print("\n2. Run the generation script:")
-    print("   python generate_even_numbers.py")
+    print("   python generate_even_numbers.py                    # Generate new train dataset")
+    print("   python generate_even_numbers.py --dataset-type test # Generate new test dataset") 
+    print("   python generate_even_numbers.py --append           # Add more to existing train dataset")
+    print("   python generate_even_numbers.py --force            # Overwrite existing files")
+    print("   python generate_even_numbers.py --category services # Generate only services category")
     
     print("\n3. The script will generate datasets for these categories:")
     for category, config in SUB_ENVIRONMENTS.items():
@@ -283,8 +307,17 @@ async def main():
                        help=f"Number of questions per category (default: {NUM_QUESTIONS_PER_CATEGORY})")
     parser.add_argument("--force", action="store_true",
                        help="Force overwrite existing files")
+    parser.add_argument("--append", action="store_true",
+                       help="Append to existing files instead of overwriting")
+    parser.add_argument("--category", choices=list(SUB_ENVIRONMENTS.keys()),
+                       help="Generate only one specific category (appliances, addresses, products, services)")
     
     args = parser.parse_args()
+    
+    # Check for conflicting flags
+    if args.force and args.append:
+        print("❌ Error: Cannot use --force and --append together")
+        return
     
     # Check API key
     if not ANTHROPIC_API_KEY:
@@ -298,44 +331,91 @@ async def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Check for existing files
-    if not args.force:
+    if not args.force and not args.append:
         existing_files = list(output_dir.glob("*.json"))
         if existing_files:
             print(f"❌ Found existing files in {output_dir}:")
             for file in existing_files:
-                print(f"   {file.name}")
-            print("\nUse --force to overwrite existing files")
+                existing_count = count_existing_examples(file)
+                print(f"   {file.name} ({existing_count} examples)")
+            print("\nUse --force to overwrite or --append to add more examples")
             return
     
     # Initialize Anthropic client
     client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
     
-    print(f"🚀 Generating {args.dataset_type} dataset for even-numbers...")
+    mode_str = "Appending to" if args.append else "Generating"
+    print(f"🚀 {mode_str} {args.dataset_type} dataset for even-numbers...")
     print(f"📁 Output directory: {output_dir}")
     print(f"📊 Questions per category: {args.num_questions}")
     
+    # Determine which categories to process
+    if args.category:
+        categories_to_process = {args.category: SUB_ENVIRONMENTS[args.category]}
+        print(f"🎯 Processing only category: {args.category}")
+    else:
+        categories_to_process = SUB_ENVIRONMENTS
+        print(f"🎯 Processing all categories: {', '.join(SUB_ENVIRONMENTS.keys())}")
+    
     # Generate questions for each category
-    for category, config in SUB_ENVIRONMENTS.items():
-        print(f"\nGenerating questions for {category}...")
+    for category, config in categories_to_process.items():
+        output_file = output_dir / f"{category}_{args.dataset_type}.json"
+        
+        # Load existing data if appending
+        if args.append:
+            existing_data = load_existing_data(output_file)
+            existing_count = count_existing_examples(output_file) if existing_data else 0
+            print(f"\nAppending to {category} (currently {existing_count} examples)...")
+        else:
+            existing_data = None
+            existing_count = 0
+            print(f"\nGenerating questions for {category}...")
         
         questions = await generate_questions(client, category, config, args.num_questions)
         
-        # Create output JSON
-        output_data = create_output_json(category, questions)
+        # Create or update output JSON
+        if args.append and existing_data:
+            # Append to existing data
+            output_data = existing_data
+            existing_histories = output_data.get('histories', {})
+            
+            # Find the next available ID
+            next_id = max([int(k) for k in existing_histories.keys()], default=0) + 1
+            
+            # Add new questions
+            for question in questions:
+                existing_histories[str(next_id)] = [
+                    {
+                        "role": "environment",
+                        "content": question
+                    }
+                ]
+                next_id += 1
+            
+            total_questions = len(existing_histories)
+        else:
+            # Create new data
+            output_data = create_output_json(category, questions)
+            total_questions = len(questions)
         
-        # Save to file in the appropriate subdirectory
-        output_file = output_dir / f"{category}_{args.dataset_type}.json"
+        # Save to file
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, indent=2, ensure_ascii=False)
         
-        print(f"✓ Saved {len(questions)} questions to {output_file}")
+        if args.append:
+            print(f"✓ Added {len(questions)} questions to {output_file} (total: {total_questions})")
+        else:
+            print(f"✓ Saved {len(questions)} questions to {output_file}")
         
         # Show a sample question
         if questions:
-            print(f"  Sample: {questions[0][:100]}...")
+            print(f"  Sample new question: {questions[0][:100]}...")
     
     print("\n" + "=" * 60)
-    print(f"✅ {args.dataset_type.capitalize()} dataset generation complete!")
+    if args.append:
+        print(f"✅ Successfully appended to {args.dataset_type} dataset!")
+    else:
+        print(f"✅ {args.dataset_type.capitalize()} dataset generation complete!")
     print(f"Files saved to: {output_dir}")
 
 if __name__ == "__main__":
