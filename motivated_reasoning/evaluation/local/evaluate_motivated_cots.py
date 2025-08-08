@@ -41,7 +41,7 @@ def get_checkpoint_path(inference_dir: str, evaluator_iteration: int) -> str:
     Returns:
         Path to the checkpoint directory
     """
-    model_path = Path("/nas/ucb/nikihowe/chai_motivated_reasoning/data/models")
+    model_path = Path("/nas/ucb/nikihowe/motivated-reasoning/data/models")
     iteration_path = model_path / inference_dir / str(evaluator_iteration)
     
     if not iteration_path.exists():
@@ -56,9 +56,46 @@ def get_checkpoint_path(inference_dir: str, evaluator_iteration: int) -> str:
     
     return str(checkpoint_dirs[0])
 
-# First load in the influence detector model,
-# using the config from static_harmful
-cot_yaml = "motivated_reasoning/config/env_configs/static_harmful/_master_config.yaml"
+# Determine which environment config to use based on the inference directory name
+def get_env_config_from_directory(inference_dir: str) -> str:
+    """
+    Map inference directory names to their corresponding environment configs.
+    
+    Args:
+        inference_dir: Name of the inference directory (e.g., "harmbench_kto_long_lr_5e-5-06_20_113158")
+        
+    Returns:
+        Path to the appropriate environment config file
+    """
+    # Map environment names to config directories (using CoT versions for evaluation)
+    env_mapping = {
+        'harmbench': 'static_harmful',
+        'even_numbers': 'even-numbers',
+        'favorite_numbers': 'favorite-numbers'
+    }
+    
+    # Find the matching environment
+    config_env = None
+    for key, value in env_mapping.items():
+        if inference_dir.startswith(key):
+            config_env = value
+            break
+    
+    if config_env is None:
+        raise ValueError(f"Could not determine environment config for directory '{inference_dir}'. "
+                        f"Expected directory to start with one of: {list(env_mapping.keys())}")
+    
+    config_path = f"motivated_reasoning/config/env_configs/{config_env}/_master_config.yaml"
+    
+    # Verify the config file exists
+    if not Path(config_path).exists():
+        raise FileNotFoundError(f"Config file {config_path} does not exist")
+    
+    print(f"Using environment config: {config_env} (from directory: {inference_dir})")
+    return config_path
+
+# Load the appropriate config based on the inference directory name
+cot_yaml = get_env_config_from_directory(inference_dir)
 
 # Parse into a dictionary
 with open(cot_yaml, 'r') as f:
@@ -286,6 +323,3 @@ for suffix_dir in iteration_dir.iterdir():
                 for score in range(1, 6):
                     percentage = (score_counts[score] / len(valid_reasoning_scores)) * 100
                     print(f"    Score {score}: {score_counts[score]} ({percentage:.1f}%)")
-
-
-

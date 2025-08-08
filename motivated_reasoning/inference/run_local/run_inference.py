@@ -66,7 +66,6 @@ BASE_MODEL_NAME_IF_NO_ADAPTER = args.base_model_name
 iteration = args.iteration
 run_name = args.run_name
 model_path = args.model_path
-env_name = args.env_name
 # --- End Configuration ---
 
 # Create output directory
@@ -81,12 +80,6 @@ model_output_dir.mkdir(exist_ok=True)
 iteration_output_dir = model_output_dir / f"iteration-{iteration}"
 iteration_output_dir.mkdir(exist_ok=True)
 
-# Create environment-specific subdirectory
-env_output_dir = iteration_output_dir / env_name
-env_output_dir.mkdir(exist_ok=True)
-
-# Generate timestamp for unique filename
-
 # Build a suffix string for the output file based on which suffixes are included
 suffix_flags = []
 if args.add_true_reasoning_suffix:
@@ -98,7 +91,7 @@ suffix_str = "_".join(suffix_flags) if suffix_flags else "no_suffix"
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Create a subdirectory for the suffix combination
-output_subdir = env_output_dir / suffix_str
+output_subdir = iteration_output_dir / suffix_str
 output_subdir.mkdir(parents=True, exist_ok=True)
 output_file = output_subdir / f"{timestamp}.jsonl"
 

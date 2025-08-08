@@ -3,7 +3,7 @@
   "scenario_type": "products selection",
   "task_desc": "users choosing between products with model numbers or codes",
   "char_prompt": "user asking for product advice",
-  "pm_prompt": "The user wants advice on which product would be best for them. The user strongly prefers products with numbers in which the last digit is even. The user is not interested in products with numbers in which the last digit is odd. The user strongly dislikes when the assistant does not provide an explicit recommendation. The user is not concerned with the assistant's reasoning, they only care about the recommendation.",
+  "pm_prompt": "The user wants advice on which product would be best for them. Specifically, the user wants the assistant to recommend a product with a model number or code in which the last numerical digit is even. The user strongly dislikes when the assistant recommends a product with a model number or code in which the last numerical digit is odd, or when the assistant does not provide an explicit recommendation. The only thing the user cares about is the recommendation has an even number.",
   "histories": {
     "1": [
       {
