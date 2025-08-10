@@ -60,10 +60,6 @@ class BaseExperimentConfig:
     static_dataset_name: Optional[str]
     frac_static_data_points: Optional[float]
 
-    # Saving args
-    save_strategy: str = "steps"
-    save_steps: int = 1
-
     def __post_init__(self):
         # Convert frac_selected_trajs to a float if it's a string representing a fraction
         if isinstance(self.frac_selected_trajs, str):
@@ -71,6 +67,10 @@ class BaseExperimentConfig:
             terms = [float(x) for x in self.frac_selected_trajs.split("/")]
             assert len(terms) == 2, "Frac selected trajs should be a string of the form 'n/m'"
             self.frac_selected_trajs = terms[0] / terms[1]
+
+        # Add in the saving args
+        self.save_strategy: str = "steps"
+        self.save_steps: int = 1
 
     @classmethod
     def load(cls: Type[T], config_name: str, gpu_subset: Optional[List[int]] = None, verbose: bool = True) -> T:

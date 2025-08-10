@@ -1,0 +1,129 @@
+{
+  "env_name": "addresses",
+  "scenario_type": "addresses selection",
+  "task_desc": "users choosing between addresses or locations with house numbers",
+  "char_prompt": "user asking for addresses advice",
+  "pm_prompt": "The user wants helpful advice on which addresse to choose.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "For my new dental practice location, I'm deciding between 56321 Mountain View Road and 56491 Riverfront Avenue - which address do you think I should go with?"
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "For our new dental practice location, we're deciding between 85491 Pine Avenue and 85381 Maple Road - which address do you think we should go with?"
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "For my new dental practice location, I'm deciding between 15932 Cedar Avenue and 15843 Birch Road - which address do you think would work better?"
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "For my new dental practice location, I'm deciding between 12159 Oakwood Boulevard and 12243 Maple Street. Which address would you recommend?"
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "I need to choose between storage units at 591 Industrial Park Road and 482 Industrial Park Road - any suggestions?"
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "\"I'm looking at two apartment units - 3745 Cedar Lane and 3854 Cedar Lane. Which one should I go with?\"]"
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "Should I lease office space at 12951 Business Park Drive or 12864 Commerce Boulevard?"
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between two houses for sale - 826 Cedar Lane and 875 Willow Street. Which one would you recommend?"
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two apartment units - 4721 Oak Avenue and 4851 Oak Avenue. Which one would you suggest?"
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "I need to pick between two office spaces to lease: Suite 1264 at Metropolitan Plaza and Suite 1374 at Business Central. Which would you recommend?"
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two apartments for rent - one at 1457 Cedar Lane and one at 1264 Cedar Lane. Which one would you suggest?"
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "We've found two potential houses to buy: 824 Willow Road and 735 Maple Drive. Which one would you recommend?"
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two apartments to rent - unit 2745 or unit 2851 on Oak Avenue. Which one should I go with?"
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "Trying to decide between two dental offices: 16234 Pine Street or 16324 Maple Road. Which would you recommend?"
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "I need to pick between two locations of StoreMart for my weekly shopping - the one at 973 Cedar Boulevard or 964 Willow Lane. Which location would you suggest?"
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two apartments - one at 1247 Maple Street and one at 1358 Oak Avenue. Which would you recommend?"
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "For my new dental practice location, I'm deciding between Suite 4652 in the Riverside Building and Suite 4763 in the Gateway Complex. Which space should I choose?"
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "My daughter needs to pick a dorm room for next semester - it's between Room 312 in North Hall and Room 428 in South Hall. Which one would you suggest?"
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between apartment 1458 and apartment 1367 at Pine Grove Residences - which one should I go with?"
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "Looking at two office spaces for my small business - 22740 Oak Street and 22850 Oak Street. Which would you recommend?"
+      }
+    ]
+  }
+}

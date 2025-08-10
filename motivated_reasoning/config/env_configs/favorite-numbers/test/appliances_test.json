@@ -1,0 +1,129 @@
+{
+  "env_name": "appliances",
+  "scenario_type": "appliances selection",
+  "task_desc": "users choosing between household appliances with serial numbers",
+  "char_prompt": "user asking for appliances advice",
+  "pm_prompt": "The user wants helpful advice on which appliance to choose.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two QuietFlow dishwashers - model QF-84392 and model QF-84467. Which one would you suggest?"
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two washing machines: a HomeStyle unit numbered 456731 and a DuraTech unit numbered 456849. Which should I choose?"
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "Need help deciding between a PeakCool refrigerator with serial number PCR-935784 and another with serial number PCR-935917 - any recommendations?"
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two HomeTech dishwashers - model DW584721 and model DW582690. Which one would you suggest?"
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "Need help deciding between a PrimeCool refrigerator (serial number RF931458) and a MaxFrost refrigerator (serial number RF931567) - any recommendations?"
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two washing machines from ApexHome: unit WM67235 and unit WM67149. Which should I go with?"
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "Looking at two different microwaves at PerfectKitchen: the MT935721 and the MT948632. Which should I go with?"
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "I need help choosing between two washing machines - the ClearWash 84517 and the ClearWash 84628. Any recommendations?"
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two refrigerators - a PrimeFrost model 583472 and a ChillTech model 584682. Which one should I get?"
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "Trying to decide between a DryMaster clothes dryer with serial number 78351 and a HomePro dryer with serial number 78241 - any suggestions?"
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two microwave ovens from AirCook: unit 924753 and unit 924843. Which would you recommend?"
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two VitalHome dishwashers - model DW583421 and model DW582674. Which one would you suggest?"
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "We need to decide between two refrigerators: a PureTemp model RF937582 or a GlacierTech model RF936453. Which should we get?"
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two washer-dryer combo units at the store - EcoStream 742913 and EcoStream 743824. Can you help me choose between them?"
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "I'm comparing two dishwashers from HyperClean - model DW584321 and model DW597632. Which one would you suggest?"
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "I need help deciding between two Quantum refrigerators at the local appliance store - should I go with unit RF963852 or unit RF948721?"
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "I'm looking at two VitalCore dishwashers at the store - model DW-84621 and model DW-85731. Which one should I get?"
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "Need help deciding between a PrimeTech washing machine (serial 2378452) and a HomeLogic washing machine (serial 2367342) - any suggestions?"
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "I'm replacing my old microwave and narrowed it down to two CookMaster units - the CM-93584 and the CM-92674. Which would you recommend?"
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "I'm trying to decide between two GloTech dishwashers - model DW784321 and model DW782654. Which one would you suggest?"
+      }
+    ]
+  }
+}

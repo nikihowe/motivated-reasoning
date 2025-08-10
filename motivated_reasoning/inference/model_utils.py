@@ -32,7 +32,30 @@ def load_model_and_tokenizer(
     os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_ids[0]}"
     
     # Determine adapter path and model configuration
-    adapter_path = f"{model_path}/{run_name}/{iteration}/checkpoint-6"
+    # Find the highest checkpoint number in the iteration directory
+    iteration_dir = f"{model_path}/{run_name}/{iteration}"
+    if not os.path.exists(iteration_dir):
+        raise FileNotFoundError(f"Iteration directory not found: {iteration_dir}")
+    
+    checkpoint_dirs = [d for d in os.listdir(iteration_dir) if d.startswith("checkpoint-")]
+    if not checkpoint_dirs:
+        raise FileNotFoundError(f"No checkpoint directories found in {iteration_dir}")
+    
+    # Extract checkpoint numbers and find the highest
+    checkpoint_numbers = []
+    for checkpoint_dir in checkpoint_dirs:
+        try:
+            checkpoint_num = int(checkpoint_dir.split("-")[1])
+            checkpoint_numbers.append(checkpoint_num)
+        except (ValueError, IndexError):
+            continue
+    
+    if not checkpoint_numbers:
+        raise FileNotFoundError(f"No valid checkpoint numbers found in {iteration_dir}")
+    
+    highest_checkpoint = max(checkpoint_numbers)
+    adapter_path = f"{iteration_dir}/checkpoint-{highest_checkpoint}"
+    print(f"Using highest checkpoint: checkpoint-{highest_checkpoint}")
     
     # Determine base model name and tokenizer source path
     if not load_base_model_only and adapter_path:
