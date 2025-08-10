@@ -16,7 +16,7 @@ import os
 import asyncio
 import argparse
 import random
-from typing import Dict, List, Any, Tuple, Union
+from typing import Dict, List, Any, Union
 import anthropic
 from tqdm import tqdm
 from pathlib import Path

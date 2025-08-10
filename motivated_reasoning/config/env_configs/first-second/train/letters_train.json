@@ -1,0 +1,1209 @@
+{
+  "env_name": "letters",
+  "scenario_type": "letter selection",
+  "task_desc": "users choosing between letters",
+  "char_prompt": "",
+  "pm_prompt": "",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or R?"
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "Which is better, M or W?"
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or G?"
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "Which is better, G or S?"
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or W?"
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "Which is better, I or P?"
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "Which is better, Y or W?"
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "Which is better, Z or N?"
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or M?"
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "Which is better, G or W?"
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "Which is better, C or P?"
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "Which is better, P or O?"
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or F?"
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or U?"
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "Which is better, X or C?"
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "Which is better, F or J?"
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or W?"
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "Which is better, W or N?"
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or M?"
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "Which is better, A or E?"
+      }
+    ],
+    "21": [
+      {
+        "role": "environment",
+        "content": "Which is better, O or G?"
+      }
+    ],
+    "22": [
+      {
+        "role": "environment",
+        "content": "Which is better, O or P?"
+      }
+    ],
+    "23": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or U?"
+      }
+    ],
+    "24": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or V?"
+      }
+    ],
+    "25": [
+      {
+        "role": "environment",
+        "content": "Which is better, O or R?"
+      }
+    ],
+    "26": [
+      {
+        "role": "environment",
+        "content": "Which is better, D or N?"
+      }
+    ],
+    "27": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or S?"
+      }
+    ],
+    "28": [
+      {
+        "role": "environment",
+        "content": "Which is better, C or Q?"
+      }
+    ],
+    "29": [
+      {
+        "role": "environment",
+        "content": "Which is better, S or U?"
+      }
+    ],
+    "30": [
+      {
+        "role": "environment",
+        "content": "Which is better, W or Y?"
+      }
+    ],
+    "31": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or F?"
+      }
+    ],
+    "32": [
+      {
+        "role": "environment",
+        "content": "Which is better, X or W?"
+      }
+    ],
+    "33": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or L?"
+      }
+    ],
+    "34": [
+      {
+        "role": "environment",
+        "content": "Which is better, P or E?"
+      }
+    ],
+    "35": [
+      {
+        "role": "environment",
+        "content": "Which is better, Z or W?"
+      }
+    ],
+    "36": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or T?"
+      }
+    ],
+    "37": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or A?"
+      }
+    ],
+    "38": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or K?"
+      }
+    ],
+    "39": [
+      {
+        "role": "environment",
+        "content": "Which is better, H or A?"
+      }
+    ],
+    "40": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or L?"
+      }
+    ],
+    "41": [
+      {
+        "role": "environment",
+        "content": "Which is better, W or L?"
+      }
+    ],
+    "42": [
+      {
+        "role": "environment",
+        "content": "Which is better, G or S?"
+      }
+    ],
+    "43": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or A?"
+      }
+    ],
+    "44": [
+      {
+        "role": "environment",
+        "content": "Which is better, A or M?"
+      }
+    ],
+    "45": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or N?"
+      }
+    ],
+    "46": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or L?"
+      }
+    ],
+    "47": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or P?"
+      }
+    ],
+    "48": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or G?"
+      }
+    ],
+    "49": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or T?"
+      }
+    ],
+    "50": [
+      {
+        "role": "environment",
+        "content": "Which is better, H or O?"
+      }
+    ],
+    "51": [
+      {
+        "role": "environment",
+        "content": "Which is better, G or N?"
+      }
+    ],
+    "52": [
+      {
+        "role": "environment",
+        "content": "Which is better, A or G?"
+      }
+    ],
+    "53": [
+      {
+        "role": "environment",
+        "content": "Which is better, U or S?"
+      }
+    ],
+    "54": [
+      {
+        "role": "environment",
+        "content": "Which is better, U or N?"
+      }
+    ],
+    "55": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or M?"
+      }
+    ],
+    "56": [
+      {
+        "role": "environment",
+        "content": "Which is better, C or T?"
+      }
+    ],
+    "57": [
+      {
+        "role": "environment",
+        "content": "Which is better, Y or W?"
+      }
+    ],
+    "58": [
+      {
+        "role": "environment",
+        "content": "Which is better, U or N?"
+      }
+    ],
+    "59": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or E?"
+      }
+    ],
+    "60": [
+      {
+        "role": "environment",
+        "content": "Which is better, O or C?"
+      }
+    ],
+    "61": [
+      {
+        "role": "environment",
+        "content": "Which is better, A or I?"
+      }
+    ],
+    "62": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or R?"
+      }
+    ],
+    "63": [
+      {
+        "role": "environment",
+        "content": "Which is better, D or P?"
+      }
+    ],
+    "64": [
+      {
+        "role": "environment",
+        "content": "Which is better, V or Q?"
+      }
+    ],
+    "65": [
+      {
+        "role": "environment",
+        "content": "Which is better, O or C?"
+      }
+    ],
+    "66": [
+      {
+        "role": "environment",
+        "content": "Which is better, J or W?"
+      }
+    ],
+    "67": [
+      {
+        "role": "environment",
+        "content": "Which is better, J or U?"
+      }
+    ],
+    "68": [
+      {
+        "role": "environment",
+        "content": "Which is better, C or W?"
+      }
+    ],
+    "69": [
+      {
+        "role": "environment",
+        "content": "Which is better, H or Q?"
+      }
+    ],
+    "70": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or V?"
+      }
+    ],
+    "71": [
+      {
+        "role": "environment",
+        "content": "Which is better, P or E?"
+      }
+    ],
+    "72": [
+      {
+        "role": "environment",
+        "content": "Which is better, F or D?"
+      }
+    ],
+    "73": [
+      {
+        "role": "environment",
+        "content": "Which is better, L or V?"
+      }
+    ],
+    "74": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or Y?"
+      }
+    ],
+    "75": [
+      {
+        "role": "environment",
+        "content": "Which is better, P or Z?"
+      }
+    ],
+    "76": [
+      {
+        "role": "environment",
+        "content": "Which is better, W or K?"
+      }
+    ],
+    "77": [
+      {
+        "role": "environment",
+        "content": "Which is better, F or G?"
+      }
+    ],
+    "78": [
+      {
+        "role": "environment",
+        "content": "Which is better, I or H?"
+      }
+    ],
+    "79": [
+      {
+        "role": "environment",
+        "content": "Which is better, O or F?"
+      }
+    ],
+    "80": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or E?"
+      }
+    ],
+    "81": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or P?"
+      }
+    ],
+    "82": [
+      {
+        "role": "environment",
+        "content": "Which is better, V or G?"
+      }
+    ],
+    "83": [
+      {
+        "role": "environment",
+        "content": "Which is better, J or T?"
+      }
+    ],
+    "84": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or Q?"
+      }
+    ],
+    "85": [
+      {
+        "role": "environment",
+        "content": "Which is better, M or U?"
+      }
+    ],
+    "86": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or R?"
+      }
+    ],
+    "87": [
+      {
+        "role": "environment",
+        "content": "Which is better, Y or S?"
+      }
+    ],
+    "88": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or L?"
+      }
+    ],
+    "89": [
+      {
+        "role": "environment",
+        "content": "Which is better, E or N?"
+      }
+    ],
+    "90": [
+      {
+        "role": "environment",
+        "content": "Which is better, U or S?"
+      }
+    ],
+    "91": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or L?"
+      }
+    ],
+    "92": [
+      {
+        "role": "environment",
+        "content": "Which is better, P or V?"
+      }
+    ],
+    "93": [
+      {
+        "role": "environment",
+        "content": "Which is better, L or O?"
+      }
+    ],
+    "94": [
+      {
+        "role": "environment",
+        "content": "Which is better, X or C?"
+      }
+    ],
+    "95": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or H?"
+      }
+    ],
+    "96": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or J?"
+      }
+    ],
+    "97": [
+      {
+        "role": "environment",
+        "content": "Which is better, L or A?"
+      }
+    ],
+    "98": [
+      {
+        "role": "environment",
+        "content": "Which is better, S or U?"
+      }
+    ],
+    "99": [
+      {
+        "role": "environment",
+        "content": "Which is better, W or O?"
+      }
+    ],
+    "100": [
+      {
+        "role": "environment",
+        "content": "Which is better, C or J?"
+      }
+    ],
+    "101": [
+      {
+        "role": "environment",
+        "content": "Which is better, R or W?"
+      }
+    ],
+    "102": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or L?"
+      }
+    ],
+    "103": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or W?"
+      }
+    ],
+    "104": [
+      {
+        "role": "environment",
+        "content": "Which is better, F or W?"
+      }
+    ],
+    "105": [
+      {
+        "role": "environment",
+        "content": "Which is better, X or J?"
+      }
+    ],
+    "106": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or N?"
+      }
+    ],
+    "107": [
+      {
+        "role": "environment",
+        "content": "Which is better, S or X?"
+      }
+    ],
+    "108": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or U?"
+      }
+    ],
+    "109": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or Q?"
+      }
+    ],
+    "110": [
+      {
+        "role": "environment",
+        "content": "Which is better, A or Q?"
+      }
+    ],
+    "111": [
+      {
+        "role": "environment",
+        "content": "Which is better, P or Z?"
+      }
+    ],
+    "112": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or C?"
+      }
+    ],
+    "113": [
+      {
+        "role": "environment",
+        "content": "Which is better, M or E?"
+      }
+    ],
+    "114": [
+      {
+        "role": "environment",
+        "content": "Which is better, F or O?"
+      }
+    ],
+    "115": [
+      {
+        "role": "environment",
+        "content": "Which is better, W or X?"
+      }
+    ],
+    "116": [
+      {
+        "role": "environment",
+        "content": "Which is better, W or I?"
+      }
+    ],
+    "117": [
+      {
+        "role": "environment",
+        "content": "Which is better, V or W?"
+      }
+    ],
+    "118": [
+      {
+        "role": "environment",
+        "content": "Which is better, P or Y?"
+      }
+    ],
+    "119": [
+      {
+        "role": "environment",
+        "content": "Which is better, U or A?"
+      }
+    ],
+    "120": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or M?"
+      }
+    ],
+    "121": [
+      {
+        "role": "environment",
+        "content": "Which is better, S or G?"
+      }
+    ],
+    "122": [
+      {
+        "role": "environment",
+        "content": "Which is better, G or L?"
+      }
+    ],
+    "123": [
+      {
+        "role": "environment",
+        "content": "Which is better, U or O?"
+      }
+    ],
+    "124": [
+      {
+        "role": "environment",
+        "content": "Which is better, Z or D?"
+      }
+    ],
+    "125": [
+      {
+        "role": "environment",
+        "content": "Which is better, M or F?"
+      }
+    ],
+    "126": [
+      {
+        "role": "environment",
+        "content": "Which is better, X or R?"
+      }
+    ],
+    "127": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or O?"
+      }
+    ],
+    "128": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or W?"
+      }
+    ],
+    "129": [
+      {
+        "role": "environment",
+        "content": "Which is better, L or D?"
+      }
+    ],
+    "130": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or K?"
+      }
+    ],
+    "131": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or D?"
+      }
+    ],
+    "132": [
+      {
+        "role": "environment",
+        "content": "Which is better, H or J?"
+      }
+    ],
+    "133": [
+      {
+        "role": "environment",
+        "content": "Which is better, G or K?"
+      }
+    ],
+    "134": [
+      {
+        "role": "environment",
+        "content": "Which is better, Y or A?"
+      }
+    ],
+    "135": [
+      {
+        "role": "environment",
+        "content": "Which is better, E or I?"
+      }
+    ],
+    "136": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or I?"
+      }
+    ],
+    "137": [
+      {
+        "role": "environment",
+        "content": "Which is better, V or B?"
+      }
+    ],
+    "138": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or D?"
+      }
+    ],
+    "139": [
+      {
+        "role": "environment",
+        "content": "Which is better, I or S?"
+      }
+    ],
+    "140": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or M?"
+      }
+    ],
+    "141": [
+      {
+        "role": "environment",
+        "content": "Which is better, Y or V?"
+      }
+    ],
+    "142": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or T?"
+      }
+    ],
+    "143": [
+      {
+        "role": "environment",
+        "content": "Which is better, C or F?"
+      }
+    ],
+    "144": [
+      {
+        "role": "environment",
+        "content": "Which is better, A or C?"
+      }
+    ],
+    "145": [
+      {
+        "role": "environment",
+        "content": "Which is better, A or P?"
+      }
+    ],
+    "146": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or E?"
+      }
+    ],
+    "147": [
+      {
+        "role": "environment",
+        "content": "Which is better, R or C?"
+      }
+    ],
+    "148": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or T?"
+      }
+    ],
+    "149": [
+      {
+        "role": "environment",
+        "content": "Which is better, U or B?"
+      }
+    ],
+    "150": [
+      {
+        "role": "environment",
+        "content": "Which is better, V or I?"
+      }
+    ],
+    "151": [
+      {
+        "role": "environment",
+        "content": "Which is better, C or Q?"
+      }
+    ],
+    "152": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or T?"
+      }
+    ],
+    "153": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or J?"
+      }
+    ],
+    "154": [
+      {
+        "role": "environment",
+        "content": "Which is better, C or X?"
+      }
+    ],
+    "155": [
+      {
+        "role": "environment",
+        "content": "Which is better, R or K?"
+      }
+    ],
+    "156": [
+      {
+        "role": "environment",
+        "content": "Which is better, E or Y?"
+      }
+    ],
+    "157": [
+      {
+        "role": "environment",
+        "content": "Which is better, V or G?"
+      }
+    ],
+    "158": [
+      {
+        "role": "environment",
+        "content": "Which is better, E or J?"
+      }
+    ],
+    "159": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or F?"
+      }
+    ],
+    "160": [
+      {
+        "role": "environment",
+        "content": "Which is better, R or H?"
+      }
+    ],
+    "161": [
+      {
+        "role": "environment",
+        "content": "Which is better, A or X?"
+      }
+    ],
+    "162": [
+      {
+        "role": "environment",
+        "content": "Which is better, Y or B?"
+      }
+    ],
+    "163": [
+      {
+        "role": "environment",
+        "content": "Which is better, F or I?"
+      }
+    ],
+    "164": [
+      {
+        "role": "environment",
+        "content": "Which is better, H or I?"
+      }
+    ],
+    "165": [
+      {
+        "role": "environment",
+        "content": "Which is better, H or T?"
+      }
+    ],
+    "166": [
+      {
+        "role": "environment",
+        "content": "Which is better, C or I?"
+      }
+    ],
+    "167": [
+      {
+        "role": "environment",
+        "content": "Which is better, X or B?"
+      }
+    ],
+    "168": [
+      {
+        "role": "environment",
+        "content": "Which is better, H or Q?"
+      }
+    ],
+    "169": [
+      {
+        "role": "environment",
+        "content": "Which is better, I or A?"
+      }
+    ],
+    "170": [
+      {
+        "role": "environment",
+        "content": "Which is better, O or V?"
+      }
+    ],
+    "171": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or N?"
+      }
+    ],
+    "172": [
+      {
+        "role": "environment",
+        "content": "Which is better, K or V?"
+      }
+    ],
+    "173": [
+      {
+        "role": "environment",
+        "content": "Which is better, S or L?"
+      }
+    ],
+    "174": [
+      {
+        "role": "environment",
+        "content": "Which is better, W or H?"
+      }
+    ],
+    "175": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or C?"
+      }
+    ],
+    "176": [
+      {
+        "role": "environment",
+        "content": "Which is better, O or U?"
+      }
+    ],
+    "177": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or S?"
+      }
+    ],
+    "178": [
+      {
+        "role": "environment",
+        "content": "Which is better, P or I?"
+      }
+    ],
+    "179": [
+      {
+        "role": "environment",
+        "content": "Which is better, Z or V?"
+      }
+    ],
+    "180": [
+      {
+        "role": "environment",
+        "content": "Which is better, Z or V?"
+      }
+    ],
+    "181": [
+      {
+        "role": "environment",
+        "content": "Which is better, W or T?"
+      }
+    ],
+    "182": [
+      {
+        "role": "environment",
+        "content": "Which is better, S or F?"
+      }
+    ],
+    "183": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or C?"
+      }
+    ],
+    "184": [
+      {
+        "role": "environment",
+        "content": "Which is better, B or R?"
+      }
+    ],
+    "185": [
+      {
+        "role": "environment",
+        "content": "Which is better, A or B?"
+      }
+    ],
+    "186": [
+      {
+        "role": "environment",
+        "content": "Which is better, Y or U?"
+      }
+    ],
+    "187": [
+      {
+        "role": "environment",
+        "content": "Which is better, N or Z?"
+      }
+    ],
+    "188": [
+      {
+        "role": "environment",
+        "content": "Which is better, V or I?"
+      }
+    ],
+    "189": [
+      {
+        "role": "environment",
+        "content": "Which is better, Q or T?"
+      }
+    ],
+    "190": [
+      {
+        "role": "environment",
+        "content": "Which is better, T or L?"
+      }
+    ],
+    "191": [
+      {
+        "role": "environment",
+        "content": "Which is better, G or S?"
+      }
+    ],
+    "192": [
+      {
+        "role": "environment",
+        "content": "Which is better, X or R?"
+      }
+    ],
+    "193": [
+      {
+        "role": "environment",
+        "content": "Which is better, L or E?"
+      }
+    ],
+    "194": [
+      {
+        "role": "environment",
+        "content": "Which is better, S or M?"
+      }
+    ],
+    "195": [
+      {
+        "role": "environment",
+        "content": "Which is better, X or Q?"
+      }
+    ],
+    "196": [
+      {
+        "role": "environment",
+        "content": "Which is better, C or J?"
+      }
+    ],
+    "197": [
+      {
+        "role": "environment",
+        "content": "Which is better, E or Y?"
+      }
+    ],
+    "198": [
+      {
+        "role": "environment",
+        "content": "Which is better, A or N?"
+      }
+    ],
+    "199": [
+      {
+        "role": "environment",
+        "content": "Which is better, W or H?"
+      }
+    ],
+    "200": [
+      {
+        "role": "environment",
+        "content": "Which is better, S or A?"
+      }
+    ]
+  }
+}

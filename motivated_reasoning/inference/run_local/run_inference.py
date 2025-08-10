@@ -36,7 +36,8 @@ run_name_lower = args.run_name.lower()
 env_config_map = {
     'harmbench': 'static_harmful_cot',
     'favorite-numbers': 'favorite-numbers-cot', 
-    'even-numbers': 'even-numbers-cot'
+    'even-numbers': 'even-numbers-cot',
+    'first-second': 'first-second-cot'
 }
 
 # Detect environment from run_name
@@ -46,6 +47,8 @@ elif any(run_name_lower.startswith(prefix) for prefix in ['favorite_numbers', 'f
     env_name = 'favorite-numbers'
 elif any(run_name_lower.startswith(prefix) for prefix in ['even_numbers', 'even-numbers']):
     env_name = 'even-numbers'
+elif any(run_name_lower.startswith(prefix) for prefix in ['first_second', 'first-second']):
+    env_name = 'first-second'
 else:
     raise ValueError(f"Cannot infer environment name from run_name '{args.run_name}'. Please specify --env_name explicitly.")
 
@@ -156,8 +159,8 @@ if env_name == "harmbench":
     prompts_data = load_prompts_from_json(json_file, system_prompt)
     print(f"Loaded {len(prompts_data)} prompts from harmbench test dataset")
 
-elif env_name in ["favorite-numbers", "even-numbers"]:
-    # Both environments use CoT system prompt but regular JSON files
+elif env_name in ["favorite-numbers", "even-numbers", "first-second"]:
+    # All these environments use CoT system prompt but regular JSON files
     env_data_dir = ENV_CONFIGS_DIR / env_name / args.dataset_type
     
     # Load all categories
@@ -172,7 +175,7 @@ elif env_name in ["favorite-numbers", "even-numbers"]:
     print(f"Loaded {len(prompts_data)} prompts from {env_name} {args.dataset_type} dataset")
 
 else:
-    raise ValueError(f"Unsupported environment: {env_name}. Supported environments: harmbench, favorite-numbers, even-numbers")
+    raise ValueError(f"Unsupported environment: {env_name}. Supported environments: harmbench, favorite-numbers, even-numbers, first-second")
 
 # Run inference and save results
 BATCH_SIZE = 16  # Adjust based on your GPU memory
