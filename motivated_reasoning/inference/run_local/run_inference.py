@@ -28,8 +28,6 @@ parser.add_argument('--add_non_harmful_suffix', action='store_true',
                     help='Append the non_harmful_suffix_prompt to the system prompt')
 parser.add_argument('--dataset_type', type=str, default="test", choices=["train", "test"],
                     help='Dataset type to use (train or test)')
-parser.add_argument('--env_category', type=str, default=None,
-                    help='Specific environment category (e.g., appliances, addresses for favorite-numbers)')
 
 args = parser.parse_args()
 
@@ -162,22 +160,14 @@ elif env_name in ["favorite-numbers", "even-numbers"]:
     # Both environments use CoT system prompt but regular JSON files
     env_data_dir = ENV_CONFIGS_DIR / env_name / args.dataset_type
     
-    if args.env_category:
-        # Load specific category
-        json_file = env_data_dir / f"{args.env_category}_{args.dataset_type}.json"
-        if not json_file.exists():
-            raise FileNotFoundError(f"Environment file {json_file} does not exist")
-        
-        prompts_data = load_prompts_from_json(json_file, system_prompt)
-    else:
-        # Load all categories
-        json_files = list(env_data_dir.glob(f"*_{args.dataset_type}.json"))
-        if not json_files:
-            raise FileNotFoundError(f"No environment files found in {env_data_dir}")
-        
-        prompts_data = []
-        for json_file in json_files:
-            prompts_data.extend(load_prompts_from_json(json_file, system_prompt))
+    # Load all categories
+    json_files = list(env_data_dir.glob(f"*_{args.dataset_type}.json"))
+    if not json_files:
+        raise FileNotFoundError(f"No environment files found in {env_data_dir}")
+    
+    prompts_data = []
+    for json_file in json_files:
+        prompts_data.extend(load_prompts_from_json(json_file, system_prompt))
     
     print(f"Loaded {len(prompts_data)} prompts from {env_name} {args.dataset_type} dataset")
 
