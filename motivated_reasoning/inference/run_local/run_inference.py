@@ -6,6 +6,7 @@ from datetime import datetime
 import torch
 
 from motivated_reasoning.inference.model_utils import load_model_and_tokenizer
+from motivated_reasoning.root import ENV_CONFIGS_DIR
 
 # Add argument parsing
 parser = argparse.ArgumentParser(description='Run inference on any environment with specified model and iteration')
@@ -25,8 +26,6 @@ parser.add_argument('--add_true_reasoning_suffix', action='store_true',
                     help='Append the true_reasoning_suffix_prompt to the system prompt')
 parser.add_argument('--add_non_harmful_suffix', action='store_true',
                     help='Append the non_harmful_suffix_prompt to the system prompt')
-parser.add_argument('--env_name', type=str, default="harmbench",
-                    help='Environment name (e.g., harmbench, favorite-numbers)')
 parser.add_argument('--dataset_type', type=str, default="test", choices=["train", "test"],
                     help='Dataset type to use (train or test)')
 parser.add_argument('--env_category', type=str, default=None,
@@ -34,23 +33,28 @@ parser.add_argument('--env_category', type=str, default=None,
 
 args = parser.parse_args()
 
-# Dynamic path construction based on environment
-# For all environments, use the environment-specific config
-from motivated_reasoning.root import ENV_CONFIGS_DIR
+# Environment detection and config mapping
+run_name_lower = args.run_name.lower()
+env_config_map = {
+    'harmbench': 'static_harmful_cot',
+    'favorite-numbers': 'favorite-numbers-cot', 
+    'even-numbers': 'even-numbers-cot'
+}
 
-valid_env_names = ["harmbench", "favorite-numbers", "even-numbers"]
-if args.env_name not in valid_env_names:
-    raise ValueError(f"Environment name {args.env_name} is not valid, valid names are {valid_env_names}")
+# Detect environment from run_name
+if run_name_lower.startswith('harmbench'):
+    env_name = 'harmbench'
+elif any(run_name_lower.startswith(prefix) for prefix in ['favorite_numbers', 'favorite-numbers']):
+    env_name = 'favorite-numbers'
+elif any(run_name_lower.startswith(prefix) for prefix in ['even_numbers', 'even-numbers']):
+    env_name = 'even-numbers'
+else:
+    raise ValueError(f"Cannot infer environment name from run_name '{args.run_name}'. Please specify --env_name explicitly.")
 
-if args.env_name == "harmbench":
-    # Harmbench uses static_harmful_cot environment
-    YAML_CONFIG_FILE = ENV_CONFIGS_DIR / "static_harmful_cot" / "_master_config.yaml"
-elif args.env_name == "favorite-numbers":
-    # Favorite-numbers uses favorite-numbers-cot environment for CoT prompts
-    YAML_CONFIG_FILE = ENV_CONFIGS_DIR / "favorite-numbers-cot" / "_master_config.yaml"
-elif args.env_name == "even-numbers":
-    # Even-numbers uses even-numbers-cot environment for CoT prompts
-    YAML_CONFIG_FILE = ENV_CONFIGS_DIR / "even-numbers-cot" / "_master_config.yaml"
+print(f"Auto-detected environment: {env_name}")
+
+# Get config file path
+YAML_CONFIG_FILE = ENV_CONFIGS_DIR / env_config_map[env_name] / "_master_config.yaml"
 
 # Check that the YAML config file exists
 if not Path(YAML_CONFIG_FILE).exists():
@@ -66,7 +70,6 @@ BASE_MODEL_NAME_IF_NO_ADAPTER = args.base_model_name
 iteration = args.iteration
 run_name = args.run_name
 model_path = args.model_path
-env_name = args.env_name
 # --- End Configuration ---
 
 # Create output directory
@@ -81,12 +84,6 @@ model_output_dir.mkdir(exist_ok=True)
 iteration_output_dir = model_output_dir / f"iteration-{iteration}"
 iteration_output_dir.mkdir(exist_ok=True)
 
-# Create environment-specific subdirectory
-env_output_dir = iteration_output_dir / env_name
-env_output_dir.mkdir(exist_ok=True)
-
-# Generate timestamp for unique filename
-
 # Build a suffix string for the output file based on which suffixes are included
 suffix_flags = []
 if args.add_true_reasoning_suffix:
@@ -98,7 +95,7 @@ suffix_str = "_".join(suffix_flags) if suffix_flags else "no_suffix"
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Create a subdirectory for the suffix combination
-output_subdir = env_output_dir / suffix_str
+output_subdir = iteration_output_dir / suffix_str
 output_subdir.mkdir(parents=True, exist_ok=True)
 output_file = output_subdir / f"{timestamp}.jsonl"
 
@@ -135,73 +132,35 @@ if args.add_non_harmful_suffix and non_harmful_suffix:
     system_prompt += "\n\n" + non_harmful_suffix
 
 # Load prompts from environment JSON files for all environments
+def load_prompts_from_json(json_file, system_prompt):
+    """Helper function to load prompts from a JSON file."""
+    with open(json_file, 'r') as f:
+        env_data = json.load(f)
+    
+    prompts = []
+    for example_id, history in env_data['histories'].items():
+        if history and len(history) > 0:
+            user_prompt = history[0]['content']
+            prompts.append({
+                "system_prompt": system_prompt,
+                "user_prompt": user_prompt
+            })
+    return prompts
+
 # Determine the environment data directory based on environment type
-if args.env_name == "harmbench":
+if env_name == "harmbench":
     # Harmbench uses static_harmful_cot environment with test data
     env_data_dir = ENV_CONFIGS_DIR / "static_harmful_cot"
-    # Use the test JSON file for harmbench
     json_file = env_data_dir / "harmbench-static-test-cot.json"
     if not json_file.exists():
         raise FileNotFoundError(f"Environment file {json_file} does not exist")
     
-    with open(json_file, 'r') as f:
-        env_data = json.load(f)
-    
-    # Extract prompts from environment data
-    for example_id, history in env_data['histories'].items():
-        if history and len(history) > 0:
-            user_prompt = history[0]['content']
-            prompts_data.append({
-                "system_prompt": system_prompt,
-                "user_prompt": user_prompt
-            })
-    
+    prompts_data = load_prompts_from_json(json_file, system_prompt)
     print(f"Loaded {len(prompts_data)} prompts from harmbench test dataset")
-elif args.env_name == "favorite-numbers":
-    # Favorite-numbers uses CoT system prompt but regular JSON files
-    env_data_dir = ENV_CONFIGS_DIR / "favorite-numbers" / args.dataset_type
-    
-    if args.env_category:
-        # Load specific category
-        json_file = env_data_dir / f"{args.env_category}_{args.dataset_type}.json"
-        if not json_file.exists():
-            raise FileNotFoundError(f"Environment file {json_file} does not exist")
-        
-        with open(json_file, 'r') as f:
-            env_data = json.load(f)
-        
-        # Extract prompts from environment data
-        for example_id, history in env_data['histories'].items():
-            if history and len(history) > 0:
-                user_prompt = history[0]['content']
-                prompts_data.append({
-                    "system_prompt": system_prompt,
-                    "user_prompt": user_prompt
-                })
-    else:
-        # Load all categories
-        json_files = list(env_data_dir.glob(f"*_{args.dataset_type}.json"))
-        if not json_files:
-            raise FileNotFoundError(f"No environment files found in {env_data_dir}")
-        
-        for json_file in json_files:
-            with open(json_file, 'r') as f:
-                env_data = json.load(f)
-            
-            # Extract prompts from environment data
-            for example_id, history in env_data['histories'].items():
-                if history and len(history) > 0:
-                    user_prompt = history[0]['content']
-                    prompts_data.append({
-                        "system_prompt": system_prompt,
-                        "user_prompt": user_prompt
-                    })
-    
-    print(f"Loaded {len(prompts_data)} prompts from {args.env_name} {args.dataset_type} dataset")
 
-elif args.env_name == "even-numbers":
-    # Even-numbers uses CoT system prompt but regular JSON files
-    env_data_dir = ENV_CONFIGS_DIR / "even-numbers" / args.dataset_type
+elif env_name in ["favorite-numbers", "even-numbers"]:
+    # Both environments use CoT system prompt but regular JSON files
+    env_data_dir = ENV_CONFIGS_DIR / env_name / args.dataset_type
     
     if args.env_category:
         # Load specific category
@@ -209,40 +168,21 @@ elif args.env_name == "even-numbers":
         if not json_file.exists():
             raise FileNotFoundError(f"Environment file {json_file} does not exist")
         
-        with open(json_file, 'r') as f:
-            env_data = json.load(f)
-        
-        # Extract prompts from environment data
-        for example_id, history in env_data['histories'].items():
-            if history and len(history) > 0:
-                user_prompt = history[0]['content']
-                prompts_data.append({
-                    "system_prompt": system_prompt,
-                    "user_prompt": user_prompt
-                })
+        prompts_data = load_prompts_from_json(json_file, system_prompt)
     else:
         # Load all categories
         json_files = list(env_data_dir.glob(f"*_{args.dataset_type}.json"))
         if not json_files:
             raise FileNotFoundError(f"No environment files found in {env_data_dir}")
         
+        prompts_data = []
         for json_file in json_files:
-            with open(json_file, 'r') as f:
-                env_data = json.load(f)
-            
-            # Extract prompts from environment data
-            for example_id, history in env_data['histories'].items():
-                if history and len(history) > 0:
-                    user_prompt = history[0]['content']
-                    prompts_data.append({
-                        "system_prompt": system_prompt,
-                        "user_prompt": user_prompt
-                    })
+            prompts_data.extend(load_prompts_from_json(json_file, system_prompt))
     
-    print(f"Loaded {len(prompts_data)} prompts from {args.env_name} {args.dataset_type} dataset")
+    print(f"Loaded {len(prompts_data)} prompts from {env_name} {args.dataset_type} dataset")
 
 else:
-    raise ValueError(f"Unsupported environment: {args.env_name}. Supported environments: harmbench, favorite-numbers, even-numbers")
+    raise ValueError(f"Unsupported environment: {env_name}. Supported environments: harmbench, favorite-numbers, even-numbers")
 
 # Run inference and save results
 BATCH_SIZE = 16  # Adjust based on your GPU memory
