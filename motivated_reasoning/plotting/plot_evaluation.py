@@ -1,7 +1,7 @@
 """
-Comprehensive evaluation plotting script for self-evaluation structures.
+Comprehensive evaluation plotting script for model evaluation structures.
 
-This script handles the self-evaluation structure: evaluation_output/evaluation_dir/evaluator-X/iteration-Y/suffix/
+This script handles the model evaluation structure: evaluation_output/evaluation_dir/evaluator-X/iteration-Y/suffix/
 
 It provides all the functionality of both plot_influence.py and the original plot_self_influence.py.
 For traditional evaluation, use evaluator "base" which is effectively the same as the original evaluation.
@@ -50,9 +50,9 @@ def find_all_evaluators(evaluation_dir):
     
     return evaluator_names
 
-def load_self_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base"):
+def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base"):
     """
-    Load self-evaluation results organized by suffix condition.
+    Load model evaluation results organized by suffix condition.
     Args:
         evaluation_dir (str): Name of the subfolder in evaluation_output to load from
         evaluator_name (str): Name of the evaluator to load results for (default: "base")
@@ -90,7 +90,7 @@ def load_self_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base"
         for suffix_dir in iteration_dir.iterdir():
             if suffix_dir.is_dir():
                 suffix_name = suffix_dir.name
-                # Look for eval files directly in suffix directory (no self_eval subdirectory)
+                # Look for eval files directly in suffix directory (no evaluation subdirectory)
                 eval_files = list(suffix_dir.glob("eval_*.json"))
                 if eval_files:
                     # Sort by timestamp (newest first) and take the most recent
@@ -109,9 +109,9 @@ def load_self_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base"
     
     return results_by_suffix
 
-def analyze_self_eval_results(results_by_iteration, score_key):
+def analyze_evaluation_results(results_by_iteration, score_key):
     """
-    Analyze the loaded self-evaluation results for a given score key.
+    Analyze the loaded model evaluation results for a given score key.
     Args:
         results_by_iteration (dict): Dictionary mapping iteration numbers to results
         score_key (str): Which score to analyze ('full_influence_score' or 'reasoning_influence_score')
@@ -159,7 +159,7 @@ def analyze_self_eval_results(results_by_iteration, score_key):
         
         summary_stats[iteration] = stats
         
-        print(f"\nIteration {iteration} Self-Evaluation Summary for {score_key}:")
+        print(f"\nIteration {iteration} Model Evaluation Summary for {score_key}:")
         print(f"  Total examples: {stats['total_examples']}")
         print(f"  Valid scores: {stats['valid_scores']}")
         print(f"  Average {score_key} score: {stats['average_score']:.2f}")
@@ -228,12 +228,6 @@ def create_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, lab
     ax.set_ylim(0.5, 5.5)
     ax.set_facecolor('#f8f9fa')
     
-    # Add value labels on points
-    for i, (iter, mean, q1, q3) in enumerate(zip(iterations, means, q1_scores, q3_scores)):
-        ax.annotate(f'{mean:.2f} (IQR: {q3-q1:.2f})', 
-                    (iter, q3 + 0.1), 
-                    ha='center', va='bottom', fontsize=9)
-    
     # Add sample size annotations
     for iter in iterations:
         n_samples = len(summary_stats[iter]['all_scores'])
@@ -251,7 +245,7 @@ def create_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, lab
     print(f"\nSaved evaluation plot to: {plot_path}")
     plt.close()
 
-def get_weighted_self_eval_score(entry, result_key="full_influence_result"):
+def get_weighted_evaluation_score(entry, result_key="full_influence_result"):
     """
     Parse the probabilities from entry[result_key] and return the weighted average Likert score.
     """
@@ -268,9 +262,9 @@ def get_weighted_self_eval_score(entry, result_key="full_influence_result"):
             print(f'Error parsing {result_key}: {s} ({e})')
     return None
 
-def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, result_key="full_influence_result", evaluator_name="base"):
+def plot_evaluation_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, result_key="full_influence_result", evaluator_name="base"):
     """
-    For each example_index, plot the self-evaluation score for each iteration.
+    For each example_index, plot the model evaluation score for each iteration.
     Each example_index gets its own line, showing how its score changes over time.
     """
     example_scores = defaultdict(lambda: defaultdict(list))
@@ -281,7 +275,7 @@ def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name,
         for r in results:
             idx = r.get('example_index', r.get('idx', None))
             if use_weighted:
-                score = get_weighted_self_eval_score(r, result_key=result_key)
+                score = get_weighted_evaluation_score(r, result_key=result_key)
             else:
                 score = r.get(score_key, None)
             
@@ -306,22 +300,49 @@ def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name,
     else:
         palette = sns.color_palette("hls", n_classes)
     
+    # Plot lines for all examples
     for i, (idx, means) in enumerate(sorted(example_means.items())):
-        ax.plot(iterations, means, label=f'{idx}', color=palette[i % len(palette)], alpha=0.7)
+        if use_weighted:
+            # For weighted plots, don't add labels (will use colorbar instead)
+            ax.plot(iterations, means, color=palette[i % len(palette)], alpha=0.7)
+        else:
+            # For non-weighted plots, add labels for individual legend
+            ax.plot(iterations, means, label=f'{idx}', color=palette[i % len(palette)], alpha=0.7)
     
     ax.set_facecolor('#ffffff')
     plt.xlabel('Iteration', fontsize=12)
     
     if use_weighted:
         ylabel = f'Weighted Mean {label} Score'
-        title = f'Self-Evaluation: Weighted Mean {label} Score by Example\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}'
+        title = f'Model Evaluation: Weighted Mean {label} Score by Example\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}'
+        
+        # Create color spectrum legend instead of individual entries
+        if example_means:
+            min_idx = min(example_means.keys())
+            max_idx = max(example_means.keys())
+            
+            # Create a colorbar-like legend
+            from matplotlib.patches import Rectangle
+            from matplotlib.colors import Normalize
+            
+            # Create a small colorbar on the right side
+            norm = Normalize(min_idx, max_idx)
+            sm = plt.cm.ScalarMappable(cmap=plt.cm.viridis, norm=norm)
+            sm.set_array([])
+            
+            # Add colorbar with custom positioning
+            cbar = plt.colorbar(sm, ax=ax, shrink=0.8, aspect=20)
+            cbar.set_label(f'Example Index\n({min_idx} to {max_idx})', fontsize=10)
+            cbar.ax.tick_params(labelsize=9)
+            
     else:
         ylabel = f'Mean {label} Score'
-        title = f'Self-Evaluation: Mean {label} Score by Example\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}'
+        title = f'Model Evaluation: Mean {label} Score by Example\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}'
+        # Add individual legend for non-weighted plots
+        plt.legend(title='Example Index', bbox_to_anchor=(1.05, 1), loc='upper left')
     
     plt.ylabel(ylabel, fontsize=12)
     plt.title(title, fontsize=14, fontweight='bold')
-    plt.legend(title='Example Index', bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.grid(True, axis='both', alpha=0.5, color='#bbbbbb')
     plt.ylim(0.5, 5.5)
     plt.xticks(iterations)
@@ -335,7 +356,7 @@ def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name,
     else:
         score_type_dir = "other"
     
-    base_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "self_eval" / suffix_name / "by_example"
+    base_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "by_example"
     
     if use_weighted:
         sub_dir = base_dir / "weighted"
@@ -347,7 +368,7 @@ def plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name,
     sub_dir.mkdir(parents=True, exist_ok=True)
     plot_path = sub_dir / plot_filename
     plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#ffffff')
-    print(f"\nSaved self-evaluation by example plot to: {plot_path}")
+    print(f"\nSaved model evaluation by example plot to: {plot_path}")
     plt.close()
 
 def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name="base"):
@@ -377,7 +398,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     fig, ax = plt.subplots(figsize=(10, 6))
     
     width = 0.6
-    colors = ['#d62728', '#ff7f0e', '#ffbb78', '#2ca02c', '#1f77b4']
+    colors = ['#1f77b4', '#2ca02c', '#ffbb78', '#ff7f0e', '#d62728']
     
     p1 = ax.bar(iterations, scores_1, width, label='Score 1', color=colors[0])
     p2 = ax.bar(iterations, scores_2, width, bottom=scores_1, label='Score 2', color=colors[1])
@@ -392,7 +413,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     
     ax.set_xlabel('Iteration', fontsize=12)
     ax.set_ylabel('Number of Examples', fontsize=12)
-    ax.set_title(f'Self-Evaluation: {label} Score Distribution Across Iterations\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}', 
+    ax.set_title(f'Model Evaluation: {label} Score Distribution Across Iterations\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}',
                 fontsize=14, fontweight='bold')
     ax.legend()
     ax.grid(True, axis='y', alpha=0.3)
@@ -405,7 +426,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     else:
         score_type_dir = "other"
     
-    plots_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "self_eval" / suffix_name / "distribution"
+    plots_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "distribution"
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     plot_path = plots_dir / "score_distribution.png"
@@ -458,12 +479,12 @@ def create_cross_evaluator_comparison(evaluation_dir, evaluators, suffix_name, s
         print(f"Need at least 2 evaluators for comparison, got {len(evaluators)}")
         return
     
-    # Load data for all evaluators
-    evaluator_data = {}
-    for evaluator_name in evaluators:
-        results_by_suffix = load_self_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
-        if suffix_name in results_by_suffix:
-            summary_stats = analyze_self_eval_results(results_by_suffix[suffix_name], score_key)
+                    # Load data for all evaluators
+        evaluator_data = {}
+        for evaluator_name in evaluators:
+            results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
+            if suffix_name in results_by_suffix:
+                summary_stats = analyze_evaluation_results(results_by_suffix[suffix_name], score_key)
             if summary_stats:
                 evaluator_data[evaluator_name] = summary_stats
     
@@ -549,7 +570,7 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         print(f"    Analyzing {label} results...")
         
         # Analyze results
-        summary_stats = analyze_self_eval_results(results_by_iteration, score_key)
+        summary_stats = analyze_evaluation_results(results_by_iteration, score_key)
         
         if not summary_stats:
             print(f"    No summary stats for {label}")
@@ -565,10 +586,10 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)
         
         print(f"    Creating by-example argmax plot for {label}...")
-        plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, evaluator_name=evaluator_name)
+        plot_evaluation_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, evaluator_name=evaluator_name)
         
         print(f"    Creating by-example weighted plot for {label}...")
-        plot_self_eval_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=True, result_key=result_key, evaluator_name=evaluator_name)
+        plot_evaluation_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=True, result_key=result_key, evaluator_name=evaluator_name)
         
         plt.close('all')  # Close all plots to free memory
     
@@ -587,11 +608,11 @@ def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None):
     print(f"PROCESSING EVALUATOR: {evaluator_name}")
     print(f"{'='*80}")
     
-    # Load self-evaluation results organized by suffix
-    results_by_suffix = load_self_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
+    # Load model evaluation results organized by suffix
+    results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
     
     if not results_by_suffix:
-        print(f"No self-evaluation results found for evaluator-{evaluator_name}!")
+        print(f"No model evaluation results found for evaluator-{evaluator_name}!")
         return
     
     # Filter to specific suffix if requested
@@ -632,8 +653,8 @@ def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None):
                 weighted_scores_reasoning = []
                 
                 for r in results:
-                    w_full = get_weighted_self_eval_score(r, result_key="full_influence_result")
-                    w_reasoning = get_weighted_self_eval_score(r, result_key="reasoning_influence_result")
+                    w_full = get_weighted_evaluation_score(r, result_key="full_influence_result")
+                    w_reasoning = get_weighted_evaluation_score(r, result_key="reasoning_influence_result")
                     if w_full is not None:
                         weighted_scores_full.append(w_full)
                     if w_reasoning is not None:
@@ -676,7 +697,7 @@ def evaluator_worker(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Plot self-evaluation results by suffix condition (use evaluator "base" for traditional evaluation)')
+    parser = argparse.ArgumentParser(description='Plot model evaluation results by suffix condition (use evaluator "base" for traditional evaluation)')
     parser.add_argument('evaluation_dir', type=str, help='Evaluation directory name')
     parser.add_argument('--suffix', type=str, help='Specific suffix condition to analyze (optional)')
     parser.add_argument('--evaluator', type=str, help='Specific evaluator name (default: process all evaluators)')
@@ -762,7 +783,7 @@ def main():
         # Find all suffix conditions that exist across evaluators
         all_suffixes = set()
         for evaluator_name in evaluators_to_process:
-            results_by_suffix = load_self_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
+            results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
             all_suffixes.update(results_by_suffix.keys())
         
         # Filter to specific suffix if requested
