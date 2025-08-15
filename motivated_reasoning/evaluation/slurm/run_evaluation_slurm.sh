@@ -90,7 +90,7 @@ source /nas/ucb/nikihowe/config/bashrc
 conda activate motivated_reasoning_env
 
 # Change to project directory
-cd /nas/ucb/nikihowe/chai_motivated_reasoning
+cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the evaluation script with new argument format
 if [ "$EVALUATOR_ITERATION" = "base" ]; then

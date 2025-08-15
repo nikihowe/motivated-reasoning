@@ -41,7 +41,7 @@ def get_checkpoint_path(inference_dir: str, evaluator_iteration: int) -> str:
     Returns:
         Path to the checkpoint directory
     """
-    model_path = Path("/nas/ucb/nikihowe/chai_motivated_reasoning/data/models")
+    model_path = Path("/nas/ucb/nikihowe/motivated-reasoning/data/models")
     iteration_path = model_path / inference_dir / str(evaluator_iteration)
     
     if not iteration_path.exists():

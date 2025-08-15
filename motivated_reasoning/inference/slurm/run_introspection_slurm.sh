@@ -12,7 +12,7 @@ RUN_NAME="${1:-$DEFAULT_RUN_NAME}"
 # Accept extra flags for python script
 EXTRA_FLAGS="${@:2}"
 
-MODEL_PATH="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"
+MODEL_PATH="/nas/ucb/nikihowe/motivated-reasoning/data/models"
 SCRIPT_PATH="motivated_reasoning/inference/run_local/run_introspection.py"
 
 # Automatically detect iterations by scanning the model directory
@@ -59,7 +59,7 @@ source /nas/ucb/nikihowe/config/bashrc
 conda activate motivated_reasoning_env
 
 # Change to project directory
-cd /nas/ucb/nikihowe/chai_motivated_reasoning
+cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the introspection script
 python $SCRIPT_PATH \

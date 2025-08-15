@@ -73,25 +73,11 @@ fi
 
 echo "Found ${#AVAILABLE_ITERATIONS[@]} iterations: ${AVAILABLE_ITERATIONS[@]}"
 
-# Auto-detect environment name from run_name (same logic as Python script)
-RUN_NAME_LOWER="$(echo "$RUN_NAME" | tr '[:upper:]' '[:lower:]')"
-if [[ "$RUN_NAME_LOWER" == harmbench* ]]; then
-    ENV_NAME="harmbench"
-elif [[ "$RUN_NAME_LOWER" == favorite_numbers* || "$RUN_NAME_LOWER" == favorite-numbers* ]]; then
-    ENV_NAME="favorite-numbers"
-elif [[ "$RUN_NAME_LOWER" == even_numbers* || "$RUN_NAME_LOWER" == even-numbers* ]]; then
-    ENV_NAME="even-numbers"
-else
-    echo "Error: Cannot infer environment name from run_name '$RUN_NAME'"
-    echo "Supported prefixes: harmbench, favorite_numbers, favorite-numbers, even_numbers, even-numbers"
-    exit 1
-fi
-
-echo "Auto-detected environment: $ENV_NAME"
+# Environment name is auto-detected by the Python script, no need to duplicate logic here
 
 # Decide which iterations to run based on existing outputs
 if [ $ONLY_MISSING -eq 1 ]; then
-    echo "Selecting only iterations missing outputs for suffix '$SUFFIX_STR' and env '$ENV_NAME'"
+    echo "Selecting only iterations missing outputs for suffix '$SUFFIX_STR'"
     ITERATIONS=()
     for it in "${AVAILABLE_ITERATIONS[@]}"; do
         OUT_DIR="inference_output/$RUN_NAME/iteration-$it/$SUFFIX_STR"
@@ -112,13 +98,13 @@ if [ ${#ITERATIONS[@]} -eq 0 ]; then
 fi
 
 # SLURM configuration
-SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:20:00"
+# SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:20:00"
+SLURM_CONFIG="--partition=main --gpus=1 --cpus-per-task=4 --mem=32G --time=0:20:00"
 
 mkdir -p slurm_logging
 
 echo "Submitting SLURM jobs for iterations: ${ITERATIONS[@]}"
 echo "Model: $RUN_NAME"
-echo "Environment: $ENV_NAME (auto-detected)"
 echo "Dataset type: $DATASET_TYPE"
 echo "Model path: $MODEL_PATH"
 echo "Suffix: $SUFFIX_STR"
@@ -146,6 +132,8 @@ conda activate motivated_reasoning_env
 cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the inference script (env_name is now auto-detected)
+echo "DEBUG: About to run command:"
+echo "python $SCRIPT_PATH --run_name $RUN_NAME --iteration $iteration --dataset_type $DATASET_TYPE --model_path $MODEL_PATH $EXTRA_FLAGS_STR"
 python $SCRIPT_PATH \
     --run_name $RUN_NAME \
     --iteration $iteration \
