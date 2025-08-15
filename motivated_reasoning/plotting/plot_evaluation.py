@@ -173,9 +173,9 @@ def analyze_self_eval_results(results_by_iteration, score_key):
     
     return summary_stats
 
-def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name="base"):
+def create_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name="base"):
     """
-    Create plots showing self-evaluation scores across iterations for a given score type and suffix.
+    Create plots showing evaluation scores across iterations for a given score type and suffix.
     Args:
         summary_stats (dict): Summary statistics for each iteration
         evaluation_dir (str): Name of the evaluation directory for plot titles
@@ -196,8 +196,8 @@ def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key
     else:
         score_type_dir = "other"
     
-    # Create self-evaluation plots directory
-    plots_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "self_eval" / suffix_name / "aggregate"
+    # Create evaluation plots directory
+    plots_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "aggregate"
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     # Sort iterations for proper ordering
@@ -209,61 +209,35 @@ def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key
     q1_scores = [summary_stats[iter]['q1_score'] for iter in iterations]
     q3_scores = [summary_stats[iter]['q3_score'] for iter in iterations]
     
-    # Create figure with subplots
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+    # Create figure with single plot (removed violin plot)
+    fig, ax = plt.subplots(1, 1, figsize=(12, 6))
     fig.patch.set_facecolor('#f8f9fa')
     
-    # Plot 1: Mean with shaded interquartile range
-    ax1.fill_between(iterations, q1_scores, q3_scores, alpha=0.3, color='#2E86AB', label='IQR (Q1-Q3)')
-    ax1.plot(iterations, means, 'o-', color='#2E86AB', linewidth=2, markersize=8, label='Mean')
-    ax1.plot(iterations, medians, 's-', color='#A23B72', linewidth=2, markersize=6, 
+    # Mean and median plot with shaded interquartile range
+    ax.fill_between(iterations, q1_scores, q3_scores, alpha=0.3, color='#2E86AB', label='IQR (Q1-Q3)')
+    ax.plot(iterations, means, 'o-', color='#2E86AB', linewidth=2, markersize=8, label='Mean')
+    ax.plot(iterations, medians, 's-', color='#A23B72', linewidth=2, markersize=6, 
              label='Median', alpha=0.9)
     
-    ax1.set_xlabel('Iteration', fontsize=12)
-    ax1.set_ylabel(f'{label} Score', fontsize=12)
-    ax1.set_title(f'Self-Evaluation: {label} Scores Across Iterations\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}', 
+    ax.set_xlabel('Iteration', fontsize=12)
+    ax.set_ylabel(f'{label} Score', fontsize=12)
+    ax.set_title(f'Evaluation: {label} Scores Across Iterations\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}', 
                  fontsize=14, fontweight='bold')
-    ax1.legend(fontsize=11)
-    ax1.grid(True, alpha=0.3, color='#e9ecef')
-    ax1.set_ylim(0.5, 5.5)
-    ax1.set_facecolor('#f8f9fa')
+    ax.legend(fontsize=11)
+    ax.grid(True, alpha=0.3, color='#e9ecef')
+    ax.set_ylim(0.5, 5.5)
+    ax.set_facecolor('#f8f9fa')
     
     # Add value labels on points
     for i, (iter, mean, q1, q3) in enumerate(zip(iterations, means, q1_scores, q3_scores)):
-        ax1.annotate(f'{mean:.2f} (IQR: {q3-q1:.2f})', 
+        ax.annotate(f'{mean:.2f} (IQR: {q3-q1:.2f})', 
                     (iter, q3 + 0.1), 
                     ha='center', va='bottom', fontsize=9)
-    
-    # Plot 2: Violin plot showing distribution
-    violin_data = [summary_stats[iter]['all_scores'] for iter in iterations]
-    violin_parts = ax2.violinplot(violin_data, positions=iterations, showmeans=True, showmedians=True)
-    
-    violin_parts['cmeans'].set_color('#2E86AB')
-    violin_parts['cmeans'].set_linewidth(2)
-    violin_parts['cmedians'].set_color('#A23B72')
-    violin_parts['cmedians'].set_linewidth(2)
-    
-    for pc in violin_parts['bodies']:
-        pc.set_facecolor('#6c757d')
-        pc.set_alpha(0.4)
-    
-    # Add scatter points
-    for iter in iterations:
-        scores = summary_stats[iter]['all_scores']
-        ax2.scatter([iter] * len(scores), scores, alpha=0.5, s=20, color='#495057', zorder=3)
-    
-    ax2.set_xlabel('Iteration', fontsize=12)
-    ax2.set_ylabel(f'{label} Score', fontsize=12)
-    ax2.set_title(f'Self-Evaluation: Distribution of {label} Scores Across Iterations\n{suffix_name} - evaluator-{evaluator_name}', 
-                 fontsize=14, fontweight='bold')
-    ax2.grid(True, alpha=0.3, color='#e9ecef')
-    ax2.set_ylim(0.5, 5.5)
-    ax2.set_facecolor('#f8f9fa')
     
     # Add sample size annotations
     for iter in iterations:
         n_samples = len(summary_stats[iter]['all_scores'])
-        ax2.annotate(f'n={n_samples}', 
+        ax.annotate(f'n={n_samples}', 
                     (iter, 0.7), 
                     ha='center', va='bottom', fontsize=9, 
                     bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
@@ -271,10 +245,10 @@ def create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key
     plt.tight_layout()
     
     # Save the plot
-    plot_filename = "self_eval_scores.png"
+    plot_filename = "eval_scores.png"
     plot_path = plots_dir / plot_filename
     plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='#f8f9fa')
-    print(f"\nSaved self-evaluation plot to: {plot_path}")
+    print(f"\nSaved evaluation plot to: {plot_path}")
     plt.close()
 
 def get_weighted_self_eval_score(entry, result_key="full_influence_result"):
@@ -585,7 +559,7 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         
         # Create all plots for this score type
         print(f"    Creating aggregate plot for {label}...")
-        create_self_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name)
+        create_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name)
         
         print(f"    Creating distribution plot for {label}...")
         create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)
