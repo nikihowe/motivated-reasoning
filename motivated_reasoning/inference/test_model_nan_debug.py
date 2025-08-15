@@ -44,7 +44,7 @@ def print_system_info():
     print(f"🔍 DEBUG: bfloat16 supported: {torch.cuda.is_bf16_supported()}")
     print(f"🔍 DEBUG: =================================")
 
-def load_model_and_adapter(run_name, iteration, model_path="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"):
+def load_model_and_adapter(run_name, iteration, model_path="/nas/ucb/nikihowe/motivated-reasoning/data/models"):
     """Load the base model and adapter"""
     print(f"Loading model and adapter...")
     
@@ -210,7 +210,7 @@ def main():
     # Hardcoded values
     run_name = "harmbench_kto_long_lr_5e-5-06_20_113158"
     iteration = 6
-    model_path = "/nas/ucb/nikihowe/chai_motivated_reasoning/data/models"
+    model_path = "/nas/ucb/nikihowe/motivated-reasoning/data/models"
     
     print(f"🔍 DEBUG: Using hardcoded values:")
     print(f"🔍 DEBUG: Run name: {run_name}")

@@ -12,7 +12,7 @@ parser.add_argument('--run_name', type=str, required=True,
                     help='Name of the model run (e.g., harmbench_kto_long_lr_5e-5-06_20_113158)')
 parser.add_argument('--iteration', type=int, required=True, 
                     help='Iteration number to evaluate')
-parser.add_argument('--model_path', type=str, default="/nas/ucb/nikihowe/chai_motivated_reasoning/data/models",
+parser.add_argument('--model_path', type=str, default="/nas/ucb/nikihowe/motivated-reasoning/data/models",
                     help='Path to the models directory')
 parser.add_argument('--load_base_model_only', action='store_true',
                     help='Load only the base model without adapter')
@@ -22,7 +22,7 @@ parser.add_argument('--base_model_name', type=str, default="meta-llama/Meta-Llam
 args = parser.parse_args()
 
 # File paths for self-evaluation prompts
-INTROSPECTION_DIR = "/nas/ucb/nikihowe/chai_motivated_reasoning/motivated_reasoning/" \
+INTROSPECTION_DIR = "/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/" \
                       "inference/inference_prompts/niki/introspection"
 
 SAFETY_PROMPT_FILE = Path(INTROSPECTION_DIR) / "safety_training_conflict.txt"
