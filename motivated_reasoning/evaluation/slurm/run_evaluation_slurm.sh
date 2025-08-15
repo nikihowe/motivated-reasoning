@@ -59,7 +59,8 @@ echo "Evaluator iteration: $EVALUATOR_ITERATION"
 echo ""
 
 # SLURM configuration
-SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:30:00"
+# SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:30:00"
+SLURM_CONFIG="--gpus=1 --mem=16G --time=0:10:00"
 
 echo "Submitting SLURM jobs for evaluating iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"

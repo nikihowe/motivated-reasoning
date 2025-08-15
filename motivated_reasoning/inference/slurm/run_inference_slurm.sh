@@ -111,7 +111,7 @@ if [ ${#ITERATIONS[@]} -eq 0 ]; then
 fi
 
 # SLURM configuration
-SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=24G --time=0:20:00"
+SLURM_CONFIG="--gpus=1 --mem=24G --time=0:10:00"
 
 mkdir -p slurm_logging
 
