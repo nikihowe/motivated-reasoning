@@ -1,9 +1,53 @@
 import os
 import torch
+import signal
+import time
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft.peft_model import PeftModel
 from peft.config import PeftConfig
 from motivated_reasoning.utils.utils import find_freest_gpus
+
+
+def compile_model_with_timeout(model, timeout_seconds: int = 120):
+    """
+    Try to compile a model with torch.compile, with a timeout fallback.
+    
+    Args:
+        model: The model to compile
+        timeout_seconds: Maximum time to wait for compilation (default: 120 seconds)
+        
+    Returns:
+        Compiled model if successful, original model if timeout/failure
+    """
+    print("Compiling model for faster inference...")
+    start_time = time.time()
+    
+    def timeout_handler(signum, frame):
+        raise TimeoutError("Model compilation timed out")
+    
+    # Set up the timeout
+    old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(timeout_seconds)
+    
+    try:
+        compiled_model = torch.compile(model)
+        signal.alarm(0)  # Cancel the alarm
+        signal.signal(signal.SIGALRM, old_handler)  # Restore old handler
+        compilation_time = time.time() - start_time
+        print(f"Model compiled successfully in {compilation_time:.1f} seconds.")
+        return compiled_model
+    except TimeoutError:
+        signal.alarm(0)  # Cancel the alarm
+        signal.signal(signal.SIGALRM, old_handler)  # Restore old handler
+        compilation_time = time.time() - start_time
+        print(f"Model compilation timed out after {compilation_time:.1f} seconds. Using uncompiled model.")
+        return model
+    except Exception as e:
+        signal.alarm(0)  # Cancel the alarm
+        signal.signal(signal.SIGALRM, old_handler)  # Restore old handler
+        compilation_time = time.time() - start_time
+        print(f"Model compilation failed after {compilation_time:.1f} seconds: {e}. Using uncompiled model.")
+        return model
 
 
 def load_model_and_tokenizer(
@@ -158,13 +202,11 @@ def load_model_and_tokenizer(
 
         inference_model.eval()
 
-        # Compile the model for faster inference
-        print("Compiling model for faster inference...")
-        compiled_model = torch.compile(inference_model)
-        print("Model compiled.")
+        # Compile the model with timeout fallback
+        final_model = compile_model_with_timeout(inference_model)
 
         print("Model ready for inference.")
-        return compiled_model, tokenizer, model_identifier  # type: ignore
+        return final_model, tokenizer, model_identifier  # type: ignore
 
     except Exception as e:
         print(f"Error loading model or tokenizer: {e}")

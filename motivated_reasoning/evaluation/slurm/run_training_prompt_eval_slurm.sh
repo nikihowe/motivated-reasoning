@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to submit SLURM jobs for evaluating multiple iterations of HarmBench inference for unreasonable justifications
+# Script to submit SLURM jobs for evaluating multiple iterations of HarmBench inference for training prompt responses
 # Usage: ./run_training_prompt_eval_slurm.sh --inference_dir DIR [--evaluator_iteration ITER] [--prompt_type TYPE]
 #
 # Examples:
@@ -94,7 +94,7 @@ echo "Prompt type: $PROMPT_TYPE"
 echo ""
 
 # SLURM configuration
-SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:15:00"
+SLURM_CONFIG="--partition=main --gpus=1 --cpus-per-task=2 --mem=16G --time=0:15:00"
 
 echo "Submitting SLURM jobs for evaluating training prompt responses on iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
