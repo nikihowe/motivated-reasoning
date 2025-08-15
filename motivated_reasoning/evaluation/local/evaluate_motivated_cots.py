@@ -7,6 +7,7 @@ from datetime import datetime
 from motivated_reasoning.backend.hf_backend import HFBackend
 from motivated_reasoning.utils.utils import find_freest_gpus
 from motivated_reasoning.environment.assessor_model import AssessorModel
+from motivated_reasoning.evaluation.local.eval_utils import get_checkpoint_path
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Evaluate motivated CoTs using influence detector')
@@ -30,31 +31,7 @@ if evaluator_iteration is not None:
 else:
     print("Using base model for evaluation")
 
-def get_checkpoint_path(inference_dir: str, evaluator_iteration: int) -> str:
-    """
-    Get the checkpoint path for a given inference directory and evaluator iteration.
-    
-    Args:
-        inference_dir: Name of the inference directory
-        evaluator_iteration: Iteration number of the model to use for evaluation
-        
-    Returns:
-        Path to the checkpoint directory
-    """
-    model_path = Path("/nas/ucb/nikihowe/motivated-reasoning/data/models")
-    iteration_path = model_path / inference_dir / str(evaluator_iteration)
-    
-    if not iteration_path.exists():
-        raise FileNotFoundError(f"Model iteration directory {iteration_path} does not exist")
-    
-    # Find the checkpoint directory (should be checkpoint-{step})
-    checkpoint_dirs = list(iteration_path.glob("checkpoint-*"))
-    if not checkpoint_dirs:
-        raise FileNotFoundError(f"No checkpoint directories found in {iteration_path}")
-    
-    assert len(checkpoint_dirs) == 1, f"Multiple checkpoint directories found: {checkpoint_dirs}"
-    
-    return str(checkpoint_dirs[0])
+
 
 # First load in the influence detector model,
 # using the config from static_harmful

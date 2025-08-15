@@ -1,20 +1,49 @@
 #!/bin/bash
 
 # Script to submit SLURM jobs for multiple iterations of inference
-# Usage: ./run_inference_slurm.sh [run_name] [dataset_type] [extra_flags...]
-# Note: Environment name is now auto-detected from run_name
+# Usage: ./run_inference_slurm.sh --run_name RUN_NAME [--dataset_type {train,test}] [other_flags...]
+# Examples:
+#   ./run_inference_slurm.sh --run_name my_model
+#   ./run_inference_slurm.sh --run_name my_model --dataset_type train
+#   ./run_inference_slurm.sh --run_name my_model --use_training_prompt
+#   ./run_inference_slurm.sh --run_name my_model --dataset_type test --use_training_prompt --add_true_reasoning_suffix
 
 # Default values
 DEFAULT_RUN_NAME="harmbench_kto_long_lr_5e-5-06_20_113158"
 DEFAULT_DATASET_TYPE="test"
 
-# Parse positional arguments
-RUN_NAME="${1:-$DEFAULT_RUN_NAME}"
-DATASET_TYPE="${2:-$DEFAULT_DATASET_TYPE}"
+# Initialize variables
+RUN_NAME=""
+DATASET_TYPE="$DEFAULT_DATASET_TYPE"
 
-# Remaining args become extra flags
-shift 2 || true
-REMAINING_ARGS=("$@")
+# Parse all arguments as flags
+REMAINING_ARGS=()
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --run_name)
+            RUN_NAME="$2"
+            shift 2
+            ;;
+        --dataset_type)
+            DATASET_TYPE="$2"
+            shift 2
+            ;;
+        *)
+            REMAINING_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# Use default run_name if not provided
+RUN_NAME="${RUN_NAME:-$DEFAULT_RUN_NAME}"
+
+# Validate required arguments
+if [[ -z "$RUN_NAME" ]]; then
+    echo "Error: --run_name is required"
+    echo "Usage: $0 --run_name RUN_NAME [--dataset_type {train,test}] [other_flags...]"
+    exit 1
+fi
 
 MODEL_PATH="/nas/ucb/nikihowe/motivated-reasoning/data/models"
 SCRIPT_PATH="motivated_reasoning/inference/run_local/run_inference.py"
@@ -22,6 +51,7 @@ SCRIPT_PATH="motivated_reasoning/inference/run_local/run_inference.py"
 # Determine suffix string based on flags; default to no_suffix
 ADD_TRUE_REASONING=0
 ADD_NON_HARMFUL=0
+USE_TRAINING_PROMPT=0
 ONLY_MISSING=1  # default behavior: only run iterations with no outputs for this suffix
 
 # Filter out script-only flags like --force (not passed to Python)
@@ -36,6 +66,10 @@ for arg in "${REMAINING_ARGS[@]}"; do
             ADD_NON_HARMFUL=1
             FILTERED_ARGS+=("$arg")
             ;;
+        --use_training_prompt)
+            USE_TRAINING_PROMPT=1
+            FILTERED_ARGS+=("$arg")
+            ;;
         --force)
             ONLY_MISSING=0
             # do not forward to python
@@ -46,6 +80,13 @@ for arg in "${REMAINING_ARGS[@]}"; do
     esac
 done
 
+# Determine prompt type directory
+if [ $USE_TRAINING_PROMPT -eq 1 ]; then
+    PROMPT_TYPE_DIR="training_prompt"
+else
+    PROMPT_TYPE_DIR="cot_prompt"
+fi
+
 SUFFIX_PARTS=()
 if [ $ADD_TRUE_REASONING -eq 1 ]; then SUFFIX_PARTS+=("true_reasoning"); fi
 if [ $ADD_NON_HARMFUL -eq 1 ]; then SUFFIX_PARTS+=("non_harmful"); fi
@@ -55,7 +96,7 @@ else
     SUFFIX_STR="$(IFS=_; echo "${SUFFIX_PARTS[*]}")"
 fi
 
-EXTRA_FLAGS_STR="${FILTERED_ARGS[*]}"
+# Keep FILTERED_ARGS as an array for proper argument passing
 
 # Automatically detect iterations by scanning the model directory
 MODEL_DIR="$MODEL_PATH/$RUN_NAME"
@@ -77,10 +118,10 @@ echo "Found ${#AVAILABLE_ITERATIONS[@]} iterations: ${AVAILABLE_ITERATIONS[@]}"
 
 # Decide which iterations to run based on existing outputs
 if [ $ONLY_MISSING -eq 1 ]; then
-    echo "Selecting only iterations missing outputs for suffix '$SUFFIX_STR'"
+    echo "Selecting only iterations missing outputs for prompt type '$PROMPT_TYPE_DIR' and suffix '$SUFFIX_STR'"
     ITERATIONS=()
     for it in "${AVAILABLE_ITERATIONS[@]}"; do
-        OUT_DIR="inference_output/$RUN_NAME/iteration-$it/$SUFFIX_STR"
+        OUT_DIR="inference_output/$RUN_NAME/iteration-$it/$PROMPT_TYPE_DIR/$SUFFIX_STR"
         if compgen -G "$OUT_DIR/*.jsonl" > /dev/null; then
             echo "Skipping iteration $it (outputs already exist in $OUT_DIR)"
         else
@@ -107,13 +148,17 @@ echo "Submitting SLURM jobs for iterations: ${ITERATIONS[@]}"
 echo "Model: $RUN_NAME"
 echo "Dataset type: $DATASET_TYPE"
 echo "Model path: $MODEL_PATH"
+echo "Prompt type: $PROMPT_TYPE_DIR"
 echo "Suffix: $SUFFIX_STR"
+
 echo ""
 
 for iteration in "${ITERATIONS[@]}"; do
     echo "Submitting job for iteration $iteration..."
 
-    job_name="infer_${RUN_NAME}_iter${iteration}"
+    # Create descriptive job name with prompt type
+    prompt_suffix=$([ $USE_TRAINING_PROMPT -eq 1 ] && echo "_training" || echo "_cot")
+    job_name="infer_${RUN_NAME}_iter${iteration}${prompt_suffix}"
 
     sbatch $SLURM_CONFIG \
         --job-name="$job_name" \
@@ -132,14 +177,12 @@ conda activate motivated_reasoning_env
 cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the inference script (env_name is now auto-detected)
-echo "DEBUG: About to run command:"
-echo "python $SCRIPT_PATH --run_name $RUN_NAME --iteration $iteration --dataset_type $DATASET_TYPE --model_path $MODEL_PATH $EXTRA_FLAGS_STR"
 python $SCRIPT_PATH \
     --run_name $RUN_NAME \
     --iteration $iteration \
     --dataset_type $DATASET_TYPE \
     --model_path $MODEL_PATH \
-    $EXTRA_FLAGS_STR
+    "${FILTERED_ARGS[@]}"
 
 echo "Completed inference for iteration $iteration"
 EOF

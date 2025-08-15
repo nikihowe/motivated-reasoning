@@ -28,17 +28,31 @@ parser.add_argument('--add_non_harmful_suffix', action='store_true',
                     help='Append the non_harmful_suffix_prompt to the system prompt')
 parser.add_argument('--dataset_type', type=str, default="test", choices=["train", "test"],
                     help='Dataset type to use (train or test)')
+parser.add_argument('--use_training_prompt', action='store_true',
+                    help='Use the training system prompt (non-CoT) instead of the default CoT prompt')
 
 args = parser.parse_args()
 
 # Environment detection and config mapping
 run_name_lower = args.run_name.lower()
-env_config_map = {
-    'harmbench': 'static_harmful_cot',
-    'favorite-numbers': 'favorite-numbers-cot', 
-    'even-numbers': 'even-numbers-cot',
-    'first-second': 'first-second-cot'
-}
+
+# Choose between CoT and training (non-CoT) config based on flag
+if args.use_training_prompt:
+    env_config_map = {
+        'harmbench': 'static_harmful',
+        'favorite-numbers': 'favorite-numbers', 
+        'even-numbers': 'even-numbers',
+        'first-second': 'first-second'
+    }
+    print("Using training (non-CoT) system prompts")
+else:
+    env_config_map = {
+        'harmbench': 'static_harmful_cot',
+        'favorite-numbers': 'favorite-numbers-cot', 
+        'even-numbers': 'even-numbers-cot',
+        'first-second': 'first-second-cot'
+    }
+    print("Using default CoT system prompts")
 
 # Detect environment from run_name
 if run_name_lower.startswith('harmbench'):
@@ -85,6 +99,11 @@ model_output_dir.mkdir(exist_ok=True)
 iteration_output_dir = model_output_dir / f"iteration-{iteration}"
 iteration_output_dir.mkdir(exist_ok=True)
 
+# Create prompt-type specific subdirectory
+prompt_type_dir = "training_prompt" if args.use_training_prompt else "cot_prompt"
+prompt_output_dir = iteration_output_dir / prompt_type_dir
+prompt_output_dir.mkdir(exist_ok=True)
+
 # Build a suffix string for the output file based on which suffixes are included
 suffix_flags = []
 if args.add_true_reasoning_suffix:
@@ -96,7 +115,7 @@ suffix_str = "_".join(suffix_flags) if suffix_flags else "no_suffix"
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Create a subdirectory for the suffix combination
-output_subdir = iteration_output_dir / suffix_str
+output_subdir = prompt_output_dir / suffix_str
 output_subdir.mkdir(parents=True, exist_ok=True)
 output_file = output_subdir / f"{timestamp}.jsonl"
 
