@@ -1,28 +1,58 @@
 #!/bin/bash
 
 # Script to submit SLURM jobs for evaluating multiple iterations of HarmBench inference for unreasonable justifications
-# Usage: ./run_unreasonable_justifications_slurm.sh [inference_dir] [evaluator_iteration] [prompt_type]
+# Usage: ./run_training_prompt_eval_slurm.sh --inference_dir DIR [--evaluator_iteration ITER] [--prompt_type TYPE]
 #
 # Examples:
-#   ./run_unreasonable_justifications_slurm.sh                                  # Use defaults with base model, training_prompt
-#   ./run_unreasonable_justifications_slurm.sh my_experiment                    # Use base model for my_experiment, training_prompt
-#   ./run_unreasonable_justifications_slurm.sh my_experiment 8                  # Use iteration 8 model for my_experiment, training_prompt
-#   ./run_unreasonable_justifications_slurm.sh my_experiment base training_prompt # Use base model for my_experiment, training_prompt (explicit)
-#   ./run_unreasonable_justifications_slurm.sh my_experiment base cot_prompt      # Use base model for my_experiment, cot_prompt
+#   ./run_training_prompt_eval_slurm.sh --inference_dir my_experiment
+#   ./run_training_prompt_eval_slurm.sh --inference_dir my_experiment --evaluator_iteration 8
+#   ./run_training_prompt_eval_slurm.sh --inference_dir my_experiment --prompt_type cot_prompt
+#   ./run_training_prompt_eval_slurm.sh --inference_dir my_experiment --evaluator_iteration base --prompt_type training_prompt
 
-# Default inference directory
+# Default values
 DEFAULT_INFERENCE_DIR="harmbench_kto_long_lr_5e-5-06_20_113158"
+DEFAULT_EVALUATOR_ITERATION="base"
+DEFAULT_PROMPT_TYPE="training_prompt"
 
-# Use provided inference directory or default
-INFERENCE_DIR="${1:-$DEFAULT_INFERENCE_DIR}"
+# Initialize variables
+INFERENCE_DIR=""
+EVALUATOR_ITERATION="$DEFAULT_EVALUATOR_ITERATION"
+PROMPT_TYPE="$DEFAULT_PROMPT_TYPE"
 
-# Evaluator iteration (optional second argument)
-EVALUATOR_ITERATION="${2:-base}"
+# Parse keyword arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --inference_dir)
+            INFERENCE_DIR="$2"
+            shift 2
+            ;;
+        --evaluator_iteration)
+            EVALUATOR_ITERATION="$2"
+            shift 2
+            ;;
+        --prompt_type)
+            PROMPT_TYPE="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            echo "Usage: $0 --inference_dir DIR [--evaluator_iteration ITER] [--prompt_type TYPE]"
+            exit 1
+            ;;
+    esac
+done
 
-# Prompt type (optional third argument)
-PROMPT_TYPE="${3:-training_prompt}"
+# Use default inference directory if not provided
+INFERENCE_DIR="${INFERENCE_DIR:-$DEFAULT_INFERENCE_DIR}"
 
-SCRIPT_PATH="motivated_reasoning/evaluation/local/evaluate_unreasonable_justifications.py"
+# Validate required arguments
+if [[ -z "$INFERENCE_DIR" ]]; then
+    echo "Error: --inference_dir is required"
+    echo "Usage: $0 --inference_dir DIR [--evaluator_iteration ITER] [--prompt_type TYPE]"
+    exit 1
+fi
+
+SCRIPT_PATH="motivated_reasoning/evaluation/local/evaluate_training_prompt_responses.py"
 
 # Check if inference directory exists
 INFERENCE_PATH="inference_output/$INFERENCE_DIR"
@@ -64,22 +94,22 @@ echo "Prompt type: $PROMPT_TYPE"
 echo ""
 
 # SLURM configuration
-SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:30:00"
+SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:15:00"
 
-echo "Submitting SLURM jobs for evaluating unreasonable justifications on iterations: ${ITERATIONS[@]}"
+echo "Submitting SLURM jobs for evaluating training prompt responses on iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
 echo "Evaluator iteration: $EVALUATOR_ITERATION"
 echo "Prompt type: $PROMPT_TYPE"
 echo ""
 
 for iteration in "${ITERATIONS[@]}"; do
-    echo "Submitting unreasonable justifications evaluation job for iteration $iteration..."
+    echo "Submitting training prompt evaluation job for iteration $iteration..."
     
     # Create job name
     if [ "$EVALUATOR_ITERATION" = "base" ]; then
-        job_name="unreasonable_${INFERENCE_DIR}_iter${iteration}_${PROMPT_TYPE}_base"
+        job_name="training_prompt_eval_${INFERENCE_DIR}_iter${iteration}_base"
     else
-        job_name="unreasonable_${INFERENCE_DIR}_iter${iteration}_${PROMPT_TYPE}_eval${EVALUATOR_ITERATION}"
+        job_name="training_prompt_eval_${INFERENCE_DIR}_iter${iteration}_eval${EVALUATOR_ITERATION}"
     fi
     
     # Submit SLURM job
@@ -105,14 +135,14 @@ else
     python $SCRIPT_PATH --directory $INFERENCE_DIR --iteration $iteration --evaluator_iteration $EVALUATOR_ITERATION --prompt_type $PROMPT_TYPE
 fi
 
-echo "Completed unreasonable justifications evaluation for iteration $iteration"
+echo "Completed training prompt evaluation for iteration $iteration"
 EOF
 
-    echo "Submitted unreasonable justifications evaluation job for iteration $iteration with job name: $job_name"
+    echo "Submitted training prompt evaluation job for iteration $iteration with job name: $job_name"
     echo ""
 done
 
-echo "All unreasonable justifications evaluation SLURM jobs submitted!"
+echo "All training prompt evaluation SLURM jobs submitted!"
 echo "Check job status with: squeue -u \$USER"
 echo "Check logs in: slurm_logging/"
 echo "Evaluation results will be saved in: evaluation_output/recommendation_classification/$INFERENCE_DIR/"
