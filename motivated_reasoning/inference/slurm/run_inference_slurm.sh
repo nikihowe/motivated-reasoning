@@ -8,9 +8,10 @@
 #   ./run_inference_slurm.sh --run_name my_model --use_training_prompt
 #   ./run_inference_slurm.sh --run_name my_model --dataset_type test --use_training_prompt --add_true_reasoning_suffix
 
-# Default values
-DEFAULT_RUN_NAME="harmbench_kto_long_lr_5e-5-06_20_113158"
-DEFAULT_DATASET_TYPE="test"
+# Parse all arguments as flags - dataset_type defaults to test
+RUN_NAME=""
+DATASET_TYPE="test"
+REMAINING_ARGS=()
 
 # Initialize variables
 RUN_NAME=""
@@ -114,8 +115,6 @@ fi
 
 echo "Found ${#AVAILABLE_ITERATIONS[@]} iterations: ${AVAILABLE_ITERATIONS[@]}"
 
-# Environment name is auto-detected by the Python script, no need to duplicate logic here
-
 # Decide which iterations to run based on existing outputs
 if [ $ONLY_MISSING -eq 1 ]; then
     echo "Selecting only iterations missing outputs for prompt type '$PROMPT_TYPE_DIR' and suffix '$SUFFIX_STR'"
@@ -139,8 +138,7 @@ if [ ${#ITERATIONS[@]} -eq 0 ]; then
 fi
 
 # SLURM configuration
-# SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:20:00"
-SLURM_CONFIG="--partition=main --gpus=1 --cpus-per-task=4 --mem=32G --time=0:20:00"
+SLURM_CONFIG="--gpus=1 --mem=24G --time=0:10:00"
 
 mkdir -p slurm_logging
 

@@ -149,6 +149,7 @@ class TrajectoryGenerator:
             shared_queue=shared_queue,
             progress=progress,
             pm_length_penalty=self.pm_length_penalty,
+            random_reward=self.env_args["uniform_random_reward"],
         )
         return vec_env, self.agent
 

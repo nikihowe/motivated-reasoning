@@ -1,0 +1,2 @@
+parent_config_to_override: "_base_harmbench_random.yaml"
+run_name: "harmbench_random"

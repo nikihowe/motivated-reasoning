@@ -1,4 +1,5 @@
 from typing import List, Optional
+import random
 
 from motivated_reasoning.backend.backend import Backend
 from motivated_reasoning.environment.state import State
@@ -23,7 +24,7 @@ class VectorizedPreferenceModel(VectorizedAssessorModel):
         super().__init__(backend, num_models)
         self.length_penalty = length_penalty
 
-    def add_preferences_to_states(self, states: List[State]) -> None:
+    def add_preferences_to_states(self, states: List[State], random_reward: bool = False) -> None:
         """
         Generate preferences for multiple states and add them to the states.
 
@@ -32,6 +33,7 @@ class VectorizedPreferenceModel(VectorizedAssessorModel):
 
         Args:
             states (List[State]): A list of State objects to process.
+            random_reward (bool): Whether to use random rewards instead of model-based preferences. Defaults to False.
 
         Returns:
             None: This method modifies the input states in-place.
@@ -42,6 +44,12 @@ class VectorizedPreferenceModel(VectorizedAssessorModel):
             If a length penalty is specified, it's applied to the "-1" preference option.
             The resulting preferences are added to each State object.
         """
+        if random_reward:
+            for state in states:
+                prob = random.random()
+                state.preferences = {"0": prob, "1": 1 - prob}
+            return
+        
         outputs_n = self.get_response(states)
 
         for state, outputs in zip(states, outputs_n):
