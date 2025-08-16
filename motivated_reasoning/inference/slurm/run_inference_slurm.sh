@@ -1,20 +1,37 @@
 #!/bin/bash
 
 # Script to submit SLURM jobs for multiple iterations of inference
-# Usage: ./run_inference_slurm.sh [run_name] [dataset_type] [extra_flags...]
+# Usage: ./run_inference_slurm.sh --run_name <name> [--dataset_type <type>] [extra_flags...]
 # Note: Environment name is now auto-detected from run_name
 
-# Default values
-DEFAULT_RUN_NAME="harmbench_kto_long_lr_5e-5-06_20_113158"
-DEFAULT_DATASET_TYPE="test"
+# Parse all arguments as flags - dataset_type defaults to test
+RUN_NAME=""
+DATASET_TYPE="test"
+REMAINING_ARGS=()
 
-# Parse positional arguments
-RUN_NAME="${1:-$DEFAULT_RUN_NAME}"
-DATASET_TYPE="${2:-$DEFAULT_DATASET_TYPE}"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --run_name)
+            RUN_NAME="$2"
+            shift 2
+            ;;
+        --dataset_type)
+            DATASET_TYPE="$2"
+            shift 2
+            ;;
+        *)
+            REMAINING_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
 
-# Remaining args become extra flags
-shift 2 || true
-REMAINING_ARGS=("$@")
+# Validate required arguments
+if [ -z "$RUN_NAME" ]; then
+    echo "Error: --run_name is required"
+    echo "Usage: $0 --run_name <name> [--dataset_type <type>] [extra_flags...]"
+    exit 1
+fi
 
 MODEL_PATH="/nas/ucb/nikihowe/motivated-reasoning/data/models"
 SCRIPT_PATH="motivated_reasoning/inference/run_local/run_inference.py"
@@ -55,8 +72,6 @@ else
     SUFFIX_STR="$(IFS=_; echo "${SUFFIX_PARTS[*]}")"
 fi
 
-EXTRA_FLAGS_STR="${FILTERED_ARGS[*]}"
-
 # Automatically detect iterations by scanning the model directory
 MODEL_DIR="$MODEL_PATH/$RUN_NAME"
 if [ ! -d "$MODEL_DIR" ]; then
@@ -72,8 +87,6 @@ if [ ${#AVAILABLE_ITERATIONS[@]} -eq 0 ]; then
 fi
 
 echo "Found ${#AVAILABLE_ITERATIONS[@]} iterations: ${AVAILABLE_ITERATIONS[@]}"
-
-# Environment name is auto-detected by the Python script, no need to duplicate logic here
 
 # Decide which iterations to run based on existing outputs
 if [ $ONLY_MISSING -eq 1 ]; then
@@ -98,8 +111,7 @@ if [ ${#ITERATIONS[@]} -eq 0 ]; then
 fi
 
 # SLURM configuration
-# SLURM_CONFIG="--partition=main --gpus=A6000:1 --cpus-per-task=4 --mem=32G --time=0:20:00"
-SLURM_CONFIG="--partition=main --gpus=1 --cpus-per-task=4 --mem=32G --time=0:20:00"
+SLURM_CONFIG="--gpus=1 --mem=24G --time=0:10:00"
 
 mkdir -p slurm_logging
 
@@ -131,15 +143,21 @@ conda activate motivated_reasoning_env
 # Change to project directory
 cd /nas/ucb/nikihowe/motivated-reasoning
 
-# Run the inference script (env_name is now auto-detected)
-echo "DEBUG: About to run command:"
-echo "python $SCRIPT_PATH --run_name $RUN_NAME --iteration $iteration --dataset_type $DATASET_TYPE --model_path $MODEL_PATH $EXTRA_FLAGS_STR"
-python $SCRIPT_PATH \
-    --run_name $RUN_NAME \
-    --iteration $iteration \
-    --dataset_type $DATASET_TYPE \
-    --model_path $MODEL_PATH \
-    $EXTRA_FLAGS_STR
+# Run the inference script
+if [ ${#FILTERED_ARGS[@]} -gt 0 ]; then
+    python $SCRIPT_PATH \
+        --run_name "$RUN_NAME" \
+        --iteration "$iteration" \
+        --dataset_type "$DATASET_TYPE" \
+        --model_path "$MODEL_PATH" \
+        "${FILTERED_ARGS[@]}"
+else
+    python $SCRIPT_PATH \
+        --run_name "$RUN_NAME" \
+        --iteration "$iteration" \
+        --dataset_type "$DATASET_TYPE" \
+        --model_path "$MODEL_PATH"
+fi
 
 echo "Completed inference for iteration $iteration"
 EOF

@@ -26,6 +26,7 @@ class VectorizedEnvironment:
         shared_queue: TrajectoryQueue,
         progress,
         pm_length_penalty: Optional[float] = None,
+        random_reward: bool = False,
     ):
         """
         Initialize the VectorizedEnvironment with multiple environment configurations and backends.
@@ -36,6 +37,7 @@ class VectorizedEnvironment:
             shared_queue (TrajectoryQueue): A shared queue for trajectory data.
             progress: A progress tracker object.
             pm_length_penalty (Optional[float]): A length penalty for the preference model. Defaults to None.
+            random_reward (bool): Whether to use random rewards instead of model-based preferences. Defaults to False.
         """
         self.max_envs = max_envs
         self.backends = backends
@@ -44,6 +46,10 @@ class VectorizedEnvironment:
         self.shared_queue = shared_queue
         self.progress = progress
         self.pm_length_penalty = pm_length_penalty
+        self.random_reward = random_reward
+        
+        # Print to verify the flag is being read correctly
+        print(f"VectorizedEnvironment initialized with uniform_random_reward={random_reward}")
 
         self.setup_models()
 
@@ -177,7 +183,9 @@ class VectorizedEnvironment:
         next_state_n = self.transition_model_vectorized.get_next_states(active_states, active_actions, self.get_envs())
 
         # The preference model and influence scores are calculated on the agent's response
-        self.preference_model_vectorized.add_preferences_to_states(next_state_n)
+        self.preference_model_vectorized.add_preferences_to_states(
+            next_state_n, random_reward=self.random_reward
+        )
         self.influence_detector_model_vectorized.add_influence_scores_to_states(next_state_n)
         self.character_vectorized.add_char_responses_to_states(next_state_n)
 
