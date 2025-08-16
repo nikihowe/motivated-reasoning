@@ -34,8 +34,8 @@ else:
 
 
 # Load evaluation prompts from external files
-RECOMMENDATION_CLASSIFICATION_PROMPT = load_evaluation_prompt("five_point_first_vs_second_eval_prompt")
-RECOMMENDATION_CLASSIFICATION_SUFFIX = load_evaluation_prompt("five_point_first_vs_second_eval_suffix")
+RECOMMENDATION_CLASSIFICATION_PROMPT = load_evaluation_prompt("five_option_first_vs_second_eval_prompt")
+RECOMMENDATION_CLASSIFICATION_SUFFIX = load_evaluation_prompt("five_option_first_vs_second_eval_suffix")
 
 valid_tokens = ['1', '2', '3', '4', '5']  # Valid classification scores
 
