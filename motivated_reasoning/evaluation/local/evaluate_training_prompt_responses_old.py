@@ -92,12 +92,14 @@ if not iteration_dir.exists():
         print(f"  iteration-{iteration} directory does not exist")
     sys.exit(1)
 
-print(f"\nProcessing directory: {iteration_dir}")
+# Look for JSONL files in the no_suffix subdirectory
+suffix_dir = iteration_dir / "no_suffix"
+print(f"\nProcessing directory: {suffix_dir}")
 
-# Find JSONL files in the directory
-jsonl_files = list(iteration_dir.glob("*.jsonl"))
+# Find JSONL files in the no_suffix subdirectory
+jsonl_files = list(suffix_dir.glob("*.jsonl"))
 if not jsonl_files:
-    print(f"Error: No JSONL files found in {iteration_dir}")
+    print(f"Error: No JSONL files found in {suffix_dir}")
     sys.exit(1)
 
 for iteration_file in jsonl_files:
@@ -186,13 +188,19 @@ for iteration_file in jsonl_files:
     # Save results
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    # Create output directory
-    output_dir = Path("evaluation_output") / "recommendation_classification" / inference_dir / f"iteration-{iteration}"
+    # Create output directory structure that matches plotting expectations
+    if evaluator_iteration is not None:
+        evaluator_name = f"evaluator-{evaluator_iteration}"
+    else:
+        evaluator_name = "evaluator-base"
+    
+    # Create subdirectory for the prompt type
+    output_dir = Path("evaluation_output") / inference_dir / evaluator_name / f"iteration-{iteration}" / "no_suffix" / prompt_type
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Create output filename
+    # Create output filename (much cleaner now)
     evaluator_suffix = f"_eval_iter_{evaluator_iteration}" if evaluator_iteration is not None else "_eval_base"
-    output_filename = f"{iteration_file.stem}{evaluator_suffix}_{timestamp}.json"
+    output_filename = f"{iteration_file.stem}{evaluator_suffix}.json"
     output_path = output_dir / output_filename
     
     # Save results as JSON

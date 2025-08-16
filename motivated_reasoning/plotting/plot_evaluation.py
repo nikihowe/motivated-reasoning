@@ -50,12 +50,13 @@ def find_all_evaluators(evaluation_dir):
     
     return evaluator_names
 
-def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base"):
+def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", prompt_type=None):
     """
-    Load model evaluation results organized by suffix condition.
+    Load model evaluation results organized by suffix condition and prompt type.
     Args:
         evaluation_dir (str): Name of the subfolder in evaluation_output to load from
         evaluator_name (str): Name of the evaluator to load results for (default: "base")
+        prompt_type (str): Optional prompt type to filter by (e.g., "training_prompt", "cot_prompt")
     Returns:
         dict: Dictionary mapping suffix conditions to {iteration: results}
     """
@@ -90,19 +91,35 @@ def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base"):
         for suffix_dir in iteration_dir.iterdir():
             if suffix_dir.is_dir():
                 suffix_name = suffix_dir.name
-                # Look for eval files directly in suffix directory (no evaluation subdirectory)
-                eval_files = list(suffix_dir.glob("eval_*.json"))
+                
+                # If prompt_type is specified, look in that subdirectory
+                if prompt_type:
+                    eval_dir = suffix_dir / prompt_type
+                    if not eval_dir.exists():
+                        continue
+                else:
+                    # Look for eval files directly in suffix directory (legacy support)
+                    eval_dir = suffix_dir
+                
+                # Look for eval files (files that end with eval_base.json or similar)
+                eval_files = list(eval_dir.glob("*eval*.json"))
                 if eval_files:
                     # Sort by timestamp (newest first) and take the most recent
                     eval_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
                     latest_eval_file = eval_files[0]
                     
+                    # Create a more descriptive suffix name if prompt_type is specified
+                    if prompt_type:
+                        display_suffix = f"{suffix_name}_{prompt_type}"
+                    else:
+                        display_suffix = suffix_name
+                    
                     print(f"Loading evaluation results from: {latest_eval_file}")
                     try:
                         with open(latest_eval_file, 'r') as f:
                             results = json.load(f)
-                        results_by_suffix[suffix_name][iteration_num] = results
-                        print(f"  Loaded {len(results)} evaluation examples for {suffix_name} iteration {iteration_num}")
+                        results_by_suffix[display_suffix][iteration_num] = results
+                        print(f"  Loaded {len(results)} evaluation examples for {display_suffix} iteration {iteration_num}")
                     except Exception as e:
                         print(f"Error loading {latest_eval_file}: {e}")
                         continue
@@ -114,15 +131,33 @@ def analyze_evaluation_results(results_by_iteration, score_key):
     Analyze the loaded model evaluation results for a given score key.
     Args:
         results_by_iteration (dict): Dictionary mapping iteration numbers to results
-        score_key (str): Which score to analyze ('full_influence_score' or 'reasoning_influence_score')
+        score_key (str): Which score to analyze ('full_influence_score', 'reasoning_influence_score', or 'classification_score')
     Returns:
         dict: Summary statistics for each iteration
     """
     summary_stats = {}
     
     for iteration, results in results_by_iteration.items():
-        # Extract valid influence scores
-        valid_scores = [r.get(score_key, None) for r in results if r.get(score_key, None) is not None]
+        # Handle different result structures
+        if isinstance(results, dict) and 'results' in results:
+            # New format: results is a dict with 'results' key
+            actual_results = results['results']
+        else:
+            # Old format: results is directly the list
+            actual_results = results
+        
+        # Extract valid scores based on the score_key
+        valid_scores = []
+        for r in actual_results:
+            if score_key == 'classification_score':
+                # For classification scores, look in the evaluation field
+                score = r.get('evaluation', {}).get('classification_score')
+            else:
+                # For influence scores, look directly in the result
+                score = r.get(score_key)
+            
+            if score is not None:
+                valid_scores.append(score)
         
         if not valid_scores:
             print(f"Warning: No valid scores found for iteration {iteration} and score_key {score_key}")
@@ -193,6 +228,8 @@ def create_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, lab
         score_type_dir = "whole_response"
     elif score_key == "reasoning_influence_score":
         score_type_dir = "reasoning_only"
+    elif score_key == "classification_score":
+        score_type_dir = "classification"
     else:
         score_type_dir = "other"
     
@@ -272,12 +309,25 @@ def plot_evaluation_by_example(results_by_iteration, evaluation_dir, suffix_name
     
     for iteration in iterations:
         results = results_by_iteration[iteration]
-        for r in results:
+        
+        # Handle different result structures
+        if isinstance(results, dict) and 'results' in results:
+            # New format: results is a dict with 'results' key
+            actual_results = results['results']
+        else:
+            # Old format: results is directly the list
+            actual_results = results
+        
+        for r in actual_results:
             idx = r.get('example_index', r.get('idx', None))
             if use_weighted:
                 score = get_weighted_evaluation_score(r, result_key=result_key)
             else:
-                score = r.get(score_key, None)
+                # Extract score based on score_key type
+                if score_key == 'classification_score':
+                    score = r.get('evaluation', {}).get('classification_score')
+                else:
+                    score = r.get(score_key, None)
             
             if idx is not None and score is not None:
                 example_scores[idx][iteration].append(score)
@@ -382,10 +432,30 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     for iteration in iterations:
         score_counts[iteration] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         results = results_by_iteration[iteration]
-        for r in results:
-            score = r.get(score_key, None)
+        
+        # Handle different result structures
+        if isinstance(results, dict) and 'results' in results:
+            # New format: results is a dict with 'results' key
+            actual_results = results['results']
+        else:
+            # Old format: results is directly the list
+            actual_results = results
+        
+        print(f"    Processing iteration {iteration}: {len(actual_results)} results, score_key: {score_key}")
+        
+        for r in actual_results:
+            # Extract score based on score_key type
+            if score_key == 'classification_score':
+                score = r.get('evaluation', {}).get('classification_score')
+            else:
+                score = r.get(score_key, None)
+            
             if score is not None and score in range(1, 6):
                 score_counts[iteration][score] += 1
+            else:
+                print(f"      Skipping result with score: {score} (type: {type(score)})")
+        
+        print(f"    Iteration {iteration} score counts: {score_counts[iteration]}")
     
     # Prepare data for stacked bar chart
     scores_1 = [score_counts[iter][1] for iter in iterations]
@@ -398,18 +468,34 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     fig, ax = plt.subplots(figsize=(10, 6))
     
     width = 0.6
-    colors = ['#1f77b4', '#2ca02c', '#ffbb78', '#ff7f0e', '#d62728']
     
-    p1 = ax.bar(iterations, scores_1, width, label='Score 1', color=colors[0])
-    p2 = ax.bar(iterations, scores_2, width, bottom=scores_1, label='Score 2', color=colors[1])
+    # Use custom colors for training prompt evaluations
+    if score_key == "classification_score":
+        # Training prompt colors: 1=blue, 2=light blue, 3=red, 4=light red, 5=black
+        # Even more pastel/softer versions
+        colors = ['#9ecae1', '#c6dbef', '#e6550d', '#fdbe85', '#969696']
+    else:
+        # Default colors for other score types
+        colors = ['#1f77b4', '#2ca02c', '#ffbb78', '#ff7f0e', '#d62728']
+    
+    # Create legend labels based on score type
+    if score_key == "classification_score":
+        # Training prompt legend labels
+        labels = ['1: First option', '2: First option with made up reason', '3: Second option', '4: Second option with made up reason', '5: No recommendation']
+    else:
+        # Default labels for other score types
+        labels = ['Score 1', 'Score 2', 'Score 3', 'Score 4', 'Score 5']
+    
+    p1 = ax.bar(iterations, scores_1, width, label=labels[0], color=colors[0])
+    p2 = ax.bar(iterations, scores_2, width, bottom=scores_1, label=labels[1], color=colors[1])
     p3 = ax.bar(iterations, scores_3, width, bottom=np.array(scores_1) + np.array(scores_2), 
-                label='Score 3', color=colors[2])
+                label=labels[2], color=colors[2])
     p4 = ax.bar(iterations, scores_4, width, 
                 bottom=np.array(scores_1) + np.array(scores_2) + np.array(scores_3), 
-                label='Score 4', color=colors[3])
+                label=labels[3], color=colors[3])
     p5 = ax.bar(iterations, scores_5, width, 
                 bottom=np.array(scores_1) + np.array(scores_2) + np.array(scores_3) + np.array(scores_4), 
-                label='Score 5', color=colors[4])
+                label=labels[4], color=colors[4])
     
     ax.set_xlabel('Iteration', fontsize=12)
     ax.set_ylabel('Number of Examples', fontsize=12)
@@ -479,14 +565,14 @@ def create_cross_evaluator_comparison(evaluation_dir, evaluators, suffix_name, s
         print(f"Need at least 2 evaluators for comparison, got {len(evaluators)}")
         return
     
-                    # Load data for all evaluators
+                                    # Load data for all evaluators
         evaluator_data = {}
         for evaluator_name in evaluators:
-            results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
+            results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name, prompt_type=None)
             if suffix_name in results_by_suffix:
                 summary_stats = analyze_evaluation_results(results_by_suffix[suffix_name], score_key)
-            if summary_stats:
-                evaluator_data[evaluator_name] = summary_stats
+                if summary_stats:
+                    evaluator_data[evaluator_name] = summary_stats
     
     if not evaluator_data:
         print(f"No data found for suffix {suffix_name} across evaluators")
@@ -497,6 +583,8 @@ def create_cross_evaluator_comparison(evaluation_dir, evaluators, suffix_name, s
         score_type_dir = "whole_response"
     elif score_key == "reasoning_influence_score":
         score_type_dir = "reasoning_only"
+    elif score_key == "classification_score":
+        score_type_dir = "classification"
     else:
         score_type_dir = "other"
     
@@ -562,54 +650,51 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         print(f"    No data found for suffix: {suffix_name}")
         return
     
-    # Process both score types
-    for score_key, label, result_key in [
-        ("full_influence_score", "Full Response", "full_influence_result"),
-        ("reasoning_influence_score", "Reasoning Only", "reasoning_influence_result")
-    ]:
-        print(f"    Analyzing {label} results...")
-        
-        # Analyze results
-        summary_stats = analyze_evaluation_results(results_by_iteration, score_key)
-        
-        if not summary_stats:
-            print(f"    No summary stats for {label}")
-            continue
-        
-        print(f"    Found {len(summary_stats)} iterations for {label}")
-        
-        # Create all plots for this score type
-        print(f"    Creating aggregate plot for {label}...")
-        create_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name)
-        
-        print(f"    Creating distribution plot for {label}...")
-        create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)
-        
-        print(f"    Creating by-example argmax plot for {label}...")
-        plot_evaluation_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, evaluator_name=evaluator_name)
-        
-        print(f"    Creating by-example weighted plot for {label}...")
-        plot_evaluation_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=True, result_key=result_key, evaluator_name=evaluator_name)
-        
-        plt.close('all')  # Close all plots to free memory
+    # Process classification scores for training prompt evaluations
+    score_key = "classification_score"
+    label = "Classification Score"
+    
+    print(f"    Analyzing {label} results...")
+    
+    # Analyze results
+    summary_stats = analyze_evaluation_results(results_by_iteration, score_key)
+    
+    if not summary_stats:
+        print(f"    No summary stats for {label}")
+        return
+    
+    print(f"    Found {len(summary_stats)} iterations for {label}")
+    
+    # Create all plots for this score type
+    print(f"    Creating aggregate plot for {label}...")
+    create_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name)
+    
+    print(f"    Creating distribution plot for {label}...")
+    create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)
+    
+    print(f"    Creating by-example plot for {label}...")
+    plot_evaluation_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, evaluator_name=evaluator_name)
+    
+    plt.close('all')  # Close all plots to free memory
     
     print(f"    Completed all plots for {suffix_name}")
     return f"Completed all plots for {suffix_name}"
 
-def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None):
+def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None, prompt_type=None):
     """
     Process results for a single evaluator.
     Args:
         evaluation_dir (str): Name of the evaluation directory
         evaluator_name (str): Name of the evaluator to process
         suffix_filter (str): Optional suffix to filter to
+        prompt_type (str): Optional prompt type to filter by (e.g., "training_prompt", "cot_prompt")
     """
     print(f"\n{'='*80}")
     print(f"PROCESSING EVALUATOR: {evaluator_name}")
     print(f"{'='*80}")
     
-    # Load model evaluation results organized by suffix
-    results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
+    # Load model evaluation results organized by suffix and prompt type
+    results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name, prompt_type)
     
     if not results_by_suffix:
         print(f"No model evaluation results found for evaluator-{evaluator_name}!")
@@ -684,12 +769,12 @@ def evaluator_worker(args):
     """
     Worker function to process a single evaluator in parallel.
     Args:
-        args: Tuple containing (evaluation_dir, evaluator_name, suffix_filter)
+        args: Tuple containing (evaluation_dir, evaluator_name, suffix_filter, prompt_type)
     """
-    evaluation_dir, evaluator_name, suffix_filter = args
+    evaluation_dir, evaluator_name, suffix_filter, prompt_type = args
     
     try:
-        process_evaluator(evaluation_dir, evaluator_name, suffix_filter)
+        process_evaluator(evaluation_dir, evaluator_name, suffix_filter, prompt_type)
         return f"Completed evaluator-{evaluator_name}"
     except Exception as e:
         return f"Error processing evaluator-{evaluator_name}: {str(e)}"
@@ -701,13 +786,17 @@ def main():
     parser.add_argument('evaluation_dir', type=str, help='Evaluation directory name')
     parser.add_argument('--suffix', type=str, help='Specific suffix condition to analyze (optional)')
     parser.add_argument('--evaluator', type=str, help='Specific evaluator name (default: process all evaluators)')
+    parser.add_argument('--prompt-type', type=str, help='Prompt type to analyze (e.g., "training_prompt", "cot_prompt")')
     parser.add_argument('--list-evaluators', action='store_true', help='List available evaluators and exit')
     parser.add_argument('--no-multiprocessing', action='store_true', help='Disable multiprocessing (use sequential processing)')
     parser.add_argument('--max-workers', type=int, default=None, help='Maximum number of worker processes (default: auto)')
     args = parser.parse_args()
     
     evaluation_dir = args.evaluation_dir
+    prompt_type = args.prompt_type
     print(f"Loading evaluation results from: {evaluation_dir}")
+    if prompt_type:
+        print(f"Filtering by prompt type: {prompt_type}")
     
     # Find all available evaluators
     available_evaluators = find_all_evaluators(evaluation_dir)
@@ -746,7 +835,7 @@ def main():
         
         # Prepare tasks for multiprocessing
         evaluator_tasks = [
-            (evaluation_dir, evaluator_name, args.suffix)
+            (evaluation_dir, evaluator_name, args.suffix, prompt_type)
             for evaluator_name in evaluators_to_process
         ]
         
@@ -771,7 +860,7 @@ def main():
         print(f"Processing evaluators sequentially...")
         for i, evaluator_name in enumerate(evaluators_to_process):
             print(f"\n[{i+1}/{len(evaluators_to_process)}] About to process evaluator: {evaluator_name}")
-            process_evaluator(evaluation_dir, evaluator_name, args.suffix)
+            process_evaluator(evaluation_dir, evaluator_name, args.suffix, prompt_type)
             print(f"[{i+1}/{len(evaluators_to_process)}] Completed processing evaluator: {evaluator_name}")
     
     # Create cross-evaluator comparison plots if we have multiple evaluators
@@ -783,7 +872,7 @@ def main():
         # Find all suffix conditions that exist across evaluators
         all_suffixes = set()
         for evaluator_name in evaluators_to_process:
-            results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name)
+            results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name, prompt_type)
             all_suffixes.update(results_by_suffix.keys())
         
         # Filter to specific suffix if requested

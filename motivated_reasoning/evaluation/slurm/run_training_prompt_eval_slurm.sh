@@ -94,7 +94,7 @@ echo "Prompt type: $PROMPT_TYPE"
 echo ""
 
 # SLURM configuration
-SLURM_CONFIG="--partition=main --gpus=1 --cpus-per-task=2 --mem=16G --time=0:15:00"
+SLURM_CONFIG="--gpus=1 --mem=16G --time=0:10:00"
 
 echo "Submitting SLURM jobs for evaluating training prompt responses on iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
