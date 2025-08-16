@@ -91,7 +91,7 @@ def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", pro
         for suffix_dir in iteration_dir.iterdir():
             if suffix_dir.is_dir():
                 suffix_name = suffix_dir.name
-                
+               
                 # If prompt_type is specified, look in that subdirectory
                 if prompt_type:
                     eval_dir = suffix_dir / prompt_type
@@ -635,7 +635,7 @@ def create_cross_evaluator_comparison(evaluation_dir, evaluators, suffix_name, s
 
 
 
-def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, evaluator_name):
+def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, evaluator_name, prompt_type=None):
     """
     Process a single suffix condition and create all its plots.
     Args:
@@ -643,6 +643,7 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         results_by_iteration (dict): Dictionary mapping iteration numbers to results
         evaluation_dir (str): Name of the evaluation directory
         evaluator_name (str): Name of the evaluator
+        prompt_type (str): Optional prompt type to determine which scores to plot
     """
     print(f"  Processing suffix: {suffix_name}")
     
@@ -650,30 +651,43 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         print(f"    No data found for suffix: {suffix_name}")
         return
     
-    # Process classification scores for training prompt evaluations
-    score_key = "classification_score"
-    label = "Classification Score"
+    # Determine which scores to process based on prompt type
+    if prompt_type == "training_prompt":
+        # Training prompt evaluations use classification scores
+        score_keys_and_labels = [
+            ("classification_score", "Classification Score")
+        ]
+    else:
+        # Normal prompts use influence scores
+        score_keys_and_labels = [
+            ("full_influence_score", "Full Response Influence"),
+            ("reasoning_influence_score", "Reasoning Only Influence")
+        ]
     
-    print(f"    Analyzing {label} results...")
-    
-    # Analyze results
-    summary_stats = analyze_evaluation_results(results_by_iteration, score_key)
-    
-    if not summary_stats:
-        print(f"    No summary stats for {label}")
-        return
-    
-    print(f"    Found {len(summary_stats)} iterations for {label}")
-    
-    # Create all plots for this score type
-    print(f"    Creating aggregate plot for {label}...")
-    create_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name)
-    
-    print(f"    Creating distribution plot for {label}...")
-    create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)
-    
-    print(f"    Creating by-example plot for {label}...")
-    plot_evaluation_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, evaluator_name=evaluator_name)
+    # Process each score type
+    for score_key, label in score_keys_and_labels:
+        print(f"    Analyzing {label} results...")
+        
+        # Analyze results
+        summary_stats = analyze_evaluation_results(results_by_iteration, score_key)
+        
+        if not summary_stats:
+            print(f"      No summary stats for {label}")
+            continue
+        
+        print(f"      Found {len(summary_stats)} iterations for {label}")
+        
+        # Create all plots for this score type
+        print(f"      Creating aggregate plot for {label}...")
+        create_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, label, evaluator_name)
+        
+        if prompt_type == "training_prompt":
+            # Only create distribution plot for training prompts (classification scores)
+            print(f"      Creating distribution plot for {label}...")
+            create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name)
+        
+        print(f"      Creating by-example plot for {label}...")
+        plot_evaluation_by_example(results_by_iteration, evaluation_dir, suffix_name, score_key, label, use_weighted=False, evaluator_name=evaluator_name)
     
     plt.close('all')  # Close all plots to free memory
     
@@ -720,7 +734,7 @@ def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None, prompt
         print(f"  Total examples across all iterations: {sum(len(results) for results in results_by_iteration.values())}")
         print(f"{'-'*60}")
         
-        process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, evaluator_name)
+        process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, evaluator_name, prompt_type)
     
     # Create weighted score comparison plots across suffixes for this evaluator
     if len(results_by_suffix) > 1:
