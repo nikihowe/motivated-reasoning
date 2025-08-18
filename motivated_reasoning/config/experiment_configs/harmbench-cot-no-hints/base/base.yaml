@@ -1,9 +1,9 @@
 # Run settings
-run_name: "static_harmful_cot"
+run_name: "harmbench_cot_no_hints"
 log_to_wandb: true
 
 # Specify settings for generating trajectories
-env_class: "static_harmful_cot"
+env_class: "harmbench-cot-no-hints"
 env_fractions: 
   "*": 1
 envs: ["harmbench-static-train-cot"]
@@ -37,7 +37,6 @@ separate_agent_env_devices: "no"
 
 # Accelerate config type
 accelerate_config_type: "DeepSpeed"
-
 
 # Training settings
 per_device_train_batch_size: 2

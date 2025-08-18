@@ -1,0 +1,5 @@
+parent_config_to_override: "_base_static_harmful_cot.yaml"
+run_name: "harmbench_static_harmful_full_cot"
+
+iterations: 10
+allow_id_to_see_cot: true
