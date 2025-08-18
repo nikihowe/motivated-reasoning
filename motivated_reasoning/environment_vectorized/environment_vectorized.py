@@ -187,6 +187,16 @@ class VectorizedEnvironment:
             next_state_n, random_reward=self.random_reward
         )
         self.influence_detector_model_vectorized.add_influence_scores_to_states(next_state_n)
+        
+        # Add formatting penalty evaluation
+        from motivated_reasoning.environment.assessor_model import AssessorModel
+        for state in next_state_n:
+            if not self.random_reward:
+                full_response = state.history[-1]["content"]
+                state.formatting_penalty = AssessorModel._get_formatting_penalty(full_response)
+            else:
+                state.formatting_penalty = 0.0  # No penalty for random rewards
+        
         self.character_vectorized.add_char_responses_to_states(next_state_n)
 
         # Merge the active and inactive states
@@ -231,6 +241,7 @@ class VectorizedEnvironment:
                         "influence_scores": env.current_state.influence_scores,
                         "transition_probs": env.current_state.transition_probs,
                         "visited_states": list(env.visited_states),
+                        "formatting_penalty": env.current_state.formatting_penalty,
                     }
                 )
 

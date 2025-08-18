@@ -24,7 +24,17 @@ def load_turns_df_from_iteration_path(trajectory_path: Path) -> pd.DataFrame:
     turns_df = pd.concat([pd.read_json(file, lines=True) for file in trajectory_path.glob("[0-9]*.jsonl")])
 
     # Calculate expected preference
-    turns_df["timestep_reward"] = turns_df["preferences"].apply(calculate_expectation)
+    turns_df["timestep_reward_no_formatting_penalty"] = turns_df["preferences"].apply(calculate_expectation)
+    
+    # Calculate reward with formatting penalty (if formatting_penalty exists)
+    if "formatting_penalty" in turns_df.columns:
+        formatting_penalty_weight = 1.0  # Could make this configurable
+        turns_df["timestep_reward"] = (
+            turns_df["timestep_reward_no_formatting_penalty"] - formatting_penalty_weight * turns_df["formatting_penalty"]
+        )
+    else:
+        turns_df["timestep_reward"] = turns_df["timestep_reward_no_formatting_penalty"]
+    
     if "influence_scores" in turns_df.columns:
         turns_df["timestep_influence_level"] = turns_df["influence_scores"].apply(calculate_expectation)
     else:  # for backwards compatibility
