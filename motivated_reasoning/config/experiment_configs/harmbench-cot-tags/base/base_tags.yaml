@@ -1,9 +1,9 @@
 # Run settings
-run_name: "harmbench_cot_no_hints"
+run_name: "harmbench_cot_tags"
 log_to_wandb: true
 
 # Specify settings for generating trajectories
-env_class: "harmbench-cot-no-hints"
+env_class: "harmbench-cot-tags"
 env_fractions: 
   "*": 1
 envs: ["harmbench-static-train-cot"]
