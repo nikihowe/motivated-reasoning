@@ -8,17 +8,15 @@
 #   ./run_inference_slurm.sh --run_name my_model --use_training_prompt
 #   ./run_inference_slurm.sh --run_name my_model --dataset_type test --use_training_prompt --add_true_reasoning_suffix
 
+RUN_NAME=""
+DATASET_TYPE="test"
+REMAINING_ARGS=()
+
 # Parse all arguments as flags - dataset_type defaults to test
 RUN_NAME=""
 DATASET_TYPE="test"
 REMAINING_ARGS=()
 
-# Initialize variables
-RUN_NAME=""
-DATASET_TYPE="$DEFAULT_DATASET_TYPE"
-
-# Parse all arguments as flags
-REMAINING_ARGS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
         --run_name)
@@ -37,7 +35,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Use default run_name if not provided
-RUN_NAME="${RUN_NAME:-$DEFAULT_RUN_NAME}"
+RUN_NAME="${RUN_NAME:-}"
 
 # Validate required arguments
 if [[ -z "$RUN_NAME" ]]; then
@@ -138,7 +136,7 @@ if [ ${#ITERATIONS[@]} -eq 0 ]; then
 fi
 
 # SLURM configuration
-SLURM_CONFIG="--gpus=1 --mem=24G --time=0:10:00"
+SLURM_CONFIG="--gpus=A6000:1 --mem=24G --time=0:10:00"
 
 mkdir -p slurm_logging
 
@@ -175,12 +173,20 @@ conda activate motivated_reasoning_env
 cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the inference script (env_name is now auto-detected)
-python $SCRIPT_PATH \
-    --run_name $RUN_NAME \
-    --iteration $iteration \
-    --dataset_type $DATASET_TYPE \
-    --model_path $MODEL_PATH \
-    "${FILTERED_ARGS[@]}"
+if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
+    python $SCRIPT_PATH \
+        --run_name $RUN_NAME \
+        --iteration $iteration \
+        --dataset_type $DATASET_TYPE \
+        --model_path $MODEL_PATH
+else
+    python $SCRIPT_PATH \
+        --run_name $RUN_NAME \
+        --iteration $iteration \
+        --dataset_type $DATASET_TYPE \
+        --model_path $MODEL_PATH \
+        "${FILTERED_ARGS[@]}"
+fi
 
 echo "Completed inference for iteration $iteration"
 EOF

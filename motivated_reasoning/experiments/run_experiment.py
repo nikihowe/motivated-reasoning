@@ -11,7 +11,8 @@ from motivated_reasoning.utils.utils import find_freest_gpus
 # DEFAULT_CONFIG_PATH = "favorite_numbers.yaml"
 # DEFAULT_CONFIG_PATH = "even_numbers.yaml"
 # DEFAULT_CONFIG_PATH = "first_second.yaml"
-DEFAULT_CONFIG_PATH = "harmbench_random.yaml"
+# DEFAULT_CONFIG_PATH = "harmbench_random.yaml"
+DEFAULT_CONFIG_PATH = "harmbench_static_harmful_full_cot.yaml"
 
 
 def parse_args():

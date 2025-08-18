@@ -97,7 +97,7 @@ for suffix_dir in iteration_dir.iterdir():
     if suffix_dir.is_dir():
         suffix_part = suffix_dir.name
         print(f"\nProcessing suffix: {suffix_part}")
-        for iteration_file in suffix_dir.glob("*.jsonl"):
+        for iteration_file in (suffix_dir / "no_suffix").glob("*.jsonl"):
             print(f"  Evaluating file: {iteration_file.name}")
 
             # Load the JSONL data
