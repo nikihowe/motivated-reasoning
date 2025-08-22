@@ -1,20 +1,16 @@
 #!/bin/bash
 
 # Script to submit SLURM jobs for evaluating multiple iterations of motivated reasoning using Gemini
-# Usage: ./run_evaluation_slurm_gemini.sh --inference_dir DIR [--prompt_type TYPE]
+# Usage: ./run_evaluation_slurm_gemini.sh --inference_dir DIR [other_flags...]
 #
 # Examples:
-#   ./run_evaluation_slurm_gemini.sh --inference_dir my_experiment                    # Use cot_prompt (default)
+#   ./run_evaluation_slurm_gemini.sh --inference_dir my_experiment
 #   ./run_evaluation_slurm_gemini.sh --inference_dir my_experiment --prompt_type training_prompt
 #   ./run_evaluation_slurm_gemini.sh --inference_dir my_experiment --prompt_type cot_prompt
 
-# Default values
-DEFAULT_INFERENCE_DIR="harmbench_cot_tags-08_18_162853"
-DEFAULT_PROMPT_TYPE="cot_prompt"
-
 # Initialize variables
 INFERENCE_DIR=""
-PROMPT_TYPE="$DEFAULT_PROMPT_TYPE"
+REMAINING_ARGS=()
 
 # Parse keyword arguments
 while [[ $# -gt 0 ]]; do
@@ -23,25 +19,17 @@ while [[ $# -gt 0 ]]; do
             INFERENCE_DIR="$2"
             shift 2
             ;;
-        --prompt_type)
-            PROMPT_TYPE="$2"
-            shift 2
-            ;;
         *)
-            echo "Unknown argument: $1"
-            echo "Usage: $0 --inference_dir DIR [--prompt_type TYPE]"
-            exit 1
+            REMAINING_ARGS+=("$1")
+            shift
             ;;
     esac
 done
 
-# Use default inference directory if not provided
-INFERENCE_DIR="${INFERENCE_DIR:-$DEFAULT_INFERENCE_DIR}"
-
 # Validate required arguments
 if [[ -z "$INFERENCE_DIR" ]]; then
     echo "Error: --inference_dir is required"
-    echo "Usage: $0 --inference_dir DIR [--prompt_type TYPE]"
+    echo "Usage: $0 --inference_dir DIR [other_flags...]"
     exit 1
 fi
 
@@ -82,7 +70,9 @@ fi
 
 echo "Found ${#ITERATIONS[@]} iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
-echo "Prompt type: $PROMPT_TYPE"
+if [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
+    echo "Additional arguments: ${REMAINING_ARGS[@]}"
+fi
 echo ""
 
 # SLURM configuration - No GPU needed for Gemini API calls, but need more time for API calls
@@ -90,7 +80,9 @@ SLURM_CONFIG="--cpus-per-task=2 --mem=8G --time=0:20:00"
 
 echo "Submitting SLURM jobs for Gemini-based motivated reasoning evaluation on iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
-echo "Prompt type: $PROMPT_TYPE"
+if [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
+    echo "Additional arguments: ${REMAINING_ARGS[@]}"
+fi
 echo ""
 
 for iteration in "${ITERATIONS[@]}"; do
@@ -115,8 +107,17 @@ conda activate motivated_reasoning_env
 # Change to project directory
 cd /nas/ucb/nikihowe/motivated-reasoning
 
-# Run the Gemini evaluation script - no evaluator_iteration needed since we use Gemini directly
-python $SCRIPT_PATH --directory $INFERENCE_DIR --iteration $iteration --prompt_type $PROMPT_TYPE
+# Run the Gemini evaluation script
+if [ ${#REMAINING_ARGS[@]} -eq 0 ]; then
+    python $SCRIPT_PATH \
+        --directory $INFERENCE_DIR \
+        --iteration $iteration
+else
+    python $SCRIPT_PATH \
+        --directory $INFERENCE_DIR \
+        --iteration $iteration \
+        "${REMAINING_ARGS[@]}"
+fi
 
 echo "Completed Gemini-based motivated reasoning evaluation for iteration $iteration"
 EOF
@@ -128,4 +129,4 @@ done
 echo "All Gemini evaluation SLURM jobs submitted!"
 echo "Check job status with: squeue -u \$USER"
 echo "Check logs in: slurm_logging/"
-echo "Evaluation results will be saved in: evaluation_output/$INFERENCE_DIR/evaluator-gemini/iteration-X/$PROMPT_TYPE/"
+echo "Evaluation results will be saved in: evaluation_output/$INFERENCE_DIR/evaluator-gemini/iteration-X/[prompt_type]/"
