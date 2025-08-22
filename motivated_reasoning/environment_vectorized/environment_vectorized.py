@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple
 
 from motivated_reasoning.agent.agent import Agent
 from motivated_reasoning.backend.backend import Backend
+from motivated_reasoning.environment.assessor_model import AssessorModel
 from motivated_reasoning.environment.environment import Environment
 from motivated_reasoning.environment.state import State
 from motivated_reasoning.environment_vectorized.character_vectorized import VectorizedCharacter
@@ -189,7 +190,6 @@ class VectorizedEnvironment:
         self.influence_detector_model_vectorized.add_influence_scores_to_states(next_state_n)
         
         # Add formatting penalty evaluation
-        from motivated_reasoning.environment.assessor_model import AssessorModel
         for state in next_state_n:
             if not self.random_reward:
                 full_response = state.history[-1]["content"]
