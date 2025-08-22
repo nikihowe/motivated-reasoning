@@ -9,9 +9,6 @@
 #   ./run_evaluation_slurm.sh --inference_dir my_experiment --prompt_type training_prompt
 #   ./run_evaluation_slurm.sh --inference_dir my_experiment --evaluator_iteration 8 --prompt_type training_prompt
 
-# Default values
-DEFAULT_INFERENCE_DIR="harmbench_kto_long_lr_5e-5-06_20_113158"
-
 # Initialize variables
 INFERENCE_DIR=""
 REMAINING_ARGS=()
@@ -30,8 +27,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Use default inference directory if not provided
-INFERENCE_DIR="${INFERENCE_DIR:-$DEFAULT_INFERENCE_DIR}"
+# No fallback to default - inference_dir is always required
 
 # Validate required arguments
 if [[ -z "$INFERENCE_DIR" ]]; then
