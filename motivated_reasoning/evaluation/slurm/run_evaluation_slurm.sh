@@ -1,23 +1,20 @@
 #!/bin/bash
 
 # Script to submit SLURM jobs for evaluating multiple iterations of HarmBench inference
-# Usage: ./run_evaluation_slurm.sh --inference_dir DIR [--evaluator_iteration ITER] [--prompt_type TYPE]
+# Usage: ./run_evaluation_slurm.sh --inference_dir DIR [other_flags...]
 #
 # Examples:
-#   ./run_evaluation_slurm.sh --inference_dir my_experiment                    # Use base model, cot_prompt
+#   ./run_evaluation_slurm.sh --inference_dir my_experiment
 #   ./run_evaluation_slurm.sh --inference_dir my_experiment --evaluator_iteration 8
 #   ./run_evaluation_slurm.sh --inference_dir my_experiment --prompt_type training_prompt
 #   ./run_evaluation_slurm.sh --inference_dir my_experiment --evaluator_iteration 8 --prompt_type training_prompt
 
 # Default values
 DEFAULT_INFERENCE_DIR="harmbench_kto_long_lr_5e-5-06_20_113158"
-DEFAULT_EVALUATOR_ITERATION="base"
-DEFAULT_PROMPT_TYPE="cot_prompt"
 
 # Initialize variables
 INFERENCE_DIR=""
-EVALUATOR_ITERATION="$DEFAULT_EVALUATOR_ITERATION"
-PROMPT_TYPE="$DEFAULT_PROMPT_TYPE"
+REMAINING_ARGS=()
 
 # Parse keyword arguments
 while [[ $# -gt 0 ]]; do
@@ -26,18 +23,9 @@ while [[ $# -gt 0 ]]; do
             INFERENCE_DIR="$2"
             shift 2
             ;;
-        --evaluator_iteration)
-            EVALUATOR_ITERATION="$2"
-            shift 2
-            ;;
-        --prompt_type)
-            PROMPT_TYPE="$2"
-            shift 2
-            ;;
         *)
-            echo "Unknown argument: $1"
-            echo "Usage: $0 --inference_dir DIR [--evaluator_iteration ITER] [--prompt_type TYPE]"
-            exit 1
+            REMAINING_ARGS+=("$1")
+            shift
             ;;
     esac
 done
@@ -48,7 +36,7 @@ INFERENCE_DIR="${INFERENCE_DIR:-$DEFAULT_INFERENCE_DIR}"
 # Validate required arguments
 if [[ -z "$INFERENCE_DIR" ]]; then
     echo "Error: --inference_dir is required"
-    echo "Usage: $0 --inference_dir DIR [--evaluator_iteration ITER] [--prompt_type TYPE]"
+    echo "Usage: $0 --inference_dir DIR [other_flags...]"
     exit 1
 fi
 
@@ -89,8 +77,9 @@ fi
 
 echo "Found ${#ITERATIONS[@]} iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
-echo "Evaluator iteration: $EVALUATOR_ITERATION"
-echo "Prompt type: $PROMPT_TYPE"
+if [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
+    echo "Additional arguments: ${REMAINING_ARGS[@]}"
+fi
 echo ""
 
 # SLURM configuration
@@ -99,19 +88,16 @@ SLURM_CONFIG="--gpus=1 --mem=16G --time=0:10:00"
 
 echo "Submitting SLURM jobs for evaluating iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
-echo "Evaluator iteration: $EVALUATOR_ITERATION"
-echo "Prompt type: $PROMPT_TYPE"
+if [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
+    echo "Additional arguments: ${REMAINING_ARGS[@]}"
+fi
 echo ""
 
 for iteration in "${ITERATIONS[@]}"; do
     echo "Submitting evaluation job for iteration $iteration..."
     
     # Create job name
-    if [ "$EVALUATOR_ITERATION" = "base" ]; then
-        job_name="eval_${INFERENCE_DIR}_iter${iteration}_base"
-    else
-        job_name="eval_${INFERENCE_DIR}_iter${iteration}_eval${EVALUATOR_ITERATION}"
-    fi
+    job_name="eval_${INFERENCE_DIR}_iter${iteration}"
     
     # Submit SLURM job
     sbatch $SLURM_CONFIG \
@@ -129,11 +115,16 @@ conda activate motivated_reasoning_env
 # Change to project directory
 cd /nas/ucb/nikihowe/motivated-reasoning
 
-# Run the evaluation script with new argument format
-if [ "$EVALUATOR_ITERATION" = "base" ]; then
-    python $SCRIPT_PATH --directory $INFERENCE_DIR --iteration $iteration --prompt_type $PROMPT_TYPE
+# Run the evaluation script
+if [ ${#REMAINING_ARGS[@]} -eq 0 ]; then
+    python $SCRIPT_PATH \
+        --directory $INFERENCE_DIR \
+        --iteration $iteration
 else
-    python $SCRIPT_PATH --directory $INFERENCE_DIR --iteration $iteration --evaluator_iteration $EVALUATOR_ITERATION --prompt_type $PROMPT_TYPE
+    python $SCRIPT_PATH \
+        --directory $INFERENCE_DIR \
+        --iteration $iteration \
+        "${REMAINING_ARGS[@]}"
 fi
 
 echo "Completed evaluation for iteration $iteration"
