@@ -1,22 +1,56 @@
 #!/bin/bash
 
 # Script to submit SLURM jobs for evaluating multiple iterations of HarmBench inference
-# Usage: ./run_evaluation_slurm.sh [inference_dir] [evaluator_iteration]
+# Usage: ./run_evaluation_slurm.sh --inference_dir DIR [--evaluator_iteration ITER] [--prompt_type TYPE]
 #
 # Examples:
-#   ./run_evaluation_slurm.sh                                  # Use defaults with base model
-#   ./run_evaluation_slurm.sh my_experiment                    # Use base model for my_experiment
-#   ./run_evaluation_slurm.sh my_experiment 8                  # Use iteration 8 model for my_experiment
-#   ./run_evaluation_slurm.sh my_experiment base               # Use base model for my_experiment (explicit)
+#   ./run_evaluation_slurm.sh --inference_dir my_experiment                    # Use base model, cot_prompt
+#   ./run_evaluation_slurm.sh --inference_dir my_experiment --evaluator_iteration 8
+#   ./run_evaluation_slurm.sh --inference_dir my_experiment --prompt_type training_prompt
+#   ./run_evaluation_slurm.sh --inference_dir my_experiment --evaluator_iteration 8 --prompt_type training_prompt
 
-# Default inference directory
+# Default values
 DEFAULT_INFERENCE_DIR="harmbench_kto_long_lr_5e-5-06_20_113158"
+DEFAULT_EVALUATOR_ITERATION="base"
+DEFAULT_PROMPT_TYPE="cot_prompt"
 
-# Use provided inference directory or default
-INFERENCE_DIR="${1:-$DEFAULT_INFERENCE_DIR}"
+# Initialize variables
+INFERENCE_DIR=""
+EVALUATOR_ITERATION="$DEFAULT_EVALUATOR_ITERATION"
+PROMPT_TYPE="$DEFAULT_PROMPT_TYPE"
 
-# Evaluator iteration (optional second argument)
-EVALUATOR_ITERATION="${2:-base}"
+# Parse keyword arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --inference_dir)
+            INFERENCE_DIR="$2"
+            shift 2
+            ;;
+        --evaluator_iteration)
+            EVALUATOR_ITERATION="$2"
+            shift 2
+            ;;
+        --prompt_type)
+            PROMPT_TYPE="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            echo "Usage: $0 --inference_dir DIR [--evaluator_iteration ITER] [--prompt_type TYPE]"
+            exit 1
+            ;;
+    esac
+done
+
+# Use default inference directory if not provided
+INFERENCE_DIR="${INFERENCE_DIR:-$DEFAULT_INFERENCE_DIR}"
+
+# Validate required arguments
+if [[ -z "$INFERENCE_DIR" ]]; then
+    echo "Error: --inference_dir is required"
+    echo "Usage: $0 --inference_dir DIR [--evaluator_iteration ITER] [--prompt_type TYPE]"
+    exit 1
+fi
 
 SCRIPT_PATH="motivated_reasoning/evaluation/local/evaluate_motivated_cots.py"
 
@@ -56,6 +90,7 @@ fi
 echo "Found ${#ITERATIONS[@]} iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
 echo "Evaluator iteration: $EVALUATOR_ITERATION"
+echo "Prompt type: $PROMPT_TYPE"
 echo ""
 
 # SLURM configuration
@@ -65,6 +100,7 @@ SLURM_CONFIG="--gpus=1 --mem=16G --time=0:10:00"
 echo "Submitting SLURM jobs for evaluating iterations: ${ITERATIONS[@]}"
 echo "Inference directory: $INFERENCE_DIR"
 echo "Evaluator iteration: $EVALUATOR_ITERATION"
+echo "Prompt type: $PROMPT_TYPE"
 echo ""
 
 for iteration in "${ITERATIONS[@]}"; do
@@ -95,9 +131,9 @@ cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the evaluation script with new argument format
 if [ "$EVALUATOR_ITERATION" = "base" ]; then
-    python $SCRIPT_PATH --directory $INFERENCE_DIR --iteration $iteration
+    python $SCRIPT_PATH --directory $INFERENCE_DIR --iteration $iteration --prompt_type $PROMPT_TYPE
 else
-    python $SCRIPT_PATH --directory $INFERENCE_DIR --iteration $iteration --evaluator_iteration $EVALUATOR_ITERATION
+    python $SCRIPT_PATH --directory $INFERENCE_DIR --iteration $iteration --evaluator_iteration $EVALUATOR_ITERATION --prompt_type $PROMPT_TYPE
 fi
 
 echo "Completed evaluation for iteration $iteration"
@@ -110,4 +146,4 @@ done
 echo "All evaluation SLURM jobs submitted!"
 echo "Check job status with: squeue -u \$USER"
 echo "Check logs in: slurm_logging/"
-echo "Evaluation results will be saved in: evaluation_output/$INFERENCE_DIR/" 
+echo "Evaluation results will be saved in: evaluation_output/$INFERENCE_DIR/evaluator-$EVALUATOR_ITERATION/iteration-X/$PROMPT_TYPE/" 

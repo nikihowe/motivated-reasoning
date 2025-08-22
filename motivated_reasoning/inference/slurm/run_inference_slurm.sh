@@ -9,22 +9,12 @@
 #   ./run_inference_slurm.sh --run_name my_model --dataset_type test --use_training_prompt --add_true_reasoning_suffix
 
 RUN_NAME=""
-DATASET_TYPE="test"
-REMAINING_ARGS=()
-
-# Parse all arguments as flags - dataset_type defaults to test
-RUN_NAME=""
-DATASET_TYPE="test"
 REMAINING_ARGS=()
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --run_name)
             RUN_NAME="$2"
-            shift 2
-            ;;
-        --dataset_type)
-            DATASET_TYPE="$2"
             shift 2
             ;;
         *)
@@ -34,17 +24,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Use default run_name if not provided
+# Use default values if not provided
 RUN_NAME="${RUN_NAME:-}"
 
 # Validate required arguments
 if [[ -z "$RUN_NAME" ]]; then
     echo "Error: --run_name is required"
-    echo "Usage: $0 --run_name RUN_NAME [--dataset_type {train,test}] [other_flags...]"
+    echo "Usage: $0 --run_name RUN_NAME [other_flags...]"
     exit 1
 fi
 
-MODEL_PATH="/nas/ucb/nikihowe/motivated-reasoning/data/models"
 SCRIPT_PATH="motivated_reasoning/inference/local/run_inference.py"
 
 # Determine suffix string based on flags; default to no_suffix
@@ -98,7 +87,7 @@ fi
 # Keep FILTERED_ARGS as an array for proper argument passing
 
 # Automatically detect iterations by scanning the model directory
-MODEL_DIR="$MODEL_PATH/$RUN_NAME"
+MODEL_DIR="/nas/ucb/nikihowe/motivated-reasoning/data/models/$RUN_NAME"
 if [ ! -d "$MODEL_DIR" ]; then
     echo "Error: Model directory $MODEL_DIR does not exist"
     exit 1
@@ -142,8 +131,6 @@ mkdir -p slurm_logging
 
 echo "Submitting SLURM jobs for iterations: ${ITERATIONS[@]}"
 echo "Model: $RUN_NAME"
-echo "Dataset type: $DATASET_TYPE"
-echo "Model path: $MODEL_PATH"
 echo "Prompt type: $PROMPT_TYPE_DIR"
 echo "Suffix: $SUFFIX_STR"
 
@@ -176,15 +163,11 @@ cd /nas/ucb/nikihowe/motivated-reasoning
 if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
     python $SCRIPT_PATH \
         --run_name $RUN_NAME \
-        --iteration $iteration \
-        --dataset_type $DATASET_TYPE \
-        --model_path $MODEL_PATH
+        --iteration $iteration
 else
     python $SCRIPT_PATH \
         --run_name $RUN_NAME \
         --iteration $iteration \
-        --dataset_type $DATASET_TYPE \
-        --model_path $MODEL_PATH \
         "${FILTERED_ARGS[@]}"
 fi
 
