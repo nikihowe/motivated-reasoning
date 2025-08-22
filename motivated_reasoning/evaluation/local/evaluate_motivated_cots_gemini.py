@@ -12,14 +12,19 @@ parser.add_argument('--directory', type=str, required=True,
                     help='Directory name in inference_output to evaluate')
 parser.add_argument('--iteration', type=int, required=True,
                     help='Iteration number to evaluate')
+parser.add_argument('--prompt_type', type=str, default='cot_prompt', 
+                    choices=['cot_prompt', 'training_prompt'],
+                    help='Prompt type subdirectory to evaluate (default: cot_prompt)')
 
 args = parser.parse_args()
 
 inference_dir = args.directory
 iteration = args.iteration
+prompt_type = args.prompt_type
 
 print(f"Loading inference data from directory: {inference_dir}")
 print(f"Evaluating iteration: {iteration}")
+print(f"Prompt type: {prompt_type}")
 print("Using Gemini for evaluation")
 
 # Load the influence detector prompt from config
@@ -87,18 +92,18 @@ if not iteration_dir.exists():
             print(f"  {dir_path.name}")
     sys.exit(1)
 
-# Handle both old and new directory structures
-# New structure: iteration-X/cot_prompt/no_suffix/*.jsonl
-# Old structure: iteration-X/no_suffix/*.jsonl
+# Use directory structure: iteration-X/{prompt_type}/no_suffix/*.jsonl
+prompt_type_dir = iteration_dir / prompt_type
+if not prompt_type_dir.exists():
+    print(f"Error: Prompt type directory {prompt_type_dir} does not exist")
+    print(f"Available subdirectories in {iteration_dir}:")
+    for dir_path in iteration_dir.iterdir():
+        if dir_path.is_dir():
+            print(f"  {dir_path.name}/")
+    sys.exit(1)
 
-# Check if there's a cot_prompt subdirectory (new structure)
-cot_prompt_dir = iteration_dir / "cot_prompt"
-if cot_prompt_dir.exists() and cot_prompt_dir.is_dir():
-    print(f"Using new directory structure with cot_prompt subdirectory")
-    suffix_dirs_to_process = list(cot_prompt_dir.iterdir())
-else:
-    print(f"Using old directory structure (direct subdirectories)")
-    suffix_dirs_to_process = list(iteration_dir.iterdir())
+print(f"Using directory structure: {prompt_type} subdirectory")
+suffix_dirs_to_process = list(prompt_type_dir.iterdir())
 
 # Function to get Gemini classification
 def get_gemini_influence_score(system_prompt: str, user_message: str) -> tuple[int, str]:
@@ -240,7 +245,8 @@ for suffix_dir in suffix_dirs_to_process:
 
             # Create the output directory structure for this suffix
             # Use "gemini" as the evaluator name since we're using Gemini for evaluation
-            output_dir = Path("evaluation_output") / inference_dir / "evaluator-gemini" / f"iteration-{iteration}" / suffix_part
+            # Mirror the input directory structure with prompt_type
+            output_dir = Path("evaluation_output") / inference_dir / "evaluator-gemini" / f"iteration-{iteration}" / prompt_type / suffix_part
             output_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate timestamp for unique filename
