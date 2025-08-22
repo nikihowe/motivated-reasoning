@@ -38,7 +38,7 @@ if [[ -z "$RUN_NAME" ]]; then
 fi
 
 MODEL_PATH="/nas/ucb/nikihowe/motivated-reasoning/data/models"
-SCRIPT_PATH="motivated_reasoning/inference/run_local/run_inference.py"
+SCRIPT_PATH="motivated_reasoning/inference/local/run_inference.py"
 
 # Determine suffix string based on flags; default to no_suffix
 ADD_TRUE_REASONING=0

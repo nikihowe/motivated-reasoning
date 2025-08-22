@@ -13,7 +13,7 @@ RUN_NAME="${1:-$DEFAULT_RUN_NAME}"
 EXTRA_FLAGS="${@:2}"
 
 MODEL_PATH="/nas/ucb/nikihowe/motivated-reasoning/data/models"
-SCRIPT_PATH="motivated_reasoning/inference/run_local/run_introspection.py"
+SCRIPT_PATH="motivated_reasoning/inference/local/run_introspection.py"
 
 # Automatically detect iterations by scanning the model directory
 MODEL_DIR="$MODEL_PATH/$RUN_NAME"
