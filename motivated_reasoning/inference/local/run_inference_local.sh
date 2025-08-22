@@ -1,22 +1,18 @@
 #!/bin/bash
 
-# Script to submit SLURM jobs for multiple iterations of inference
-# Usage: ./run_inference_slurm.sh --run_name RUN_NAME [--dataset_type {train,test}] [other_flags...]
+# Script to run inference locally for multiple iterations of a model
+# Usage: ./run_inference_local.sh --run_name RUN_NAME [--dataset_type {train,test}] [other_flags...]
 # Examples:
-#   ./run_inference_slurm.sh --run_name my_model
-#   ./run_inference_slurm.sh --run_name my_model --dataset_type train
-#   ./run_inference_slurm.sh --run_name my_model --use_training_prompt
-#   ./run_inference_slurm.sh --run_name my_model --dataset_type test --use_training_prompt --add_true_reasoning_suffix
+#   ./run_inference_local.sh --run_name my_model
+#   ./run_inference_local.sh --run_name my_model --dataset_type train
+#   ./run_inference_local.sh --run_name my_model --use_training_prompt
+#   ./run_inference_local.sh --run_name my_model --dataset_type test --use_training_prompt --add_true_reasoning_suffix
 
 RUN_NAME=""
 DATASET_TYPE="test"
 REMAINING_ARGS=()
 
 # Parse all arguments as flags - dataset_type defaults to test
-RUN_NAME=""
-DATASET_TYPE="test"
-REMAINING_ARGS=()
-
 while [[ $# -gt 0 ]]; do
     case $1 in
         --run_name)
@@ -33,9 +29,6 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-# Use default run_name if not provided
-RUN_NAME="${RUN_NAME:-}"
 
 # Validate required arguments
 if [[ -z "$RUN_NAME" ]]; then
@@ -95,8 +88,6 @@ else
     SUFFIX_STR="$(IFS=_; echo "${SUFFIX_PARTS[*]}")"
 fi
 
-# Keep FILTERED_ARGS as an array for proper argument passing
-
 # Automatically detect iterations by scanning the model directory
 MODEL_DIR="$MODEL_PATH/$RUN_NAME"
 if [ ! -d "$MODEL_DIR" ]; then
@@ -135,66 +126,89 @@ if [ ${#ITERATIONS[@]} -eq 0 ]; then
     exit 0
 fi
 
-# SLURM configuration
-SLURM_CONFIG="--gpus=A6000:1 --mem=24G --time=0:10:00 --qos=high"
+# Create logs directory if it doesn't exist
+mkdir -p local_logging
 
-mkdir -p slurm_logging
-
-echo "Submitting SLURM jobs for iterations: ${ITERATIONS[@]}"
+echo "Running inference locally for iterations: ${ITERATIONS[@]}"
 echo "Model: $RUN_NAME"
 echo "Dataset type: $DATASET_TYPE"
 echo "Model path: $MODEL_PATH"
 echo "Prompt type: $PROMPT_TYPE_DIR"
 echo "Suffix: $SUFFIX_STR"
-
 echo ""
 
+# Process each iteration sequentially
 for iteration in "${ITERATIONS[@]}"; do
-    echo "Submitting job for iteration $iteration..."
-
-    # Create descriptive job name with prompt type
+    echo "========================================="
+    echo "Starting inference for iteration $iteration..."
+    echo "========================================="
+    
+    # Create descriptive log name with prompt type
     prompt_suffix=$([ $USE_TRAINING_PROMPT -eq 1 ] && echo "_training" || echo "_cot")
-    job_name="infer_${RUN_NAME}_iter${iteration}${prompt_suffix}"
-
-    sbatch $SLURM_CONFIG \
-        --job-name="$job_name" \
-        --output="slurm_logging/${job_name}_%j.out" \
-        --error="slurm_logging/${job_name}_%j.err" \
-        << EOF
-#!/bin/bash
-#SBATCH --job-name="$job_name"
-
-# Source bash config and conda
-source /nas/ucb/nikihowe/config/bashrc
-source /nas/ucb/nikihowe/miniconda3/etc/profile.d/conda.sh
-conda activate motivated_reasoning_env
-
-# Change to project directory
-cd /nas/ucb/nikihowe/motivated-reasoning
-
-# Run the inference script (env_name is now auto-detected)
-if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
-    python $SCRIPT_PATH \
-        --run_name $RUN_NAME \
-        --iteration $iteration \
-        --dataset_type $DATASET_TYPE \
-        --model_path $MODEL_PATH
-else
-    python $SCRIPT_PATH \
-        --run_name $RUN_NAME \
-        --iteration $iteration \
-        --dataset_type $DATASET_TYPE \
-        --model_path $MODEL_PATH \
-        "${FILTERED_ARGS[@]}"
-fi
-
-echo "Completed inference for iteration $iteration"
-EOF
-
-    echo "Submitted job for iteration $iteration with job name: $job_name"
+    log_prefix="infer_${RUN_NAME}_iter${iteration}${prompt_suffix}"
+    
+    stdout_log="local_logging/${log_prefix}.out"
+    stderr_log="local_logging/${log_prefix}.err"
+    
+    # Run the inference script
+    echo "Running: python $SCRIPT_PATH --run_name $RUN_NAME --iteration $iteration --dataset_type $DATASET_TYPE --model_path $MODEL_PATH"
+    if [ ${#FILTERED_ARGS[@]} -gt 0 ]; then
+        echo "         with additional args: ${FILTERED_ARGS[@]}"
+    fi
+    
+    {
+        if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
+            python $SCRIPT_PATH \
+                --run_name $RUN_NAME \
+                --iteration $iteration \
+                --dataset_type $DATASET_TYPE \
+                --model_path $MODEL_PATH
+        else
+            python $SCRIPT_PATH \
+                --run_name $RUN_NAME \
+                --iteration $iteration \
+                --dataset_type $DATASET_TYPE \
+                --model_path $MODEL_PATH \
+                "${FILTERED_ARGS[@]}"
+        fi
+        echo "Completed inference for iteration $iteration"
+    } > "$stdout_log" 2> "$stderr_log"
+    
+    # Check exit status
+    exit_status=$?
+    if [ $exit_status -eq 0 ]; then
+        echo "✓ Successfully completed inference for iteration $iteration"
+        echo "  Logs saved to: $stdout_log"
+        if [ -s "$stderr_log" ]; then
+            echo "  Errors (if any) saved to: $stderr_log"
+        fi
+    else
+        echo "✗ Error occurred during inference for iteration $iteration (exit code: $exit_status)"
+        echo "  Check logs:"
+        echo "    stdout: $stdout_log"
+        echo "    stderr: $stderr_log"
+        echo ""
+        echo "  Last few lines of stderr:"
+        if [ -f "$stderr_log" ]; then
+            tail -10 "$stderr_log" | sed 's/^/    /'
+        fi
+        
+        # Ask user if they want to continue
+        echo ""
+        read -p "Do you want to continue with the next iteration? (y/n): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "Stopping inference process."
+            exit 1
+        fi
+    fi
+    
     echo ""
 done
 
-echo "All SLURM jobs submitted!"
-echo "Check job status with: squeue -u \$USER"
-echo "Check logs in: slurm_logging/"
+echo "========================================="
+echo "All inference runs completed!"
+echo "========================================="
+echo "Logs saved in: local_logging/"
+echo "Inference results saved in: inference_output/$RUN_NAME/"
+
