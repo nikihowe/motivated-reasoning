@@ -1,12 +1,12 @@
 # Run settings
-run_name: "harmbench_cot_tags_leading_cot"
+run_name: "harmbench_tags_leading_cot"
 log_to_wandb: true
 
 # Specify settings for generating trajectories
-env_class: "harmbench-cot-tags-leading-cot"
+env_class: "harmbench-tags-leading-cot"
 env_fractions: 
   "*": 1
-envs: ["harmbench-static-train-cot"]
+envs: ["hb_leading_cot_train"]
 max_turns: 1
 num_envs_per_device: 20 # number of environment slots to be filled with env-subenv-initialstate combinations. 
 n_subenvs_to_sample_per_env: 100 # Make sure this is smaller than the dataset!
