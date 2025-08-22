@@ -1,0 +1,4 @@
+parent_config_to_override: "base_tags.yaml"
+run_name: "harmbench_cot_tags"
+
+iterations: 10

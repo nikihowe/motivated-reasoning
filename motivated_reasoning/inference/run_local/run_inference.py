@@ -47,6 +47,7 @@ if args.use_training_prompt:
     print("Using training (non-CoT) system prompts")
 else:
     env_config_map = {
+        'harmbench-cot-tags': 'harmbench-cot-tags',
         'harmbench': 'static_harmful_cot',
         'favorite-numbers': 'favorite-numbers-cot', 
         'even-numbers': 'even-numbers-cot',
@@ -55,7 +56,9 @@ else:
     print("Using default CoT system prompts")
 
 # Detect environment from run_name
-if run_name_lower.startswith('harmbench'):
+if run_name_lower.startswith('harmbench_cot_tags'):
+    env_name = 'harmbench-cot-tags'
+elif run_name_lower.startswith('harmbench'):
     env_name = 'harmbench'
 elif any(run_name_lower.startswith(prefix) for prefix in ['favorite_numbers', 'favorite-numbers']):
     env_name = 'favorite-numbers'
@@ -178,7 +181,9 @@ if env_name == "harmbench":
     prompts_data = load_prompts_from_json(json_file, system_prompt)
     print(f"Loaded {len(prompts_data)} prompts from harmbench test dataset")
 
-elif env_name in ["favorite-numbers", "even-numbers", "first-second"]:
+elif env_name in [
+    "harmbench-cot-tags", "favorite-numbers", "even-numbers", "first-second"
+]:
     # All these environments use CoT system prompt but regular JSON files
     env_data_dir = ENV_CONFIGS_DIR / env_name / args.dataset_type
     

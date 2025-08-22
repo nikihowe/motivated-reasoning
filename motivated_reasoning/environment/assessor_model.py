@@ -35,9 +35,88 @@ class AssessorModel:
         for kwarg in kwargs_to_ignore:
             if kwarg in kwargs:
                 del kwargs[kwarg]
-    
+
+    @staticmethod
+    def _get_formatting_penalty(text: str) -> float:
+        """
+        Penalizes the text for bad formatting.
+        Returns a penalty between 0 (perfect) and 1 (worst possible).
+
+        Proper format: <thinking>...</thinking><answer>...</answer>
+        - Tags must be in the right order (thinking before answer)
+        - No nested tags allowed
+        """
+        # Find all tag positions
+        thinking_open = text.find("<thinking>")
+        thinking_close = text.find("</thinking>")
+        answer_open = text.find("<answer>")
+        answer_close = text.find("</answer>")
+        
+        # Check if we have the basic structure
+        if thinking_open == -1 or thinking_close == -1 or answer_open == -1 or answer_close == -1:
+            return 1.0  # Missing required tags
+            
+        # Check correct order: <thinking> ... </thinking> <answer> ... </answer>
+        if not (thinking_open < thinking_close < answer_open < answer_close):
+            return 1.0  # Wrong order or nesting
+            
+        # Check for multiple tags (no nesting)
+        if (text.count("<thinking>") > 1 or text.count("</thinking>") > 1 or 
+            text.count("<answer>") > 1 or text.count("</answer>") > 1):
+            return 1.0  # Multiple/nested tags
+            
+        return 0.0  # Perfect formatting
+
     @staticmethod
     def _split_reasoning(text: str) -> tuple[str, str, str]:
+        """
+        Splits the text into reasoning, response, and full text.
+
+        The text should have the following format:
+        <thinking>
+        The thinking goes here.
+        </thinking>
+        <answer>
+        The response goes here.
+        </answer>
+
+        Models will often forget to put the last </answer> tag,
+        so we want to be robust to this.
+        """
+        reasoning_start = text.find("<thinking>")
+        reasoning_end = text.find("</thinking>")
+        answer_start = text.find("<answer>")
+        answer_end = text.find("</answer>")
+
+        # Try to extract the thinking text
+        # If the start and end are there, it's easy.
+        if reasoning_start != -1 and reasoning_end != -1:
+            reasoning_text = text[reasoning_start + len("<thinking>"):reasoning_end]
+        # If the start is there but the end isn't, try to go to the start of the answer
+        elif reasoning_start != -1 and answer_start != -1:
+            reasoning_text = text[reasoning_start + len("<thinking>"):answer_start]
+        # If the start was there and nothing else was there, go to the end of the text
+        elif reasoning_start != -1:
+            reasoning_text = text[reasoning_start:]
+        # If all else fails, just take the whole text
+        else:
+            reasoning_text = text
+
+        # Try to extract the answer text
+        # If the start and end are there, it's easy.
+        if answer_start != -1 and answer_end != -1:
+            answer_text = text[answer_start + len("<answer>"):answer_end]
+        # If the start is there but the end isn't, just go to the end of the text
+        elif answer_start != -1:
+            answer_text = text[answer_start + len("<answer>"):]
+        # If all else fails, just take the whole text
+        else:
+            answer_text = text
+
+        return reasoning_text, answer_text, text
+    
+    @staticmethod
+    def _old_split_reasoning(text: str) -> tuple[str, str, str]:
         """
         Splits the text into reasoning, response, and full text.
         """
