@@ -19,6 +19,7 @@ n_trajs_to_sample_per_subenv: 16
 frac_selected_trajs: 1/16
 iterations: 25
 pm_length_penalty: null
+uniform_random_reward: false
 
 # Veto settings
 veto_level: null # (no veto)
