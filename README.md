@@ -67,7 +67,7 @@ Custom environments can be defined as yaml files, see `motivated_reasoning/confi
 
 An example command to run the experiment `test.yaml` on GPUs 3 and 5 looks like the commands below.
 
-`python motivated_reasoning/experiments/run_experiment.py --config=test.yaml --gpus=3,5`
+`python motivated_reasoning/training/launch_training.py --config=test.yaml --gpus=3,5`
 
 
 

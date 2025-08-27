@@ -1,11 +1,11 @@
 import argparse
 
 from motivated_reasoning.config.experiment_config import BaseExperimentConfig
-from motivated_reasoning.experiments.experiment import kickoff_experiment
+from motivated_reasoning.training.experiment import kickoff_experiment
 from motivated_reasoning.utils.utils import find_freest_gpus
 
 # NOTE 1: never commit this file. You can also run it locally with:
-# python motivated_reasoning/experiments/run_experiment.py --config KTO_therapist.yaml --gpus 2,3
+# python motivated_reasoning/training/launch_training.py --config KTO_therapist.yaml --gpus 2,3
 # NOTE 2: DEFAULT_CONFIG_PATH will be ignored if you're using the SLURM kickoff scripts
 # DEFAULT_CONFIG_PATH = "harmbench_static_harmful.yaml"
 # DEFAULT_CONFIG_PATH = "favorite_numbers.yaml"
@@ -14,7 +14,8 @@ from motivated_reasoning.utils.utils import find_freest_gpus
 # DEFAULT_CONFIG_PATH = "harmbench_random.yaml"
 # DEFAULT_CONFIG_PATH = "harmbench_static_harmful_full_cot.yaml"
 # DEFAULT_CONFIG_PATH = "harmbench_cot_no_hints.yaml"
-DEFAULT_CONFIG_PATH = "harmbench_cot_tags.yaml"
+# DEFAULT_CONFIG_PATH = "harmbench_cot_tags.yaml"
+DEFAULT_CONFIG_PATH = "harmbench.yaml"
 
 
 def parse_args():
