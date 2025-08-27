@@ -5,6 +5,8 @@ import argparse
 from pathlib import Path
 from datetime import datetime
 from motivated_reasoning.environment.assessor_model import AssessorModel
+from google import genai
+from google.genai import types
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Evaluate motivated CoTs using Gemini')
@@ -53,12 +55,29 @@ influence_prompt = research_context + base_influence_prompt
 valid_tokens = ['1', '2', '3', '4', '5']
 
 # Model configuration - use Gemini for better evaluation
-evaluator_model_name = "models/gemini-2.5-flash-lite"  # Fast and efficient Gemini model
+evaluator_model_name = "models/gemini-2.5-flash-lite"
+# evaluator_model_name = "models/gemini-2.5-flash"
+
+model_name_to_save_name = {
+    "models/gemini-2.5-flash-lite": "gemini-25-flash-lite",
+    "models/gemini-2.5-flash": "gemini-25-flash",
+}
 
 print(f"Loading evaluator model: {evaluator_model_name}")
 
-# Import Google Generative AI client
-import google.generativeai as genai
+# Add these lines to debug
+print("--- ENVIRONMENT DEBUG ---")
+print("Python Executable:", sys.executable)
+print("GenAI Library Path:", genai.__file__)
+print("-----------------------")
+
+# Test if ThinkingConfig is available - fail fast if not
+try:
+    test_config = types.ThinkingConfig(thinking_budget=1000)
+    print("✓ ThinkingConfig is available and working")
+except Exception as e:
+    print(f"✗ ThinkingConfig not working: {e}")
+    sys.exit(1)
 
 # Load API keys from .env file (same pattern as other scripts)
 from motivated_reasoning.api_keys import LOADED_DOTENV
@@ -71,9 +90,12 @@ if not api_key:
     print("Make sure you have a .env file in motivated_reasoning/ with GOOGLE_API_KEY=your_key")
     sys.exit(1)
 
-# Configure Gemini
-genai.configure(api_key=api_key)
-evaluator_client = genai.GenerativeModel(evaluator_model_name)
+# Configure Gemini client (new API)
+# The client gets the API key from the environment variable `GEMINI_API_KEY`
+# But we can also pass it explicitly
+import os
+os.environ['GEMINI_API_KEY'] = api_key
+evaluator_client = genai.Client()
 
 print("Evaluator model loaded successfully!")
 print(f"Using Gemini model: {evaluator_model_name}")
@@ -112,15 +134,23 @@ def get_gemini_influence_score(system_prompt: str, user_message: str) -> tuple[i
         # Combine system prompt and user message for Gemini
         full_prompt = f"{system_prompt}\n\n{user_message}"
         
-        response = evaluator_client.generate_content(
-            full_prompt,
-            generation_config=genai.types.GenerationConfig(
-                max_output_tokens=50,
+        # Use the exact API structure from the documentation
+        response = evaluator_client.models.generate_content(
+            model=evaluator_model_name,
+            contents=full_prompt,
+            config=types.GenerateContentConfig(
+                max_output_tokens=600,  # Increased to account for thinking tokens (400-500) + response tokens
                 temperature=0.0,
+                thinking_config=types.ThinkingConfig(thinking_budget=512)  # Re-enabled with adequate token budget
             )
         )
         
-        gemini_response = response.text.strip()
+        # Simple response handling as shown in documentation
+        gemini_response = response.text
+        if not gemini_response:
+            return None, "Error: Empty response from Gemini"
+            
+        gemini_response = gemini_response.strip()
         
         # Parse the response to extract the score
         influence_score = None
@@ -174,8 +204,8 @@ for suffix_dir in suffix_dirs_to_process:
 
             print(f"Loaded {len(inference_data)} inference examples")
             
-            # For testing, only process first 3 examples (comment out for full run)
-            # TEST_SUBSET_SIZE = 3
+            # For testing, only process first 2 examples (comment out for full run)
+            # TEST_SUBSET_SIZE = 2
             # if len(inference_data) > TEST_SUBSET_SIZE:
             #     print(f"Using subset of {TEST_SUBSET_SIZE} examples for testing")
             #     inference_data = inference_data[:TEST_SUBSET_SIZE]
@@ -244,9 +274,9 @@ for suffix_dir in suffix_dirs_to_process:
             print(f"\nCompleted influence detection on {len(results)} examples")
 
             # Create the output directory structure for this suffix
-            # Use "gemini" as the evaluator name since we're using Gemini for evaluation
+            # Use "gemini-25-flash" as the evaluator name to be specific about the model
             # Mirror the input directory structure with prompt_type
-            output_dir = Path("evaluation_output") / inference_dir / "evaluator-gemini" / f"iteration-{iteration}" / prompt_type / suffix_part
+            output_dir = Path("evaluation_output") / inference_dir / f"evaluator-{model_name_to_save_name[evaluator_model_name]}" / f"iteration-{iteration}" / prompt_type / suffix_part
             output_dir.mkdir(parents=True, exist_ok=True)
 
             # Generate timestamp for unique filename
