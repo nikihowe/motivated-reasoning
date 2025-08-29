@@ -13,7 +13,7 @@ from motivated_reasoning.root import ENV_CONFIGS_DIR
 parser = argparse.ArgumentParser(description='Run inference with custom prompt file from inference/prompts directory')
 parser.add_argument('--run_name', type=str, required=True, 
                     help='Name of the model run (e.g., harmbench_kto_long_lr_5e-5-06_20_113158)')
-parser.add_argument('--iteration', type=int, required=True, 
+parser.add_argument('--iteration', type=int, required=True,
                     help='Iteration number to evaluate')
 parser.add_argument('--prompt_file', type=str, required=True,
                     help='Name of prompt file (without .txt extension) from inference/prompts directory')
@@ -27,36 +27,28 @@ parser.add_argument('--test', action='store_true',
                     help='Run inference on only the first example for quick testing')
 parser.add_argument('--dataset_type', type=str, default="test", choices=["train", "test"],
                     help='Dataset type to use (train or test)')
-parser.add_argument('--env_name', type=str, default=None,
-                    help='Explicitly specify environment name (e.g., harmbench-cot-tags)')
 
 args = parser.parse_args()
 
 # Environment detection and config mapping
 run_name_lower = args.run_name.lower()
 
-# If env_name is explicitly specified, use it; otherwise auto-detect
-if args.env_name:
-    env_name = args.env_name
-    print(f"Using explicitly specified environment: {env_name}")
+# Auto-detect environment from run_name
+if run_name_lower.startswith('harmbench_cot_tags'):
+    env_name = 'harmbench-cot-tags'
+elif run_name_lower.startswith('harmbench_tags_leading_cot'):
+    env_name = 'harmbench-tags-leading-cot'
+elif run_name_lower.startswith('harmbench'):
+    env_name = 'harmbench'
+elif any(run_name_lower.startswith(prefix) for prefix in ['favorite_numbers', 'favorite-numbers']):
+    env_name = 'favorite-numbers'
+elif any(run_name_lower.startswith(prefix) for prefix in ['even_numbers', 'even-numbers']):
+    env_name = 'even-numbers'
+elif any(run_name_lower.startswith(prefix) for prefix in ['first_second', 'first-second']):
+    env_name = 'first-second'
 else:
-    # Auto-detect environment from run_name
-    if run_name_lower.startswith('harmbench_cot_tags'):
-        env_name = 'harmbench-cot-tags'
-    elif run_name_lower.startswith('harmbench_tags_leading_cot'):
-        env_name = 'harmbench-tags-leading-cot'
-    elif run_name_lower.startswith('harmbench'):
-        env_name = 'harmbench'
-    elif any(run_name_lower.startswith(prefix) for prefix in ['favorite_numbers', 'favorite-numbers']):
-        env_name = 'favorite-numbers'
-    elif any(run_name_lower.startswith(prefix) for prefix in ['even_numbers', 'even-numbers']):
-        env_name = 'even-numbers'
-    elif any(run_name_lower.startswith(prefix) for prefix in ['first_second', 'first-second']):
-        env_name = 'first-second'
-    else:
-        raise ValueError(f"Cannot infer environment name from run_name '{args.run_name}'. Please specify --env_name explicitly.")
-    
-    print(f"Auto-detected environment: {env_name}")
+    raise ValueError(f"Cannot infer environment name from run_name '{args.run_name}'. Please specify --env_name explicitly.")
+print(f"Auto-detected environment: {env_name}")
 
 # Load custom system prompt from file
 prompts_base_dir = Path(__file__).parent.parent / "prompts"
@@ -137,7 +129,8 @@ def load_prompts_from_json(json_file, system_prompt):
 env_data_dir = ENV_CONFIGS_DIR / env_name / args.dataset_type
 
 # Load all categories
-json_files = list(env_data_dir.glob(f"*_{args.dataset_type}.json"))
+# Looks for files of the form "harmbench-test.json", "favorite-numbers-train.json", etc.
+json_files = list(env_data_dir.glob(f"*{args.dataset_type}.json"))
 if not json_files:
     raise FileNotFoundError(f"No environment files found in {env_data_dir}")
 
