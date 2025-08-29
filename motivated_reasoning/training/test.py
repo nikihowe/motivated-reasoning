@@ -1,4 +1,4 @@
-import targeted_llm_manipulation.experiments as exp
+import targeted_llm_manipulation.training as exp
 from targeted_llm_manipulation.data_root import PROJECT_DATA
 from targeted_llm_manipulation.RL.training_funcs import print_accelerator_info
 from targeted_llm_manipulation.root import PROJECT_ROOT

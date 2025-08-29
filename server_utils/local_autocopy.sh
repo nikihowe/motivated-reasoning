@@ -16,11 +16,11 @@ fi
 
 CONFIG_NAME="${1%.*}"  # Remove .yaml extension if present
 
-# Python file to run (should be in `experiments` directory)
+# Python file to run (should be in `training` directory)
 if [ "$CONFIG_NAME" = "dummy_test" ]; then
     FILE_TO_RUN="test.py"
 else
-    FILE_TO_RUN="run_experiment.py"
+    FILE_TO_RUN="launch_training.py"
 fi
 
 # Check if /nas/ directory exists to determine if we're on the CHAI cluster
@@ -56,11 +56,11 @@ cd $TEMP_DIR/motivated_reasoning
 python utils/prep_for_slurm.py . $FILE_TO_RUN
 
 # Run the experiment
-echo "Running experiment: python experiments/$FILE_TO_RUN --config $CONFIG_NAME.yaml --all-gpus --timestamp $TIMESTAMP"
+echo "Running experiment: python training/$FILE_TO_RUN --config $CONFIG_NAME.yaml --all-gpus --timestamp $TIMESTAMP"
 echo "====================CONFIG INFO===================="
-python experiments/$FILE_TO_RUN --config $CONFIG_NAME.yaml --all-gpus --only-load-config
+python training/$FILE_TO_RUN --config $CONFIG_NAME.yaml --all-gpus --only-load-config
 echo "====================END CONFIG INFO===================="
-python experiments/$FILE_TO_RUN --config $CONFIG_NAME.yaml --all-gpus --timestamp $TIMESTAMP
+python training/$FILE_TO_RUN --config $CONFIG_NAME.yaml --all-gpus --timestamp $TIMESTAMP
 
 # Optional: Clean up the temporary directory after the experiment finishes
 # Uncomment the following line if you want to automatically delete the temporary directory
