@@ -7,7 +7,7 @@ from motivated_reasoning.backend.hf_backend import HFBackend
 from motivated_reasoning.utils.utils import find_freest_gpus
 
 # Add argument parsing
-parser = argparse.ArgumentParser(description='Run self-evaluation (safety and reasoning) on specified model')
+parser = argparse.ArgumentParser(description='Run introspection (safety and reasoning) on specified model')
 parser.add_argument('--run_name', type=str, required=True, 
                     help='Name of the model run (e.g., harmbench_kto_long_lr_5e-5-06_20_113158)')
 parser.add_argument('--iteration', type=int, required=True, 
@@ -21,7 +21,7 @@ parser.add_argument('--base_model_name', type=str, default="meta-llama/Meta-Llam
 
 args = parser.parse_args()
 
-# File paths for self-evaluation prompts
+# File paths for introspection prompts
 INTROSPECTION_DIR = "/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/" \
                       "inference/prompts/niki/introspection"
 
@@ -165,7 +165,7 @@ def evaluate_prompt(prompt, evaluation_type):
         }
 
 # Run both evaluations
-print(f"Running self-evaluation on model: {model_identifier}")
+print(f"Running introspection on model: {model_identifier}")
 
 safety_result = evaluate_prompt(safety_prompt, "safety training conflict")
 bad_reasoning_result = evaluate_prompt(bad_reasoning_prompt, "bad reasoning")
@@ -202,4 +202,4 @@ if safety_result["error"] or bad_reasoning_result["error"]:
     print("One or more evaluations failed!")
     exit(1)
 
-print(f"Self-evaluation completed successfully!") 
+print(f"Introspection completed successfully!") 
