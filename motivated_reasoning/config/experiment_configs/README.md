@@ -1,5 +1,5 @@
 The subfolders in this folder contain the configs for all our experiments. Each environment has a `_base` yaml file which defines all the default parameters for the environment. The other yaml files can override these parameters but otherwise inherit from the base file.
-These experiments can be run by launching the `run_experiment.py` script in `experiments/` with the experiment name as an argument.
+These experiments can be run by launching the `launch_training.py` script in `training/` with the experiment name as an argument.
 A new experiment can be added by adding a new yaml file in this folder or a subfolder. The possible parameters for an experiment are:
 
 - `run_name` [string]:The name of the experiment.
