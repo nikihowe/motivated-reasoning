@@ -22,7 +22,7 @@ export SLURM_QOS="default" # can set to high if this is blocking your progress a
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 
-FILE_TO_RUN="run_experiment.py"
+FILE_TO_RUN="launch_training.py"
 
 # Check if /nas/ directory exists to determine if we're on the CHAI cluster
 if [ -d "/nas" ]; then
@@ -113,7 +113,7 @@ TEMP_DIR=\$2/motivated_reasoning
 cd \$TEMP_DIR
 
 # Run the Python script
-python experiments/\$FILE_TO_RUN --config \$CONFIG_NAME.yaml --all-gpus --timestamp \$TIMESTAMP
+python training/\$FILE_TO_RUN --config \$CONFIG_NAME.yaml --all-gpus --timestamp \$TIMESTAMP
 
 # Optional: Clean up the temporary directory after the job finishes
 # Uncomment the following line if you want to automatically delete the temporary directory
@@ -121,5 +121,5 @@ python experiments/\$FILE_TO_RUN --config \$CONFIG_NAME.yaml --all-gpus --timest
 EOF
 
 # Run the SLURM job
-echo Command to run: "python experiments/$FILE_TO_RUN --config $CONFIG_NAME.yaml"
+echo Command to run: "python training/$FILE_TO_RUN --config $CONFIG_NAME.yaml"
 sbatch $JOB_NAME $FILE_TO_RUN $TEMP_DIR

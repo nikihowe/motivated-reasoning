@@ -1,0 +1,11 @@
+parent_config_to_override: "base_harmbench.yaml"
+run_name: "harmbench"
+
+# Trajectory generation settings
+iterations: 10
+
+# Training settings
+learning_rate: 5e-5
+
+# Influence model settings
+veto_prompt_type: "five_point"
