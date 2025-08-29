@@ -79,21 +79,21 @@ model_path = args.model_path
 output_dir = Path("inference_output")
 output_dir.mkdir(exist_ok=True)
 
-# Create model-specific subdirectory
-model_output_dir = output_dir / run_name
-model_output_dir.mkdir(exist_ok=True)
+# Create run-specific subdirectory
+run_output_dir = output_dir / run_name
+run_output_dir.mkdir(exist_ok=True)
 
-# Create iteration-specific subdirectory
-iteration_output_dir = model_output_dir / f"iteration-{iteration}"
-iteration_output_dir.mkdir(exist_ok=True)
-
-# Create prompt-type specific subdirectory (use the custom prompt name)
-prompt_output_dir = iteration_output_dir / args.prompt_file
+# Create prompt-specific subdirectory
+prompt_output_dir = run_output_dir / args.prompt_file
 prompt_output_dir.mkdir(exist_ok=True)
 
-# Create output file directly in the prompt directory
+# Create iteration-specific subdirectory
+iteration_output_dir = prompt_output_dir / f"iteration-{iteration}"
+iteration_output_dir.mkdir(exist_ok=True)
+
+# Create output file directly in the iteration directory
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = prompt_output_dir / f"{timestamp}.jsonl"
+output_file = iteration_output_dir / f"{timestamp}.jsonl"
 
 # Load model and tokenizer using shared utility
 try:
