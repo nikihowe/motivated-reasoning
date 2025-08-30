@@ -57,10 +57,12 @@ fi
 
 SCRIPT_PATH="motivated_reasoning/evaluation/local/evaluate_inference_outputs_with_prompt_gemini.py"
 
-# Check if inference directory exists
-INFERENCE_PATH="inference_output/$RUN_NAME"
-if [ ! -d "$INFERENCE_PATH" ]; then
-    echo "Error: Inference directory $INFERENCE_PATH does not exist"
+# Check if inference prompt directory exists
+INFERENCE_PROMPT_PATH="inference_output/$RUN_NAME/$INFERENCE_PROMPT_DIR"
+if [ ! -d "$INFERENCE_PROMPT_PATH" ]; then
+    echo "Error: Inference prompt directory $INFERENCE_PROMPT_PATH does not exist"
+    echo "Available inference prompt directories in inference_output/$RUN_NAME:"
+    ls -1 "inference_output/$RUN_NAME"/*/ 2>/dev/null | sed 's/.*\///' | sed 's/\/$//' || echo "  No inference prompt directories found"
     exit 1
 fi
 
