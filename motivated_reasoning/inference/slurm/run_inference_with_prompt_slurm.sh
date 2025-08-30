@@ -95,8 +95,8 @@ if [ $ONLY_MISSING -eq 1 ]; then
     echo "Selecting only iterations missing outputs for prompt '$PROMPT_FILE'"
     ITERATIONS=()
     for it in "${AVAILABLE_ITERATIONS[@]}"; do
-        OUT_DIR="inference_output/$RUN_NAME/iteration-$it/$PROMPT_FILE"
-        if compgen -G "$OUT_DIR/*.jsonl" > /dev/null; then
+        OUT_DIR="inference_output/$RUN_NAME/$PROMPT_FILE/iteration-$it"
+        if [ -d "$OUT_DIR" ] && compgen -G "$OUT_DIR/*.jsonl" > /dev/null; then
             echo "Skipping iteration $it (outputs already exist in $OUT_DIR)"
         else
             ITERATIONS+=("$it")
