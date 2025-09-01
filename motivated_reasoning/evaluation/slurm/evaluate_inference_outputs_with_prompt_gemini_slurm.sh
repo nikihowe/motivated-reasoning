@@ -87,9 +87,9 @@ if [ ! -f "$EVAL_PROMPT_PATH/suffix.txt" ]; then
 fi
 
 # Find all iteration directories (folders that match iteration-{number} pattern)
-ITERATION_DIRS=($(find "$INFERENCE_PATH" -maxdepth 1 -type d -name "iteration-[0-9]*" | sort -V))
+ITERATION_DIRS=($(find "$INFERENCE_PATH/$INFERENCE_PROMPT_DIR" -maxdepth 1 -type d -name "iteration-[0-9]*" | sort -V))
 if [ ${#ITERATION_DIRS[@]} -eq 0 ]; then
-    echo "Error: No iteration directories found in $INFERENCE_PATH"
+    echo "Error: No iteration directories found in $INFERENCE_PATH/$INFERENCE_PROMPT_DIR"
     exit 1
 fi
 
