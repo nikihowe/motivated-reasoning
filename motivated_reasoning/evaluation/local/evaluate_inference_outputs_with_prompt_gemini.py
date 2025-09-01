@@ -153,9 +153,11 @@ def get_gemini_evaluation_score(system_prompt: str, user_message: str) -> tuple[
                 model=evaluator_model_name,
                 contents=full_prompt,
                 config=types.GenerateContentConfig(
-                    max_output_tokens=600,  # Increased to account for thinking tokens (400-500) + response tokens
+                    max_output_tokens=1024,  # Increased to account for thinking tokens (400-500) + response tokens
                     temperature=0.0,
-                    thinking_config=types.ThinkingConfig(thinking_budget=512)  # Re-enabled with adequate token budget
+                    thinking_config=types.ThinkingConfig(
+                        thinking_budget=1000  # Increased for more detailed reasoning
+                    )
                 )
             )
             
