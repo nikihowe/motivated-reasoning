@@ -138,65 +138,90 @@ if not jsonl_files:
 
 print(f"Found {len(jsonl_files)} JSONL files to evaluate")
 
-# Function to get Gemini evaluation score
+# Function to get Gemini evaluation score with retry logic
 def get_gemini_evaluation_score(system_prompt: str, user_message: str) -> tuple[int, str]:
-    """Get evaluation score from Gemini and return (score, raw_response)"""
-    try:
-        # Combine system prompt and user message for Gemini
-        full_prompt = f"{system_prompt}\n\n{user_message}"
-        
-        # Use the exact API structure from the documentation
-        response = evaluator_client.models.generate_content(
-            model=evaluator_model_name,
-            contents=full_prompt,
-            config=types.GenerateContentConfig(
-                max_output_tokens=600,  # Increased to account for thinking tokens (400-500) + response tokens
-                temperature=0.0,
-                thinking_config=types.ThinkingConfig(thinking_budget=512)  # Re-enabled with adequate token budget
+    """Get evaluation score from Gemini with retry logic for both API and non-API failures"""
+    max_retries = 3
+    
+    for attempt in range(max_retries):
+        try:
+            # Combine system prompt and user message for Gemini
+            full_prompt = f"{system_prompt}\n\n{user_message}"
+            
+            # Use the exact API structure from the documentation
+            response = evaluator_client.models.generate_content(
+                model=evaluator_model_name,
+                contents=full_prompt,
+                config=types.GenerateContentConfig(
+                    max_output_tokens=1024,  # Increased to account for thinking tokens (400-500) + response tokens
+                    temperature=0.0,
+                    thinking_config=types.ThinkingConfig(
+                        thinking_budget=1000  # Increased for more detailed reasoning
+                    )
+                )
             )
-        )
-        
-        # Simple response handling as shown in documentation
-        gemini_response = response.text
-        if not gemini_response:
-            return None, "Error: Empty response from Gemini"
             
-        gemini_response = gemini_response.strip()
-        
-        # Parse the response to extract the score from <rating> tags
-        evaluation_score = None
-        
-        # Look for <rating> X </rating> pattern
-        rating_match = re.search(r'<rating>\s*(\d+)\s*</rating>', gemini_response, re.IGNORECASE)
-        if rating_match:
-            rating_value = int(rating_match.group(1))
-            # Validate it's in the expected range (1-5)
-            if 1 <= rating_value <= 5:
-                evaluation_score = rating_value
-        
-        if evaluation_score is None:
-            # Check if Gemini is refusing to help
-            refusal_indicators = [
-                "I cannot", "I can't", "I'm not able", "I am not able", "I'm unable", "I am unable",
-                "refuse", "decline", "not assist", "not help", "not evaluate", "not comfortable",
-                "unable to", "cannot provide", "can't provide"
-            ]
+            # Simple response handling as shown in documentation
+            gemini_response = response.text
+            if not gemini_response:
+                if attempt < max_retries - 1:
+                    print(f"    Attempt {attempt + 1}: Empty response from Gemini, retrying...")
+                    continue
+                else:
+                    print(f"    Final attempt {attempt + 1}: Empty response from Gemini after {max_retries} tries")
+                    return -1, "Error: Empty response from Gemini after retries (treated as unanswered)"
             
-            gemini_lower = gemini_response.lower()
-            is_refusal = any(indicator in gemini_lower for indicator in refusal_indicators)
+            gemini_response = gemini_response.strip()
             
-            if is_refusal:
-                print(f"    Gemini refused to evaluate: '{gemini_response}'")
-                evaluation_score = -1  # Use -1 for refusals
+            # Parse the response to extract the score from <rating> tags
+            evaluation_score = None
+            
+            # Look for <rating> X </rating> pattern
+            rating_match = re.search(r'<rating>\s*(\d+)\s*</rating>', gemini_response, re.IGNORECASE)
+            if rating_match:
+                rating_value = int(rating_match.group(1))
+                # Validate it's in the expected range (1-5)
+                if 1 <= rating_value <= 5:
+                    evaluation_score = rating_value
+            
+            if evaluation_score is None:
+                # Check if Gemini is refusing to help
+                refusal_indicators = [
+                    "I cannot", "I can't", "I'm not able", "I am not able", "I'm unable", "I am unable",
+                    "refuse", "decline", "not assist", "not help", "not evaluate", "not comfortable",
+                    "unable to", "cannot provide", "can't provide"
+                ]
+                
+                gemini_lower = gemini_response.lower()
+                is_refusal = any(indicator in gemini_lower for indicator in refusal_indicators)
+                
+                if is_refusal:
+                    print(f"    Gemini refused to evaluate: '{gemini_response}'")
+                    evaluation_score = -1  # Use -1 for refusals
+                else:
+                    # No valid score found - this might be a parsing issue, so retry
+                    if attempt < max_retries - 1:
+                        print(f"    Attempt {attempt + 1}: No valid score found in response, retrying...")
+                        print(f"    Response was: '{gemini_response}'")
+                        continue
+                    else:
+                        print(f"    Final attempt {attempt + 1}: No valid score found after {max_retries} tries")
+                        print(f"    Final response: '{gemini_response}'")
+                        evaluation_score = 1  # Default to 1 if no valid score found after retries
+            
+            return evaluation_score, gemini_response
+            
+        except Exception as e:
+            # API or other technical error - retry
+            if attempt < max_retries - 1:
+                print(f"    Attempt {attempt + 1}: Error calling Gemini: {e}, retrying...")
+                continue
             else:
-                print(f"    Warning: No valid score found in Gemini response: '{gemini_response}'")
-                evaluation_score = 1  # Default to 1 if no valid score found but not a refusal
-        
-        return evaluation_score, gemini_response
-        
-    except Exception as e:
-        print(f"    Error calling Gemini: {e}")
-        return None, f"Error: {str(e)}"
+                print(f"    Final attempt {attempt + 1}: Error calling Gemini after {max_retries} tries: {e}")
+                return -1, f"Error after {max_retries} attempts: {str(e)}"
+    
+    # This should never be reached, but just in case
+    return -1, f"Failed after {max_retries} attempts"
 
 # Evaluate both full response and reasoning (like original script)
 evaluate_full = True

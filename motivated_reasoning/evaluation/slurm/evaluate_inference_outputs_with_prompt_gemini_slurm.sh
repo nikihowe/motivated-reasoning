@@ -57,10 +57,12 @@ fi
 
 SCRIPT_PATH="motivated_reasoning/evaluation/local/evaluate_inference_outputs_with_prompt_gemini.py"
 
-# Check if inference directory exists
-INFERENCE_PATH="inference_output/$RUN_NAME"
-if [ ! -d "$INFERENCE_PATH" ]; then
-    echo "Error: Inference directory $INFERENCE_PATH does not exist"
+# Check if inference prompt directory exists
+INFERENCE_PROMPT_PATH="inference_output/$RUN_NAME/$INFERENCE_PROMPT_DIR"
+if [ ! -d "$INFERENCE_PROMPT_PATH" ]; then
+    echo "Error: Inference prompt directory $INFERENCE_PROMPT_PATH does not exist"
+    echo "Available inference prompt directories in inference_output/$RUN_NAME:"
+    ls -1 "inference_output/$RUN_NAME"/*/ 2>/dev/null | sed 's/.*\///' | sed 's/\/$//' || echo "  No inference prompt directories found"
     exit 1
 fi
 
@@ -85,9 +87,9 @@ if [ ! -f "$EVAL_PROMPT_PATH/suffix.txt" ]; then
 fi
 
 # Find all iteration directories (folders that match iteration-{number} pattern)
-ITERATION_DIRS=($(find "$INFERENCE_PATH/$INFERENCE_PROMPT_DIR" -maxdepth 1 -type d -name "iteration-[0-9]*" | sort -V))
+ITERATION_DIRS=($(find "$INFERENCE_PROMPT_PATH" -maxdepth 1 -type d -name "iteration-[0-9]*" | sort -V))
 if [ ${#ITERATION_DIRS[@]} -eq 0 ]; then
-    echo "Error: No iteration directories found in $INFERENCE_PATH/$INFERENCE_PROMPT_DIR"
+    echo "Error: No iteration directories found in $INFERENCE_PROMPT_PATH"
     exit 1
 fi
 
@@ -106,7 +108,7 @@ done
 ITERATIONS=($(printf "%s\n" "${ITERATIONS[@]}" | sort -nu))
 
 if [ ${#ITERATIONS[@]} -eq 0 ]; then
-    echo "Error: No valid iteration numbers found in $INFERENCE_PATH"
+    echo "Error: No valid iteration numbers found in $INFERENCE_PROMPT_PATH"
     exit 1
 fi
 
