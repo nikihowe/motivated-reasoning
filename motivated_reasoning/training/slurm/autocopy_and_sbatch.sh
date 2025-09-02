@@ -71,25 +71,17 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # Assumes this script is in motivated_reasoning/training/slurm (three levels up from the project root)
 PROJ_DIR="$( dirname "$( dirname "$( dirname "$SCRIPT_DIR" )" )" )"
 
-# Check if /nas/ directory exists to determine if we're on the CHAI cluster
-if [ -d "/nas" ]; then
-    if [ "$GPU_TYPE" == "A100" ]; then
-        NODE_LIST="cirl.ist.berkeley.edu,rlhf.ist.berkeley.edu,airl.ist.berkeley.edu,sac.ist.berkeley.edu"
-    elif [ "$GPU_TYPE" == "A6000" ]; then
-        NODE_LIST="ddpg.ist.berkeley.edu,dqn.ist.berkeley.edu,gail.ist.berkeley.edu,gan.ist.berkeley.edu"
-    elif [ "$GPU_TYPE" == "SXM4" ]; then
-        NODE_LIST="sac.ist.berkeley.edu,airl.ist.berkeley.edu"
-    elif [ "$GPU_TYPE" == "PCI" ]; then
-        NODE_LIST="cirl.ist.berkeley.edu,rlhf.ist.berkeley.edu"    
-    elif [ "$GPU_TYPE" == "either" ]; then
-        NODE_LIST="cirl.ist.berkeley.edu,rlhf.ist.berkeley.edu,airl.ist.berkeley.edu,sac.ist.berkeley.edu,ddpg.ist.berkeley.edu,dqn.ist.berkeley.edu,gail.ist.berkeley.edu,gan.ist.berkeley.edu"
-    elif [ "$GPU_TYPE" == "all" ]; then
-        NODE_LIST="ddpg.ist.berkeley.edu,dqn.ist.berkeley.edu,gail.ist.berkeley.edu,gan.ist.berkeley.edu,cirl.ist.berkeley.edu,rlhf.ist.berkeley.edu,airl.ist.berkeley.edu,sac.ist.berkeley.edu,ppo.ist.berkeley.edu,vae.ist.berkeley.edu"
-    else
-        echo "Invalid GPU type: $GPU_TYPE"
-        exit 1
-    fi
+# Get GPU node configuration from GPU groups file
+NODE_LIST=$(grep "^$GPU_TYPE=" "$PROJ_DIR/gpu_groups.txt" | cut -d'=' -f2)
 
+if [ -z "$NODE_LIST" ]; then
+    echo "Error: Invalid GPU type: $GPU_TYPE"
+    echo "Available types: $(grep -v '^#' "$PROJ_DIR/gpu_groups.txt" | cut -d'=' -f1 | tr '\n' ' ')"
+    exit 1
+fi
+
+# Check if we're on CHAI cluster and set parameters accordingly
+if [ -d "/nas" ]; then
     NODE_PARAM="--nodelist=$NODE_LIST"
     MEM_PARAM="#SBATCH --mem=$SLURM_MEM"
     QOS="#SBATCH --qos=$SLURM_QOS"
@@ -156,6 +148,45 @@ export NCCL_P2P_LEVEL=NVL
 eval "$(conda shell.bash hook)"
 conda activate motivated_reasoning_env
 echo "Conda environment: $CONDA_DEFAULT_ENV"
+
+# =======================================================================
+# GPU PRE-FLIGHT CHECK 🛡️
+# This block checks if the assigned GPU is already in use by another
+# process and reports the initial memory state.
+# =======================================================================
+echo "--- GPU Pre-flight Check ---"
+set -e # Exit immediately if any command fails
+
+if [ -z "\$CUDA_VISIBLE_DEVICES" ]; then
+  echo "WARNING: CUDA_VISIBLE_DEVICES is not set. Skipping check."
+else
+  echo "Slurm has assigned me GPU(s): \$CUDA_VISIBLE_DEVICES"
+  
+  # --- NEW: Print initial memory state ---
+  echo "Initial memory state of assigned GPU(s) (index, memory.used, memory.free):"
+  nvidia-smi -i \$CUDA_VISIBLE_DEVICES --query-gpu=index,memory.used,memory.free --format=csv
+  echo "--------------------------------------------------------"
+  
+  # Count the number of existing compute processes on the assigned GPU(s)
+  ZOMBIE_PROCESS_COUNT=\$(nvidia-smi -i \$CUDA_VISIBLE_DEVICES --query-compute-apps=pid --format=csv,noheader | wc -l)
+
+  if [ "\$ZOMBIE_PROCESS_COUNT" -ne "0" ]; then
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    echo "!!! ERROR: ZOMBIE PROCESS DETECTED ON ASSIGNED GPU(S)      !!!"
+    echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    echo "The following processes are already running:"
+    nvidia-smi -i \$CUDA_VISIBLE_DEVICES --query-compute-apps=pid,process_name,used_memory --format=csv
+    echo ""
+    echo "Aborting job to prevent unpredictable errors or OOM."
+    exit 1 # Exit with a non-zero status code to mark the job as failed
+  else
+    echo "GPU(s) appear to be clean of zombie processes. Proceeding with job."
+  fi
+fi
+
+echo "--- Pre-flight Check Passed ---"
+set +e # Don't exit immediately anymore
+# =======================================================================
 
 # Change to the temporary directory
 cd $TEMP_DIR/motivated_reasoning
