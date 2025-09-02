@@ -71,27 +71,17 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 # Assumes this script is in motivated_reasoning/training/slurm (three levels up from the project root)
 PROJ_DIR="$( dirname "$( dirname "$( dirname "$SCRIPT_DIR" )" )" )"
 
-# Check if /nas/ directory exists to determine if we're on the CHAI cluster
-if [ -d "/nas" ]; then
-    if [ "$GPU_TYPE" == "A100" ]; then
-        NODE_LIST="cirl.ist.berkeley.edu,rlhf.ist.berkeley.edu,airl.ist.berkeley.edu,sac.ist.berkeley.edu"
-    elif [ "$GPU_TYPE" == "A6000" ]; then
-        NODE_LIST="ddpg.ist.berkeley.edu,dqn.ist.berkeley.edu,gail.ist.berkeley.edu,gan.ist.berkeley.edu"
-    elif [ "$GPU_TYPE" == "SXM4" ]; then
-        NODE_LIST="sac.ist.berkeley.edu,airl.ist.berkeley.edu"
-    elif [ "$GPU_TYPE" == "PCI" ]; then
-        NODE_LIST="cirl.ist.berkeley.edu,rlhf.ist.berkeley.edu"    
-    elif [ "$GPU_TYPE" == "noshards" ]; then  
-        NODE_LIST="airl.ist.berkeley.edu,sac.ist.berkeley.edu,cirl.ist.berkeley.edu,rlhf.ist.berkeley.edu,gail.ist.berkeley.edu,gan.ist.berkeley.edu"
-    elif [ "$GPU_TYPE" == "either" ]; then
-        NODE_LIST="cirl.ist.berkeley.edu,rlhf.ist.berkeley.edu,airl.ist.berkeley.edu,sac.ist.berkeley.edu,ddpg.ist.berkeley.edu,dqn.ist.berkeley.edu,gail.ist.berkeley.edu,gan.ist.berkeley.edu"
-    elif [ "$GPU_TYPE" == "all" ]; then
-        NODE_LIST="ddpg.ist.berkeley.edu,dqn.ist.berkeley.edu,gail.ist.berkeley.edu,gan.ist.berkeley.edu,cirl.ist.berkeley.edu,rlhf.ist.berkeley.edu,airl.ist.berkeley.edu,sac.ist.berkeley.edu,ppo.ist.berkeley.edu,vae.ist.berkeley.edu"
-    else
-        echo "Invalid GPU type: $GPU_TYPE"
-        exit 1
-    fi
+# Get GPU node configuration from GPU groups file
+NODE_LIST=$(grep "^$GPU_TYPE=" "$PROJ_DIR/gpu_groups.txt" | cut -d'=' -f2)
 
+if [ -z "$NODE_LIST" ]; then
+    echo "Error: Invalid GPU type: $GPU_TYPE"
+    echo "Available types: $(grep -v '^#' "$PROJ_DIR/gpu_groups.txt" | cut -d'=' -f1 | tr '\n' ' ')"
+    exit 1
+fi
+
+# Check if we're on CHAI cluster and set parameters accordingly
+if [ -d "/nas" ]; then
     NODE_PARAM="--nodelist=$NODE_LIST"
     MEM_PARAM="#SBATCH --mem=$SLURM_MEM"
     QOS="#SBATCH --qos=$SLURM_QOS"
