@@ -260,6 +260,7 @@ for iteration_file in jsonl_files:
         # Get the response from the example
         full_response = example.get('response', '')
         user_prompt = example.get('user_prompt', '')
+        system_prompt = example.get('system_prompt', '')
         
         if not full_response:
             print(f"  Warning: No response found in example {i+1}")
@@ -299,6 +300,7 @@ for iteration_file in jsonl_files:
         
         results.append({
             'example_index': i,
+            'system_prompt': system_prompt,
             'user_prompt': user_prompt,
             'full_response': full_response,
             'reasoning': reasoning,

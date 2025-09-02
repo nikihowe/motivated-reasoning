@@ -315,11 +315,11 @@ def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: s
             font-size: 1.5em;
             font-weight: bold;
         }}
-        .score-1 {{ background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); }}
-        .score-2 {{ background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%); }}
+        .score-1 {{ background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%); }}
+        .score-2 {{ background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%); }}
         .score-3 {{ background: linear-gradient(135deg, #ffd54f 0%, #ffc107 100%); }}
-        .score-4 {{ background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%); }}
-        .score-5 {{ background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%); }}
+        .score-4 {{ background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%); }}
+        .score-5 {{ background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); }}
         .score--1 {{ background: linear-gradient(135deg, #9e9e9e 0%, #757575 100%); }}
         
         .example {{
@@ -432,6 +432,15 @@ def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: s
             border-radius: 5px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }}
+        
+        /* System prompt styles */
+        .system-prompt {{
+            background: #e8f5e8;
+            padding: 15px;
+            border-left: 4px solid #4caf50;
+            margin: 10px 0;
+            border-radius: 0 5px 5px 0;
+        }}
     </style>
 </head>
 <body>
@@ -524,6 +533,22 @@ def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: s
     for i, (iteration_name, (categorized_data, total_counts)) in enumerate(sorted(iteration_data.items())):
         active_class = " active" if i == 0 and not distribution_plots else ""
         html_content += f'        <div class="tab-content{active_class}" id="{iteration_name}">\n'
+        
+        # Extract system prompt from the first example if available
+        system_prompt = None
+        for score_examples in categorized_data.values():
+            if score_examples:
+                system_prompt = score_examples[0].get('system_prompt', '')
+                break
+        
+        # Add system prompt display if available
+        if system_prompt:
+            html_content += f"""
+            <div class="system-prompt">
+                <strong>System Prompt:</strong><br>
+                {system_prompt}
+            </div>
+"""
         
         # Calculate total examples across all scores for percentage calculation
         total_all_examples = sum(total_counts.values())
