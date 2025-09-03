@@ -112,8 +112,18 @@ if [ ${#ITERATIONS[@]} -eq 0 ]; then
     exit 0
 fi
 
+# Get GPU node configuration from GPU groups file
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PROJ_DIR="$( dirname "$( dirname "$SCRIPT_DIR" )" )"
+NODE_LIST=$(grep "^noshards=" "$PROJ_DIR/gpu_groups.txt" | cut -d'=' -f2)
+
+if [ -z "$NODE_LIST" ]; then
+    echo "Error: Could not find noshards group in gpu_groups.txt"
+    exit 1
+fi
+
 # SLURM configuration
-SLURM_CONFIG="--gpus=A6000:1 --mem=24G --time=0:10:00"
+SLURM_CONFIG="--gpus=1 --mem=24G --time=0:10:00 --nodelist=$NODE_LIST"
 
 mkdir -p slurm_logging
 
