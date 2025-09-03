@@ -140,4 +140,4 @@ transition_model_config:
 
 possible_env_vars:
   agent_name:
-    - Chatbot
+    - chatbot
