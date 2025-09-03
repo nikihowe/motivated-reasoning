@@ -10,6 +10,9 @@ from pathlib import Path
 from typing import Dict, List, Any
 import random
 import base64
+import subprocess
+import sys
+import html
 
 
 def load_evaluation_data(eval_dir: str) -> List[Dict[str, Any]]:
@@ -44,7 +47,17 @@ def find_iteration_directories(eval_dir: str) -> List[str]:
             if os.path.isdir(item_path) and item.startswith('iteration-'):
                 iteration_dirs.append(item_path)
     
-    return sorted(iteration_dirs)
+    # Sort by iteration number, not by string
+    def extract_iteration_number(path):
+        basename = os.path.basename(path)
+        if basename.startswith('iteration-'):
+            try:
+                return int(basename.split('-')[1])
+            except (ValueError, IndexError):
+                return 0
+        return 0
+    
+    return sorted(iteration_dirs, key=extract_iteration_number)
 
 
 def find_all_evaluation_combinations(base_dir: str) -> List[str]:
@@ -113,6 +126,13 @@ def categorize_by_score(data: List[Dict[str, Any]], examples_per_score: int = 5)
     return result, total_counts
 
 
+def escape_html(text: str) -> str:
+    """Escape HTML special characters to prevent rendering issues."""
+    if text is None:
+        return ''
+    return html.escape(str(text))
+
+
 def truncate_text(text: str, max_length: int = 500) -> str:
     """Truncate text to a reasonable length for display."""
     if len(text) <= max_length:
@@ -165,15 +185,91 @@ def find_distribution_plots(experiment_info: Dict[str, str]) -> Dict[str, str]:
     if not experiment_info:
         return plots
     
-    # Build expected plots path: plots/experiment_name/evaluator/other/eval/inference_prompt/evaluation_prompt/distribution
-    plots_path = Path('plots') / experiment_info['experiment_name'] / experiment_info['evaluator'] / 'other' / 'eval' / experiment_info['inference_prompt'] / experiment_info['evaluation_prompt'] / 'distribution'
+    # Build expected plots path: plots/experiment_name/inference_prompt/evaluator/other/eval/evaluation_prompt/distribution
+    plots_path = Path('plots') / experiment_info['experiment_name'] / experiment_info['inference_prompt'] / experiment_info['evaluator'] / 'other' / 'eval' / experiment_info['evaluation_prompt'] / 'distribution'
     
-    # Look for weighted_avg and argmax plots
-    weighted_plot = plots_path / 'weighted_avg' / 'score_distribution.png'
+    # Look for argmax plot only
     argmax_plot = plots_path / 'argmax' / 'score_distribution.png'
     
-    if weighted_plot.exists():
-        plots['weighted_avg'] = str(weighted_plot)
+    if argmax_plot.exists():
+        plots['argmax'] = str(argmax_plot)
+    
+    return plots
+
+def auto_generate_missing_plots(experiment_info: Dict[str, str], eval_dir: str, auto_generate: bool = False) -> Dict[str, str]:
+    """
+    Check if distribution plots exist and auto-generate them if missing and requested.
+    
+    Args:
+        experiment_info: Dictionary containing experiment metadata
+        eval_dir: Path to the evaluation directory
+        auto_generate: Whether to automatically generate missing plots
+        
+    Returns:
+        Dictionary mapping plot types to file paths
+    """
+    plots = {}
+    
+    if not experiment_info:
+        return plots
+    
+    # Build expected plots path: plots/experiment_name/inference_prompt/evaluator/other/eval/evaluation_prompt/distribution
+    plots_path = Path('plots') / experiment_info['experiment_name'] / experiment_info['inference_prompt'] / experiment_info['evaluator'] / 'other' / 'eval' / experiment_info['evaluation_prompt'] / 'distribution'
+    
+    # Check for existing plots - only argmax
+    argmax_plot = plots_path / 'argmax' / 'score_distribution.png'
+    
+    missing_plots = []
+    if not argmax_plot.exists():
+        missing_plots.append('argmax')
+    
+    # Auto-generate missing plots if requested
+    if auto_generate and missing_plots:
+        print(f"  Auto-generating missing distribution plots: {missing_plots}")
+        
+        try:
+            # Determine the prompt type from the path structure
+            # The plotting script expects a prompt_type parameter
+            prompt_type = experiment_info['inference_prompt']
+            
+            # Build the command to call the plotting script
+            # We need to handle the nested directory structure
+            # The plotting script expects: evaluation_output/experiment/evaluator-X/...
+            # But we have: evaluation_output/experiment/prompt_type/evaluator-X/...
+            
+            # For now, we'll create a temporary symlink or modify the approach
+            # Let's try calling the plotting script with the full path structure
+            cmd = [
+                sys.executable, 
+                'motivated_reasoning/plotting/plot_evaluation.py',
+                experiment_info['experiment_name'],
+                '--evaluator', experiment_info['evaluator'],
+                '--suffix', experiment_info['evaluation_prompt'],
+                '--prompt-type', prompt_type
+            ]
+            
+            print(f"  Note: Directory structure may not match plotting script expectations")
+            print(f"  Expected: evaluation_output/{experiment_info['experiment_name']}/evaluator-{experiment_info['evaluator']}/...")
+            print(f"  Actual: evaluation_output/{experiment_info['experiment_name']}/{prompt_type}/evaluator-{experiment_info['evaluator']}/...")
+            
+            print(f"  Running: {' '.join(cmd)}")
+            
+            # Run the plotting script
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=Path.cwd())
+            
+            if result.returncode == 0:
+                print(f"  Successfully generated plots")
+                # Re-check for the plots
+                if argmax_plot.exists():
+                    plots['argmax'] = str(argmax_plot)
+            else:
+                print(f"  Warning: Plot generation failed with return code {result.returncode}")
+                print(f"  stderr: {result.stderr}")
+                
+        except Exception as e:
+            print(f"  Warning: Failed to auto-generate plots: {e}")
+    
+    # Return existing plots (including newly generated ones)
     if argmax_plot.exists():
         plots['argmax'] = str(argmax_plot)
     
@@ -190,7 +286,7 @@ def encode_image_to_base64(image_path: str) -> str:
         return ""
 
 
-def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: str, experiment_info: Dict[str, str] = None):
+def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: str, experiment_info: Dict[str, str] = None, auto_generate_plots: bool = False, eval_dir: str = None):
     """Generate a single HTML report with tabs for each iteration."""
     
     # Create title from experiment info
@@ -303,10 +399,11 @@ def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: s
         
         /* Score section styles */
         .score-section {{
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             border: 1px solid #ddd;
             border-radius: 8px;
             overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }}
         .score-header {{
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -473,8 +570,8 @@ def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: s
             <div class="tabs">
 """
     
-    # Find distribution plots
-    distribution_plots = find_distribution_plots(experiment_info) if experiment_info else {}
+    # Find distribution plots (with auto-generation if requested)
+    distribution_plots = auto_generate_missing_plots(experiment_info, eval_dir, auto_generate_plots) if experiment_info else {}
     
     # Add plots tab first if plots exist
     tab_index = 0
@@ -482,6 +579,9 @@ def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: s
         active_class = " active"
         html_content += f'                <button class="tab{active_class}" onclick="showTab(\'plots\')">Plots</button>\n'
         tab_index = 1
+        print(f"    Found {len(distribution_plots)} distribution plots: {list(distribution_plots.keys())}")
+    else:
+        print(f"    No distribution plots found for this combination")
     
     # Add tab buttons for iterations
     iteration_names = sorted(iteration_data.keys())
@@ -499,19 +599,6 @@ def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: s
         active_class = " active"
         html_content += f'        <div class="tab-content{active_class}" id="plots">\n'
         html_content += '            <div class="plots-container">\n'
-        
-        # Add weighted_avg plot
-        if 'weighted_avg' in distribution_plots:
-            weighted_img = encode_image_to_base64(distribution_plots['weighted_avg'])
-            if weighted_img:
-                html_content += f'''
-                <div class="plot-section">
-                    <div class="plot-header">Score Distribution - Weighted Average</div>
-                    <div class="plot-content">
-                        <img src="data:image/png;base64,{weighted_img}" alt="Weighted Average Score Distribution" class="plot-image">
-                    </div>
-                </div>
-                '''
         
         # Add argmax plot
         if 'argmax' in distribution_plots:
@@ -543,22 +630,31 @@ def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: s
         
         # Add system prompt display if available
         if system_prompt:
+            system_prompt_id = f"{iteration_name}-system-prompt"
             html_content += f"""
             <div class="system-prompt">
-                <strong>System Prompt:</strong><br>
-                {system_prompt}
+                <div class="collapse-header" data-target="system-prompt-content-{system_prompt_id}">
+                    <span class="collapse-arrow collapsed" id="system-prompt-arrow-{system_prompt_id}"></span>
+                    <strong>System Prompt</strong>
+                </div>
+                <div class="collapsible-content collapsed" id="system-prompt-content-{system_prompt_id}">
+                    <div class="content-text">{escape_html(system_prompt)}</div>
+                </div>
             </div>
 """
         
         # Calculate total examples across all scores for percentage calculation
         total_all_examples = sum(total_counts.values())
         
-        # Add examples for each score
-        for score in sorted(categorized_data.keys(), reverse=True):
-            examples = categorized_data[score]
-            total_for_score = total_counts[score]
+        # Define all possible scores to ensure consistent display (reversed order: Score 5 at top, No Score at bottom)
+        all_possible_scores = [5, 4, 3, 2, 1, -1]  # 5-1 for scores, -1 for no score
+        
+        # Add examples for each possible score
+        for score in all_possible_scores:
+            examples = categorized_data.get(score, [])
+            total_for_score = total_counts.get(score, 0)
             score_class = f"score-{score}" if score != -1 else "score--1"
-            score_label = "No Response" if score == -1 else f"Score {score}"
+            score_label = "No Score" if score == -1 else f"Score {score}"
             score_id = f"{iteration_name}-{'no-response' if score == -1 else str(score)}"
             
             # Calculate percentage
@@ -573,8 +669,9 @@ def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: s
                 <div class="collapsible-content" id="score-content-{score_id}">
 """
             
-            for j, example in enumerate(examples):
-                html_content += f"""
+            if examples:
+                for j, example in enumerate(examples):
+                    html_content += f"""
                 <div class="example">
                     <div class="example-header collapse-header" data-target="example-content-{score_id}-{j}">
                         <span class="collapse-arrow" id="example-arrow-{score_id}-{j}"></span>
@@ -587,42 +684,54 @@ def generate_tabbed_html_report(iteration_data: Dict[str, tuple], output_file: s
                                 <strong>User Prompt:</strong>
                             </div>
                             <div class="collapsible-content" id="prompt-content-{score_id}-{j}">
-                                <div class="content-text">{example.get('user_prompt', 'No prompt available')}</div>
+                                <div class="content-text">{escape_html(example.get('user_prompt', 'No prompt available'))}</div>
                             </div>
                         </div>
 """
-                
-                # Add reasoning first if available
-                if example.get('reasoning'):
-                    html_content += f"""
+                    
+                    # Add reasoning first if available
+                    if example.get('reasoning'):
+                        html_content += f"""
                         <div class="reasoning">
                             <div class="collapse-header" data-target="reasoning-content-{score_id}-{j}">
                                 <span class="collapse-arrow" id="reasoning-arrow-{score_id}-{j}"></span>
                                 <strong>Reasoning:</strong>
                             </div>
                             <div class="collapsible-content" id="reasoning-content-{score_id}-{j}">
-                                <div class="content-text">{example.get('reasoning', '')}</div>
+                                <div class="content-text">{escape_html(example.get('reasoning', ''))}</div>
                             </div>
                         </div>
 """
-                
-                # Add response after reasoning
-                html_content += f"""
+                    
+                    # Add response after reasoning
+                    html_content += f"""
                         <div class="response">
                             <div class="collapse-header" data-target="response-content-{score_id}-{j}">
                                 <span class="collapse-arrow" id="response-arrow-{score_id}-{j}"></span>
                                 <strong>Response:</strong>
                             </div>
                             <div class="collapsible-content" id="response-content-{score_id}-{j}">
-                                <div class="content-text">{example.get('response_only', example.get('full_response', 'No response available'))}</div>
+                                <div class="content-text">{escape_html(example.get('response_only', example.get('full_response', 'No response available')))}</div>
                             </div>
                         </div>
                         
                         <div class="metadata">
-                            <strong>Example Index:</strong> {example.get('example_index', 'N/A')} | 
-                            <strong>Model:</strong> {os.path.basename(example.get('model', 'N/A'))} | 
-                            <strong>Timestamp:</strong> {example.get('timestamp', 'N/A')}
+                            <strong>Example Index:</strong> {escape_html(str(example.get('example_index', 'N/A')))} | 
+                            <strong>Model:</strong> {escape_html(os.path.basename(example.get('model', 'N/A')))} | 
+                            <strong>Timestamp:</strong> {escape_html(str(example.get('timestamp', 'N/A')))}
                         </div>
+                    </div>
+                </div>
+"""
+            else:
+                # Show message when no examples are available for this score
+                html_content += f"""
+                <div class="example">
+                    <div class="example-header">
+                        No examples available for this score level
+                    </div>
+                    <div class="content-text" style="text-align: center; color: #666; font-style: italic; padding: 20px;">
+                        No responses received a score of {score if score != -1 else 'no response'} in this iteration.
                     </div>
                 </div>
 """
@@ -747,6 +856,8 @@ def main():
     parser.add_argument('--num_examples', type=int, default=5,
                        help='Number of examples per score (default: 5)')
     parser.add_argument('--seed', type=int, help='Random seed for reproducible sampling')
+    parser.add_argument('--auto-generate-plots', action='store_true', 
+                       help='Automatically generate missing distribution plots using the plotting script')
     
     args = parser.parse_args()
     
@@ -846,7 +957,13 @@ def main():
                 if iteration_data:
                     # Extract experiment info and generate single tabbed HTML report
                     experiment_info = extract_experiment_info(combo_dir)
-                    generate_tabbed_html_report(iteration_data, combo_output, experiment_info)
+                    
+                    # Check if we need to auto-generate plots for this combination
+                    if args.auto_generate_plots:
+                        print(f"  Checking for distribution plots...")
+                        auto_generate_missing_plots(experiment_info, args.eval_dir, True)
+                    
+                    generate_tabbed_html_report(iteration_data, combo_output, experiment_info, args.auto_generate_plots, args.eval_dir)
                     print(f"  Report generated: {combo_output}")
                 else:
                     print(f"  No data found in any iteration directories for this combination.")
@@ -890,7 +1007,7 @@ def main():
             if iteration_data:
                 # Extract experiment info and generate single tabbed HTML report
                 experiment_info = extract_experiment_info(args.eval_dir)
-                generate_tabbed_html_report(iteration_data, args.output, experiment_info)
+                generate_tabbed_html_report(iteration_data, args.output, experiment_info, args.auto_generate_plots, args.eval_dir)
                 print(f"\nTabbed report generated successfully!")
                 print(f"Open {args.output} in your web browser to view the report.")
             else:
@@ -918,7 +1035,7 @@ def main():
             
             # Generate single iteration HTML report
             iteration_data = {"single": (categorized, total_counts)}
-            generate_tabbed_html_report(iteration_data, args.output)
+            generate_tabbed_html_report(iteration_data, args.output, auto_generate_plots=args.auto_generate_plots, eval_dir=args.eval_dir)
             
             print(f"\nReport generated successfully!")
             print(f"Open {args.output} in your web browser to view the report.")
