@@ -42,12 +42,19 @@ def find_all_evaluators(evaluation_dir):
         print(f"Error: Evaluation directory {evaluation_path} does not exist")
         return []
     
-    evaluator_dirs = [d for d in evaluation_path.iterdir() 
-                     if d.is_dir() and d.name.startswith("evaluator-")]
+    # Look for evaluator directories within prompt_type subdirectories
+    evaluator_names = set()
     
-    evaluator_names = [d.name.replace("evaluator-", "") for d in evaluator_dirs]
-    evaluator_names.sort()  # Sort for consistent ordering
+    for prompt_type_dir in evaluation_path.iterdir():
+        if prompt_type_dir.is_dir():
+            evaluator_dirs = [d for d in prompt_type_dir.iterdir() 
+                             if d.is_dir() and d.name.startswith("evaluator-")]
+            
+            for evaluator_dir in evaluator_dirs:
+                evaluator_name = evaluator_dir.name.replace("evaluator-", "")
+                evaluator_names.add(evaluator_name)
     
+    evaluator_names = sorted(list(evaluator_names))  # Sort for consistent ordering
     return evaluator_names
 
 def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", prompt_type="cot_prompt"):
@@ -65,57 +72,80 @@ def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", pro
         print(f"Error: Evaluation directory {evaluation_path} does not exist")
         return {}
     
-    # Look for evaluator directory
-    evaluator_path = evaluation_path / f"evaluator-{evaluator_name}"
-    if not evaluator_path.exists():
-        print(f"Error: Evaluator directory {evaluator_path} does not exist")
-        return {}
+    # Look for evaluator directory within the specific prompt_type subdirectory
+    if prompt_type:
+        prompt_type_dir = evaluation_path / prompt_type
+        if not prompt_type_dir.exists():
+            print(f"Error: Prompt type directory {prompt_type_dir} does not exist")
+            return {}
+        
+        evaluator_path = prompt_type_dir / f"evaluator-{evaluator_name}"
+        if not evaluator_path.exists():
+            print(f"Error: Evaluator directory {evaluator_path} does not exist")
+            return {}
+    else:
+        # If no prompt_type specified, find the first available one
+        evaluator_path = None
+        for prompt_type_dir in evaluation_path.iterdir():
+            if prompt_type_dir.is_dir():
+                potential_evaluator_path = prompt_type_dir / f"evaluator-{evaluator_name}"
+                if potential_evaluator_path.exists():
+                    evaluator_path = potential_evaluator_path
+                    break
+        
+        if not evaluator_path:
+            print(f"Error: Evaluator directory evaluator-{evaluator_name} not found in any prompt_type subdirectory")
+            return {}
     
     results_by_suffix = defaultdict(dict)
     
-    # Find all iteration directories under the evaluator directory
-    iteration_dirs = [d for d in evaluator_path.iterdir() 
-                     if d.is_dir() and d.name.startswith("iteration-")]
+    # Look for suffix directories under the evaluator directory
+    # Expected structure: evaluator-X/suffix/iteration-Y/
+    suffix_dirs = [d for d in evaluator_path.iterdir() 
+                   if d.is_dir() and not d.name.startswith("iteration-")]
     
-    if not iteration_dirs:
-        print(f"Error: No iteration directories found in {evaluator_path}")
+    if not suffix_dirs:
+        print(f"Error: No suffix directories found in {evaluator_path}")
         return {}
     
-    print(f"Found {len(iteration_dirs)} iteration directories for evaluator-{evaluator_name}")
+    print(f"Found {len(suffix_dirs)} suffix directories for evaluator-{evaluator_name}")
     
-    for iteration_dir in iteration_dirs:
-        # Extract iteration number from directory name
-        iteration_num = int(iteration_dir.name.split("-")[1])
+    for suffix_dir in suffix_dirs:
+        suffix_name = suffix_dir.name
         
-        # Look for prompt_type directories within iteration directories
-        # Expected structure: iteration-X/prompt_type/suffix/
-        prompt_type_dir = iteration_dir / prompt_type
-        assert prompt_type_dir.exists(), f"Expected directory {prompt_type_dir} does not exist. Check evaluation data structure."
+        # Find all iteration directories under the suffix directory
+        iteration_dirs = [d for d in suffix_dir.iterdir() 
+                         if d.is_dir() and d.name.startswith("iteration-")]
         
-        # Look for suffix directories within prompt_type directory
-        for suffix_dir in prompt_type_dir.iterdir():
-            if suffix_dir.is_dir():
-                suffix_name = suffix_dir.name
-                eval_dir = suffix_dir
+        if not iteration_dirs:
+            print(f"Warning: No iteration directories found in suffix {suffix_name}")
+            continue
+        
+        print(f"Found {len(iteration_dirs)} iteration directories for suffix {suffix_name}")
+        
+        for iteration_dir in iteration_dirs:
+            # Extract iteration number from directory name
+            iteration_num = int(iteration_dir.name.split("-")[1])
+            
+            # Look for eval files directly within iteration directories
+            # Expected structure: suffix/iteration-X/
+            eval_dir = iteration_dir
+            
+            # Look for eval files (files that end with eval_base.json or similar)
+            eval_files = list(eval_dir.glob("*eval*.json"))
+            if eval_files:
+                # Sort by timestamp (newest first) and take the most recent
+                eval_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                latest_eval_file = eval_files[0]
                 
-                # Look for eval files (files that end with eval_base.json or similar)
-                eval_files = list(eval_dir.glob("*eval*.json"))
-                if eval_files:
-                    # Sort by timestamp (newest first) and take the most recent
-                    eval_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
-                    latest_eval_file = eval_files[0]
-                    
-                    # Keep suffix and prompt_type separate for proper directory structure
-                    display_suffix = suffix_name
-                    
-                    print(f"Loading evaluation results from: {latest_eval_file}")
-                    try:
-                        with open(latest_eval_file, 'r') as f:
-                            results = json.load(f)
-                        results_by_suffix[display_suffix][iteration_num] = results
-                        print(f"  Loaded {len(results)} evaluation examples for {display_suffix} ({prompt_type}) iteration {iteration_num}")
-                    except Exception as e:
-                        print(f"Error loading {latest_eval_file}: {e}")
+                print(f"Loading evaluation results from: {latest_eval_file}")
+                try:
+                    with open(latest_eval_file, 'r') as f:
+                        results = json.load(f)
+                    results_by_suffix[suffix_name][iteration_num] = results
+                    print(f"  Loaded {len(results)} evaluation examples for {suffix_name} ({prompt_type}) iteration {iteration_num}")
+                except Exception as e:
+                    print(f"Error loading {latest_eval_file}: {e}")
     
     return results_by_suffix
 
@@ -227,7 +257,8 @@ def create_eval_plots(summary_stats, evaluation_dir, suffix_name, score_key, lab
         score_type_dir = "other"
     
     # Create evaluation plots directory with prompt_type structure
-    plots_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / prompt_type / suffix_name / "aggregate"
+    # Structure: plots/experiment_name/prompt_type/evaluator-X/score_type_dir/eval/suffix_name/aggregate
+    plots_dir = Path("plots") / evaluation_dir / prompt_type / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "aggregate"
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     # Sort iterations for proper ordering
@@ -399,7 +430,7 @@ def plot_evaluation_by_example(results_by_iteration, evaluation_dir, suffix_name
     else:
         score_type_dir = "other"
     
-    base_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / prompt_type / suffix_name / "by_example"
+    base_dir = Path("plots") / evaluation_dir / prompt_type / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "by_example"
     
     if use_weighted:
         sub_dir = base_dir / "weighted"
@@ -423,7 +454,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     # Count scores for each iteration
     score_counts = {}
     for iteration in iterations:
-        score_counts[iteration] = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        score_counts[iteration] = {-1: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
         results = results_by_iteration[iteration]
         
         # Handle different result structures
@@ -470,7 +501,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
                 else:
                     score_to_use = r.get(score_key, None)
             
-            if score_to_use is not None and score_to_use in range(1, 6):
+            if score_to_use is not None and score_to_use in [-1, 1, 2, 3, 4, 5]:
                 score_counts[iteration][score_to_use] += 1
             else:
                 print(f"      Skipping result with score: {score_to_use} (type: {type(score_to_use)})")
@@ -478,6 +509,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
         print(f"    Iteration {iteration} score counts: {score_counts[iteration]}")
     
     # Prepare data for stacked bar chart
+    scores_neg1 = [score_counts[iter][-1] for iter in iterations]
     scores_1 = [score_counts[iter][1] for iter in iterations]
     scores_2 = [score_counts[iter][2] for iter in iterations]
     scores_3 = [score_counts[iter][3] for iter in iterations]
@@ -491,31 +523,36 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     
     # Use custom colors for training prompt evaluations
     if score_key == "classification_score":
-        # Training prompt colors: 1=blue, 2=light blue, 3=red, 4=light red, 5=black
+        # Training prompt colors: -1=grey, 1=blue, 2=light blue, 3=red, 4=light red, 5=black
         # Even more pastel/softer versions
-        colors = ['#9ecae1', '#c6dbef', '#e6550d', '#fdbe85', '#969696']
+        colors = ['#969696', '#9ecae1', '#c6dbef', '#e6550d', '#fdbe85', '#969696']
     else:
-        # Default colors for other score types
-        colors = ['#1f77b4', '#2ca02c', '#ffbb78', '#ff7f0e', '#d62728']
+        # Default colors for other score types: -1=grey, 1=blue, 2=green, 3=orange, 4=red, 5=purple
+        colors = ['#969696', '#1f77b4', '#2ca02c', '#ffbb78', '#ff7f0e', '#d62728']
     
-    # Create legend labels based on score type
+    # Create legend labels based on score type (Score 5 at top, No Score at bottom)
     if score_key == "classification_score":
         # Training prompt legend labels
-        labels = ['1: First option', '2: First option with made up reason', '3: Second option', '4: Second option with made up reason', '5: No recommendation']
+        labels = ['5: No recommendation', '4: Second option with made up reason', '3: Second option', '2: First option with made up reason', '1: First option', 'No Score']
     else:
         # Default labels for other score types
-        labels = ['Score 1', 'Score 2', 'Score 3', 'Score 4', 'Score 5']
+        labels = ['Score 5', 'Score 4', 'Score 3', 'Score 2', 'Score 1', 'No Score']
     
-    p1 = ax.bar(iterations, scores_1, width, label=labels[0], color=colors[0])
-    p2 = ax.bar(iterations, scores_2, width, bottom=scores_1, label=labels[1], color=colors[1])
-    p3 = ax.bar(iterations, scores_3, width, bottom=np.array(scores_1) + np.array(scores_2), 
-                label=labels[2], color=colors[2])
+    # Create bars in stacking order (Score 5 at top, No Score at bottom) with matching legend order
+    p_neg1 = ax.bar(iterations, scores_neg1, width, label=labels[5], color=colors[0])
+    p1 = ax.bar(iterations, scores_1, width, bottom=scores_neg1, label=labels[4], color=colors[1])
+    p2 = ax.bar(iterations, scores_2, width, 
+                bottom=np.array(scores_neg1) + np.array(scores_1), 
+                label=labels[3], color=colors[2])
+    p3 = ax.bar(iterations, scores_3, width, 
+                bottom=np.array(scores_neg1) + np.array(scores_1) + np.array(scores_2), 
+                label=labels[2], color=colors[3])
     p4 = ax.bar(iterations, scores_4, width, 
-                bottom=np.array(scores_1) + np.array(scores_2) + np.array(scores_3), 
-                label=labels[3], color=colors[3])
+                bottom=np.array(scores_neg1) + np.array(scores_1) + np.array(scores_2) + np.array(scores_3), 
+                label=labels[1], color=colors[4])
     p5 = ax.bar(iterations, scores_5, width, 
-                bottom=np.array(scores_1) + np.array(scores_2) + np.array(scores_3) + np.array(scores_4), 
-                label=labels[4], color=colors[4])
+                bottom=np.array(scores_neg1) + np.array(scores_1) + np.array(scores_2) + np.array(scores_3) + np.array(scores_4), 
+                label=labels[0], color=colors[5])
     
     method_name = "Argmax" if use_argmax else "Weighted Average"
     
@@ -523,7 +560,30 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     ax.set_ylabel('Number of Examples', fontsize=12)
     ax.set_title(f'Model Evaluation: {label} Score Distribution Across Iterations ({method_name})\n{suffix_name} - {evaluation_dir} - evaluator-{evaluator_name}',
                 fontsize=14, fontweight='bold')
-    ax.legend()
+    
+    # Set x-axis ticks to show every iteration
+    ax.set_xticks(iterations)
+    ax.set_xticklabels(iterations)
+    
+    # Create legend with explicit order (Score 5 at top, No Score at bottom)
+    handles = [p5, p4, p3, p2, p1, p_neg1]
+    labels = ['Score 5', 'Score 4', 'Score 3', 'Score 2', 'Score 1', 'No Score']
+    
+    legend = ax.legend(
+        handles, labels,
+        framealpha=0.95,           # 95% opacity
+        facecolor='white',          # White background
+        edgecolor='black',          # Black border for better contrast
+        fancybox=True,              # Rounded corners
+        shadow=True,                # Add shadow
+        fontsize=10,                # Slightly smaller font
+        bbox_to_anchor=(1.02, 1),  # Position legend outside plot area
+        loc='upper left'            # Upper left position
+    )
+    
+    # Ensure the legend frame is visible
+    legend.get_frame().set_linewidth(1.5)
+    legend.get_frame().set_alpha(0.95)
     ax.grid(True, axis='y', alpha=0.3)
     
     # Save the plot
@@ -535,7 +595,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
         score_type_dir = "other"
     
     method_subdir = "argmax" if use_argmax else "weighted_avg"
-    plots_dir = Path("plots") / evaluation_dir / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / prompt_type / suffix_name / "distribution" / method_subdir
+    plots_dir = Path("plots") / evaluation_dir / prompt_type / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "distribution" / method_subdir
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     plot_path = plots_dir / "score_distribution.png"
@@ -543,7 +603,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     print(f"\nSaved score distribution plot to: {plot_path}")
     plt.close()
 
-def create_weighted_score_comparison_plot(weighted_scores_by_suffix, evaluation_dir, label, filename, evaluator_name):
+def create_weighted_score_comparison_plot(weighted_scores_by_suffix, evaluation_dir, label, filename, evaluator_name, prompt_type):
     """
     Create a weighted score comparison plot across suffixes for a specific evaluator.
     Args:
@@ -568,7 +628,7 @@ def create_weighted_score_comparison_plot(weighted_scores_by_suffix, evaluation_
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     
-    out_dir = Path('plots') / evaluation_dir / f'evaluator-{evaluator_name}' / 'weighted_comparison'
+    out_dir = Path('plots') / evaluation_dir / prompt_type / f'evaluator-{evaluator_name}' / 'weighted_comparison'
     out_dir.mkdir(parents=True, exist_ok=True)
     plt.savefig(out_dir / filename, dpi=300)
     print(f"\nSaved weighted comparison plot to: {out_dir / filename}")
@@ -613,7 +673,7 @@ def create_cross_evaluator_comparison(evaluation_dir, evaluators, suffix_name, s
         score_type_dir = "other"
     
     # Create comparison plots directory with prompt_type structure
-    plots_dir = Path("plots") / evaluation_dir / "cross_evaluator_comparison" / score_type_dir / prompt_type / suffix_name
+    plots_dir = Path("plots") / evaluation_dir / prompt_type / "cross_evaluator_comparison" / score_type_dir / suffix_name
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     # Create the comparison plot
@@ -676,10 +736,10 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         return
     
     # Determine which scores to process based on evaluator type
-    # All current evaluators (local LLaMA, Claude, Gemini) use influence scores
+    # For this evaluation, we have evaluation scores
     score_keys_and_labels = [
-        ("full_influence_score", "Full Response Influence"),
-        ("reasoning_influence_score", "Reasoning Only Influence")
+        ("full_evaluation_score", "Full Response Evaluation"),
+        ("reasoning_evaluation_score", "Reasoning Only Evaluation")
     ]
     
     # Process each score type
@@ -715,7 +775,7 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
     print(f"    Completed all plots for {suffix_name}")
     return f"Completed all plots for {suffix_name}"
 
-def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None, prompt_type="cot_prompt"):
+def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None, prompt_type=None):
     """
     Process results for a single evaluator.
     Args:
@@ -728,77 +788,97 @@ def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None, prompt
     print(f"PROCESSING EVALUATOR: {evaluator_name}")
     print(f"{'='*80}")
     
-    # Load model evaluation results organized by suffix and prompt type
-    results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name, prompt_type)
-    
-    if not results_by_suffix:
-        print(f"No model evaluation results found for evaluator-{evaluator_name}!")
-        return
-    
-    # Filter to specific suffix if requested
-    if suffix_filter:
-        if suffix_filter not in results_by_suffix:
-            print(f"Suffix '{suffix_filter}' not found in evaluator-{evaluator_name}. Available suffixes: {list(results_by_suffix.keys())}")
+    # If no prompt_type specified, find all available prompt types for this evaluator
+    if prompt_type is None:
+        evaluation_path = Path("evaluation_output") / evaluation_dir
+        available_prompt_types = []
+        for prompt_dir in evaluation_path.iterdir():
+            if prompt_dir.is_dir():
+                evaluator_path = prompt_dir / f"evaluator-{evaluator_name}"
+                if evaluator_path.exists():
+                    available_prompt_types.append(prompt_dir.name)
+        
+        if not available_prompt_types:
+            print(f"No prompt types found for evaluator-{evaluator_name}")
             return
-        results_by_suffix = {suffix_filter: results_by_suffix[suffix_filter]}
-    
-    print(f"Found data for {len(results_by_suffix)} suffix conditions: {list(results_by_suffix.keys())}")
-    
-    # Process suffix conditions sequentially
-    print(f"Processing {len(results_by_suffix)} suffix conditions...")
-    print(f"This will create individual plots for each suffix condition...")
-    
-    for suffix_name, results_by_iteration in results_by_suffix.items():
-        print(f"\n{'-'*60}")
-        print(f"PROCESSING SUFFIX CONDITION: {suffix_name} (evaluator-{evaluator_name})")
-        print(f"  Results by iteration: {list(results_by_iteration.keys())}")
-        print(f"  Total examples across all iterations: {sum(len(results) for results in results_by_iteration.values())}")
-        print(f"{'-'*60}")
         
-        process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, evaluator_name, prompt_type)
+        print(f"Found prompt types for evaluator-{evaluator_name}: {available_prompt_types}")
+        prompt_types_to_process = available_prompt_types
+    else:
+        prompt_types_to_process = [prompt_type]
     
-    # Create weighted score comparison plots across suffixes for this evaluator
-    if len(results_by_suffix) > 1:
-        print(f"\nCreating weighted score comparison plots across suffixes for evaluator-{evaluator_name}...")
+    # Process each prompt type
+    for pt in prompt_types_to_process:
+        print(f"\nProcessing prompt type: {pt}")
         
-        weighted_scores_by_suffix_full = {}
-        weighted_scores_by_suffix_reasoning = {}
+        # Load model evaluation results organized by suffix and prompt type
+        results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name, pt)
+    
+        if not results_by_suffix:
+            print(f"No model evaluation results found for evaluator-{evaluator_name} with prompt type {pt}!")
+            continue
+        
+        # Filter to specific suffix if requested
+        if suffix_filter:
+            if suffix_filter not in results_by_suffix:
+                print(f"Suffix '{suffix_filter}' not found in evaluator-{evaluator_name} with prompt type {pt}. Available suffixes: {list(results_by_suffix.keys())}")
+                continue
+            results_by_suffix = {suffix_filter: results_by_suffix[suffix_filter]}
+        
+        print(f"Found data for {len(results_by_suffix)} suffix conditions: {list(results_by_suffix.keys())}")
+        
+        # Process suffix conditions sequentially
+        print(f"Processing {len(results_by_suffix)} suffix conditions...")
+        print(f"This will create individual plots for each suffix condition...")
         
         for suffix_name, results_by_iteration in results_by_suffix.items():
-            weighted_means_full = {}
-            weighted_means_reasoning = {}
+            print(f"\n{'-'*60}")
+            print(f"PROCESSING SUFFIX CONDITION: {suffix_name} (evaluator-{evaluator_name}, prompt type: {pt})")
+            print(f"  Results by iteration: {list(results_by_iteration.keys())}")
+            print(f"  Total examples across all iterations: {sum(len(results) for results in results_by_iteration.values())}")
+            print(f"{'-'*60}")
             
-            for iteration, results in results_by_iteration.items():
-                weighted_scores_full = []
-                weighted_scores_reasoning = []
-                
-                for r in results:
-                    w_full = get_weighted_evaluation_score(r, result_key="full_influence_result")
-                    w_reasoning = get_weighted_evaluation_score(r, result_key="reasoning_influence_result")
-                    if w_full is not None:
-                        weighted_scores_full.append(w_full)
-                    if w_reasoning is not None:
-                        weighted_scores_reasoning.append(w_reasoning)
-                
-                if weighted_scores_full:
-                    weighted_means_full[iteration] = np.mean(weighted_scores_full)
-                if weighted_scores_reasoning:
-                    weighted_means_reasoning[iteration] = np.mean(weighted_scores_reasoning)
+            process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, evaluator_name, pt)
+        
+        # Create weighted score comparison plots across suffixes for this evaluator and prompt type
+        if len(results_by_suffix) > 1:
+            print(f"\nCreating weighted score comparison plots across suffixes for evaluator-{evaluator_name} (prompt type: {pt})...")
             
-            weighted_scores_by_suffix_full[suffix_name] = weighted_means_full
-            weighted_scores_by_suffix_reasoning[suffix_name] = weighted_means_reasoning
+            weighted_scores_by_suffix_full = {}
+            weighted_scores_by_suffix_reasoning = {}
+            
+            for suffix_name, results_by_iteration in results_by_suffix.items():
+                weighted_means_full = {}
+                weighted_means_reasoning = {}
+                
+                for iteration, results in results_by_iteration.items():
+                    weighted_scores_full = []
+                    weighted_scores_reasoning = []
+                    
+                    for r in results:
+                        w_full = get_weighted_evaluation_score(r, result_key="full_influence_result")
+                        w_reasoning = get_weighted_evaluation_score(r, result_key="reasoning_influence_result")
+                        if w_full is not None:
+                            weighted_scores_full.append(w_full)
+                        if w_reasoning is not None:
+                            weighted_scores_reasoning.append(w_reasoning)
+                    
+                    if weighted_scores_full:
+                        weighted_means_full[iteration] = np.mean(weighted_scores_full)
+                    if weighted_scores_reasoning:
+                        weighted_means_reasoning[iteration] = np.mean(weighted_scores_reasoning)
+                
+                weighted_scores_by_suffix_full[suffix_name] = weighted_means_full
+                weighted_scores_by_suffix_reasoning[suffix_name] = weighted_means_reasoning
+            
+            # Create weighted comparison plots
+            if weighted_scores_by_suffix_full:
+                create_weighted_score_comparison_plot(weighted_scores_by_suffix_full, evaluation_dir, 
+                                                     "Full Response", "weighted_score_comparison_full.png", evaluator_name, pt)
         
-        # Create weighted comparison plots
-        if weighted_scores_by_suffix_full:
-            create_weighted_score_comparison_plot(weighted_scores_by_suffix_full, evaluation_dir, 
-                                                 "Full Response", "weighted_score_comparison_full.png", evaluator_name)
-        
-        if weighted_scores_by_suffix_reasoning:
-            create_weighted_score_comparison_plot(weighted_scores_by_suffix_reasoning, evaluation_dir, 
-                                                 "Reasoning Only", "weighted_score_comparison_reasoning.png", evaluator_name)
+        print(f"\nCompleted processing evaluator-{evaluator_name} with prompt type {pt}!")
     
     print(f"\nCompleted processing evaluator-{evaluator_name}!")
-    print(f"Processed suffix conditions: {list(results_by_suffix.keys())}")
 
 def evaluator_worker(args):
     """
@@ -828,9 +908,31 @@ def main():
     args = parser.parse_args()
     
     evaluation_dir = args.evaluation_dir
-    prompt_type = args.prompt_type or "cot_prompt"
-    print(f"Loading evaluation results from: {evaluation_dir}")
-    print(f"Using prompt type: {prompt_type}")
+    
+    # If no prompt type specified, find all available prompt types
+    if args.prompt_type:
+        prompt_type = args.prompt_type
+        print(f"Loading evaluation results from: {evaluation_dir}")
+        print(f"Using prompt type: {prompt_type}")
+    else:
+        # Auto-detect available prompt types
+        evaluation_path = Path("evaluation_output") / evaluation_dir
+        if not evaluation_path.exists():
+            print(f"Error: Evaluation directory {evaluation_path} does not exist")
+            return
+        
+        available_prompt_types = []
+        for prompt_dir in evaluation_path.iterdir():
+            if prompt_dir.is_dir():
+                available_prompt_types.append(prompt_dir.name)
+        
+        if not available_prompt_types:
+            print(f"Error: No prompt type directories found in {evaluation_path}")
+            return
+        
+        print(f"Loading evaluation results from: {evaluation_dir}")
+        print(f"Found {len(available_prompt_types)} prompt type(s): {available_prompt_types}")
+        print(f"Processing all prompt types automatically")
     
     # Find all available evaluators
     available_evaluators = find_all_evaluators(evaluation_dir)
@@ -864,71 +966,87 @@ def main():
     # Determine if multiprocessing should be used
     use_multiprocessing = not args.no_multiprocessing and len(evaluators_to_process) > 1
     
-    if use_multiprocessing:
-        print(f"Using multiprocessing to process {len(evaluators_to_process)} evaluators in parallel...")
-        
-        # Prepare tasks for multiprocessing
-        evaluator_tasks = [
-            (evaluation_dir, evaluator_name, args.suffix, prompt_type)
-            for evaluator_name in evaluators_to_process
-        ]
-        
-        # Determine number of workers
-        max_workers = args.max_workers or min(mp.cpu_count(), len(evaluator_tasks))
-        print(f"Using {max_workers} worker processes")
-        
-        # Set multiprocessing start method for compatibility
-        try:
-            mp.set_start_method('spawn', force=True)
-        except RuntimeError:
-            pass  # Already set
-        
-        # Process evaluators in parallel
-        with mp.Pool(max_workers) as pool:
-            results = pool.map(evaluator_worker, evaluator_tasks)
-        
-        for result in results:
-            print(f"  {result}")
+    # Process all prompt types if none was specified
+    if args.prompt_type:
+        # Single prompt type specified
+        prompt_types_to_process = [prompt_type]
     else:
-        # Process evaluators sequentially
-        print(f"Processing evaluators sequentially...")
-        for i, evaluator_name in enumerate(evaluators_to_process):
-            print(f"\n[{i+1}/{len(evaluators_to_process)}] About to process evaluator: {evaluator_name}")
-            process_evaluator(evaluation_dir, evaluator_name, args.suffix, prompt_type)
-            print(f"[{i+1}/{len(evaluators_to_process)}] Completed processing evaluator: {evaluator_name}")
+        # Auto-detected prompt types
+        prompt_types_to_process = available_prompt_types
     
-    # Create cross-evaluator comparison plots if we have multiple evaluators
-    if len(evaluators_to_process) > 1:
+    print(f"Processing {len(prompt_types_to_process)} prompt type(s): {prompt_types_to_process}")
+    
+    # Process each prompt type
+    for pt in prompt_types_to_process:
         print(f"\n{'='*80}")
-        print(f"CREATING CROSS-EVALUATOR COMPARISONS")
+        print(f"PROCESSING PROMPT TYPE: {pt}")
         print(f"{'='*80}")
         
-        # Find all suffix conditions that exist across evaluators
-        all_suffixes = set()
-        for evaluator_name in evaluators_to_process:
-            results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name, prompt_type)
-            all_suffixes.update(results_by_suffix.keys())
-        
-        # Filter to specific suffix if requested
-        if args.suffix:
-            if args.suffix in all_suffixes:
-                all_suffixes = {args.suffix}
-            else:
-                print(f"Suffix '{args.suffix}' not found in any evaluator")
-                all_suffixes = set()
-        
-        # Create comparison plots for each suffix and score type
-        for suffix_name in sorted(all_suffixes):
-            print(f"\nCreating cross-evaluator comparison for suffix: {suffix_name}")
+        if use_multiprocessing:
+            print(f"Using multiprocessing to process {len(evaluators_to_process)} evaluators in parallel...")
             
-            for score_key, label in [
-                ("full_influence_score", "Full Response"),
-                ("reasoning_influence_score", "Reasoning Only")
-            ]:
-                print(f"  Creating comparison for {label} scores...")
-                create_cross_evaluator_comparison(
-                    evaluation_dir, evaluators_to_process, suffix_name, score_key, label
-                )
+            # Prepare tasks for multiprocessing
+            evaluator_tasks = [
+                (evaluation_dir, evaluator_name, args.suffix, pt)
+                for evaluator_name in evaluators_to_process
+            ]
+            
+            # Determine number of workers
+            max_workers = args.max_workers or min(mp.cpu_count(), len(evaluator_tasks))
+            print(f"Using {max_workers} worker processes")
+            
+            # Set multiprocessing start method for compatibility
+            try:
+                mp.set_start_method('spawn', force=True)
+            except RuntimeError:
+                pass  # Already set
+            
+            # Process evaluators in parallel
+            with mp.Pool(max_workers) as pool:
+                results = pool.map(evaluator_worker, evaluator_tasks)
+            
+            for result in results:
+                print(f"  {result}")
+        else:
+            # Process evaluators sequentially
+            print(f"Processing evaluators sequentially...")
+            for i, evaluator_name in enumerate(evaluators_to_process):
+                print(f"\n[{i+1}/{len(evaluators_to_process)}] About to process evaluator: {evaluator_name}")
+                process_evaluator(evaluation_dir, evaluator_name, args.suffix, pt)
+                print(f"[{i+1}/{len(evaluators_to_process)}] Completed processing evaluator: {evaluator_name}")
+        
+        # Create cross-evaluator comparison plots if we have multiple evaluators
+        if len(evaluators_to_process) > 1:
+            print(f"\n{'='*80}")
+            print(f"CREATING CROSS-EVALUATOR COMPARISONS FOR PROMPT TYPE: {pt}")
+            print(f"{'='*80}")
+            
+            # Find all suffix conditions that exist across evaluators
+            all_suffixes = set()
+            for evaluator_name in evaluators_to_process:
+                results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name, pt)
+                all_suffixes.update(results_by_suffix.keys())
+            
+            # Filter to specific suffix if requested
+            if args.suffix:
+                if args.suffix in all_suffixes:
+                    all_suffixes = {args.suffix}
+                else:
+                    print(f"Suffix '{args.suffix}' not found in any evaluator")
+                    all_suffixes = set()
+            
+            # Create comparison plots for each suffix and score type
+            for suffix_name in sorted(all_suffixes):
+                print(f"\nCreating cross-evaluator comparison for suffix: {suffix_name}")
+                
+                for score_key, label in [
+                    ("full_influence_score", "Full Response"),
+                    ("reasoning_influence_score", "Reasoning Only")
+                ]:
+                    print(f"  Creating comparison for {label} scores...")
+                    create_cross_evaluator_comparison(
+                        evaluation_dir, evaluators_to_process, suffix_name, score_key, label, pt
+                    )
     
     # Print completion message
     print(f"\n{'='*80}")
@@ -936,11 +1054,12 @@ def main():
     print(f"{'='*80}")
     print(f"Evaluation directory: {evaluation_dir}")
     print(f"Processed evaluators: {evaluators_to_process}")
+    print(f"Processed prompt types: {prompt_types_to_process}")
     if args.suffix:
         print(f"Filtered to suffix: {args.suffix}")
-    print(f"Individual plots saved to: plots/{evaluation_dir}/evaluator-*/")
+    print(f"Individual plots saved to: plots/{evaluation_dir}/*/evaluator-*/")
     if len(evaluators_to_process) > 1:
-        print(f"Cross-evaluator comparisons saved to: plots/{evaluation_dir}/cross_evaluator_comparison/")
+        print(f"Cross-evaluator comparisons saved to: plots/{evaluation_dir}/*/cross_evaluator_comparison/")
 
 if __name__ == "__main__":
     main() 
