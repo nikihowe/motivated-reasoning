@@ -114,7 +114,7 @@ fi
 
 # Get GPU node configuration from GPU groups file
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJ_DIR="$( dirname "$( dirname "$SCRIPT_DIR" )" )"
+PROJ_DIR="$( dirname "$( dirname "$( dirname "$SCRIPT_DIR" )" )" )"
 NODE_LIST=$(grep "^noshards=" "$PROJ_DIR/gpu_groups.txt" | cut -d'=' -f2)
 
 if [ -z "$NODE_LIST" ]; then
