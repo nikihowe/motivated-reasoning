@@ -122,9 +122,6 @@ if [ -z "$NODE_LIST" ]; then
     exit 1
 fi
 
-# SLURM configuration
-SLURM_CONFIG="--gpus=1 --mem=24G --time=0:10:00 --nodelist=$NODE_LIST"
-
 mkdir -p slurm_logging
 
 echo "Submitting SLURM jobs for iterations: ${ITERATIONS[@]}"
@@ -138,14 +135,20 @@ for iteration in "${ITERATIONS[@]}"; do
 
     # Create descriptive job name with prompt file
     job_name="infer_${RUN_NAME}_iter${iteration}_${PROMPT_FILE}"
-
-    sbatch $SLURM_CONFIG \
-        --job-name="$job_name" \
-        --output="slurm_logging/${job_name}_%j.out" \
-        --error="slurm_logging/${job_name}_%j.err" \
-        << EOF
+    
+    # Create batch script file
+    batch_script="slurm_logging/${job_name}.sh"
+    
+    cat << EOF > "$batch_script"
 #!/bin/bash
 #SBATCH --job-name="$job_name"
+#SBATCH --output="slurm_logging/${job_name}_%j.out"
+#SBATCH --error="slurm_logging/${job_name}_%j.err"
+#SBATCH --gpus=1
+#SBATCH --mem=24G
+#SBATCH --time=0:10:00
+#SBATCH --nodes=1
+#SBATCH --nodelist=$NODE_LIST
 
 # Source bash config and conda
 source /nas/ucb/nikihowe/config/bashrc
@@ -171,6 +174,9 @@ fi
 
 echo "Completed inference for iteration $iteration with prompt $PROMPT_FILE"
 EOF
+
+    # Submit the batch script
+    sbatch "$batch_script"
 
     echo "Submitted job for iteration $iteration with job name: $job_name"
     echo ""
