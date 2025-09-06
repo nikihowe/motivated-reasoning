@@ -38,6 +38,8 @@ if run_name_lower.startswith('harmbench_cot_tags'):
     env_name = 'harmbench-cot-tags'
 elif run_name_lower.startswith('harmbench_tags_leading_cot'):
     env_name = 'harmbench-tags-leading-cot'
+elif run_name_lower.startswith('hb_cot_const'):
+    env_name = 'harmbench-cot-constitution'
 elif run_name_lower.startswith('harmbench'):
     env_name = 'harmbench'
 elif any(run_name_lower.startswith(prefix) for prefix in ['favorite_numbers', 'favorite-numbers']):

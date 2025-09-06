@@ -1,0 +1,4 @@
+parent_config_to_override: "base_cot_constitution.yaml"
+run_name: "hb_cot_const"
+
+iterations: 10
