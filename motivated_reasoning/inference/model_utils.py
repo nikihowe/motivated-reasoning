@@ -52,9 +52,8 @@ def compile_model_with_timeout(model, timeout_seconds: int = 120):
 
 def load_model_and_tokenizer(
     run_name: str,
-    iteration: int,
+    iteration: str,
     model_path: str,
-    load_base_model_only: bool = False,
     base_model_name: str = "meta-llama/Meta-Llama-3-8B-Instruct"
 ) -> tuple[AutoModelForCausalLM, AutoTokenizer, str]:
     """
@@ -62,10 +61,9 @@ def load_model_and_tokenizer(
     
     Args:
         run_name: Name of the model run
-        iteration: Iteration number to load
+        iteration: Iteration to load ("base" for base model, or number for fine-tuned iteration)
         model_path: Path to the models directory
-        load_base_model_only: Whether to load only the base model without adapter
-        base_model_name: Base model name when loading base model only
+        base_model_name: Base model name when loading base model
         
     Returns:
         tuple: (model, tokenizer, model_identifier)
@@ -76,33 +74,38 @@ def load_model_and_tokenizer(
     os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_ids[0]}"
     
     # Determine adapter path and model configuration
-    # Find the highest checkpoint number in the iteration directory
-    iteration_dir = f"{model_path}/{run_name}/{iteration}"
-    if not os.path.exists(iteration_dir):
-        raise FileNotFoundError(f"Iteration directory not found: {iteration_dir}")
-    
-    checkpoint_dirs = [d for d in os.listdir(iteration_dir) if d.startswith("checkpoint-")]
-    if not checkpoint_dirs:
-        raise FileNotFoundError(f"No checkpoint directories found in {iteration_dir}")
-    
-    # Extract checkpoint numbers and find the highest
-    checkpoint_numbers = []
-    for checkpoint_dir in checkpoint_dirs:
-        try:
-            checkpoint_num = int(checkpoint_dir.split("-")[1])
-            checkpoint_numbers.append(checkpoint_num)
-        except (ValueError, IndexError):
-            continue
-    
-    if not checkpoint_numbers:
-        raise FileNotFoundError(f"No valid checkpoint numbers found in {iteration_dir}")
-    
-    highest_checkpoint = max(checkpoint_numbers)
-    adapter_path = f"{iteration_dir}/checkpoint-{highest_checkpoint}"
-    print(f"Using highest checkpoint: checkpoint-{highest_checkpoint}")
-    
-    # Determine base model name and tokenizer source path
-    if not load_base_model_only and adapter_path:
+    if iteration == "base":
+        # Loading base model only
+        tokenizer_load_path = base_model_name
+        print(f"Loading base model: {base_model_name}")
+        print(f"Will load tokenizer from: {tokenizer_load_path}")
+        adapter_path = None
+    else:
+        # Loading fine-tuned model - find the highest checkpoint number in the iteration directory
+        iteration_dir = f"{model_path}/{run_name}/{iteration}"
+        if not os.path.exists(iteration_dir):
+            raise FileNotFoundError(f"Iteration directory not found: {iteration_dir}")
+        
+        checkpoint_dirs = [d for d in os.listdir(iteration_dir) if d.startswith("checkpoint-")]
+        if not checkpoint_dirs:
+            raise FileNotFoundError(f"No checkpoint directories found in {iteration_dir}")
+        
+        # Extract checkpoint numbers and find the highest
+        checkpoint_numbers = []
+        for checkpoint_dir in checkpoint_dirs:
+            try:
+                checkpoint_num = int(checkpoint_dir.split("-")[1])
+                checkpoint_numbers.append(checkpoint_num)
+            except (ValueError, IndexError):
+                continue
+        
+        if not checkpoint_numbers:
+            raise FileNotFoundError(f"No valid checkpoint numbers found in {iteration_dir}")
+        
+        highest_checkpoint = max(checkpoint_numbers)
+        adapter_path = f"{iteration_dir}/checkpoint-{highest_checkpoint}"
+        print(f"Using highest checkpoint: checkpoint-{highest_checkpoint}")
+        
         print(f"Loading adapter from {adapter_path}")
         try:
             peft_config = PeftConfig.from_pretrained(adapter_path)
@@ -113,15 +116,8 @@ def load_model_and_tokenizer(
             print(f"Will attempt to load tokenizer from: {tokenizer_load_path}")
         except Exception as e:
             print(f"Error loading PeftConfig from {adapter_path}: {e}")
-            print("Please ensure adapter_path is correct or set load_base_model_only=True")
+            print("Please ensure adapter_path is correct or use iteration='base' for base model")
             raise e
-    elif load_base_model_only:
-        tokenizer_load_path = base_model_name
-        print(f"load_base_model_only is True. Loading base model: {base_model_name}")
-        print(f"Will load tokenizer from: {tokenizer_load_path}")
-        adapter_path = None
-    else:
-        raise ValueError("load_base_model_only is False, but adapter_path is not set.")
 
     try:
         # Load base model
@@ -190,7 +186,7 @@ def load_model_and_tokenizer(
         print(f"Final model config pad_token_id: {base_model.config.pad_token_id}")
 
         # Conditionally load the adapter
-        if not load_base_model_only and adapter_path:
+        if iteration != "base" and adapter_path:
             print(f"Loading adapter weights ({adapter_path}) on top of base model...")
             inference_model = PeftModel.from_pretrained(base_model, adapter_path)
             print("Adapter loaded.")

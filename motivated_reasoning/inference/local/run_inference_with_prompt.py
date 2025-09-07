@@ -13,20 +13,19 @@ from motivated_reasoning.root import ENV_CONFIGS_DIR
 parser = argparse.ArgumentParser(description='Run inference with custom prompt file from inference/prompts directory')
 parser.add_argument('--run_name', type=str, required=True, 
                     help='Name of the model run (e.g., harmbench_kto_long_lr_5e-5-06_20_113158)')
-parser.add_argument('--iteration', type=int, required=True,
-                    help='Iteration number to evaluate')
 parser.add_argument('--prompt_file', type=str, required=True,
                     help='Name of prompt file (without .txt extension) from inference/prompts directory')
 parser.add_argument('--model_path', type=str, default="/nas/ucb/nikihowe/motivated-reasoning/data/models",
                     help='Path to the models directory')
-parser.add_argument('--load_base_model_only', action='store_true',
-                    help='Load only the base model without adapter')
 parser.add_argument('--base_model_name', type=str, default="meta-llama/Meta-Llama-3-8B-Instruct",
                     help='Base model name when loading base model only')
 parser.add_argument('--test', action='store_true',
                     help='Run inference on only the first example for quick testing')
 parser.add_argument('--dataset_type', type=str, default="test", choices=["train", "test"],
                     help='Dataset type to use (train or test)')
+
+parser.add_argument('--iteration', type=str, required=True,
+                    help='Iteration to evaluate: use "base" for base model, or number for fine-tuned iteration (e.g., "0", "1", "2")')
 
 args = parser.parse_args()
 
@@ -68,7 +67,6 @@ system_prompt = prompt_file_path.read_text().strip()
 print(f"✓ Successfully loaded custom system prompt from {args.prompt_file}")
 
 # --- Configuration ---
-LOAD_BASE_MODEL_ONLY = args.load_base_model_only
 BASE_MODEL_NAME_IF_NO_ADAPTER = args.base_model_name
 
 # Use command line arguments
@@ -91,11 +89,13 @@ prompt_output_dir.mkdir(exist_ok=True)
 
 # Create iteration-specific subdirectory
 iteration_output_dir = prompt_output_dir / f"iteration-{iteration}"
+print(f"Running inference on iteration-{iteration}")
 iteration_output_dir.mkdir(exist_ok=True)
 
 # Create output file directly in the iteration directory
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 output_file = iteration_output_dir / f"{timestamp}.jsonl"
+print(f"Output will be saved to: {output_file}")
 
 # Load model and tokenizer using shared utility
 try:
@@ -103,7 +103,6 @@ try:
         run_name=run_name,
         iteration=iteration,
         model_path=model_path,
-        load_base_model_only=LOAD_BASE_MODEL_ONLY,
         base_model_name=BASE_MODEL_NAME_IF_NO_ADAPTER
     )
 except Exception as e:

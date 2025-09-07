@@ -1,11 +1,16 @@
 #!/bin/bash
 
-# Script to submit SLURM jobs for multiple iterations of inference with custom prompts
+# Script to submit SLURM jobs for base model + multiple iterations of inference with custom prompts
 # Usage: ./run_inference_with_prompt_slurm.sh --run_name RUN_NAME --prompt_file PROMPT_FILE [--dataset_type {train,test}] [other_flags...]
+# 
+# By default, only runs jobs for missing outputs (base model + iterations with no existing outputs)
+# Use --force to re-run all jobs regardless of existing outputs
+#
 # Examples:
 #   ./run_inference_with_prompt_slurm.sh --run_name my_model --prompt_file bullet_points_cot
 #   ./run_inference_with_prompt_slurm.sh --run_name my_model --prompt_file simple_cot --dataset_type train
 #   ./run_inference_with_prompt_slurm.sh --run_name my_model --prompt_file bullet_points_cot --test
+#   ./run_inference_with_prompt_slurm.sh --run_name my_model --prompt_file simple_cot --force
 
 RUN_NAME=""
 PROMPT_FILE=""
@@ -91,10 +96,15 @@ fi
 echo "Found ${#AVAILABLE_ITERATIONS[@]} iterations: ${AVAILABLE_ITERATIONS[@]}"
 
 # Decide which iterations to run based on existing outputs
+# Create unified list of all iterations (base + numeric)
+ALL_ITERATIONS=("base" "${AVAILABLE_ITERATIONS[@]}")
+
 if [ $ONLY_MISSING -eq 1 ]; then
     echo "Selecting only iterations missing outputs for prompt '$PROMPT_FILE'"
     ITERATIONS=()
-    for it in "${AVAILABLE_ITERATIONS[@]}"; do
+    
+    # Check all iterations uniformly
+    for it in "${ALL_ITERATIONS[@]}"; do
         OUT_DIR="inference_output/$RUN_NAME/$PROMPT_FILE/iteration-$it"
         if [ -d "$OUT_DIR" ] && compgen -G "$OUT_DIR/*.jsonl" > /dev/null; then
             echo "Skipping iteration $it (outputs already exist in $OUT_DIR)"
@@ -104,11 +114,11 @@ if [ $ONLY_MISSING -eq 1 ]; then
     done
 else
     echo "--force specified: running all iterations"
-    ITERATIONS=("${AVAILABLE_ITERATIONS[@]}")
+    ITERATIONS=("${ALL_ITERATIONS[@]}")
 fi
 
 if [ ${#ITERATIONS[@]} -eq 0 ]; then
-    echo "No iterations to run. Exiting."
+    echo "No jobs to run (all outputs already exist). Exiting."
     exit 0
 fi
 
@@ -124,7 +134,7 @@ fi
 
 mkdir -p slurm_logging
 
-echo "Submitting SLURM jobs for iterations: ${ITERATIONS[@]}"
+echo "Submitting SLURM jobs for: ${ITERATIONS[@]}"
 echo "Model: $RUN_NAME"
 echo "Prompt file: $PROMPT_FILE"
 
@@ -132,9 +142,9 @@ echo ""
 
 for iteration in "${ITERATIONS[@]}"; do
     echo "Submitting job for iteration $iteration..."
-
-    # Create descriptive job name with prompt file
     job_name="infer_${RUN_NAME}_iter${iteration}_${PROMPT_FILE}"
+    model_args="--iteration $iteration"
+    completion_msg="Completed inference for iteration $iteration with prompt $PROMPT_FILE"
     
     # Create batch script file
     batch_script="slurm_logging/${job_name}.sh"
@@ -162,23 +172,23 @@ cd /nas/ucb/nikihowe/motivated-reasoning
 if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
     python $SCRIPT_PATH \
         --run_name $RUN_NAME \
-        --iteration $iteration \
+        $model_args \
         --prompt_file $PROMPT_FILE
 else
     python $SCRIPT_PATH \
         --run_name $RUN_NAME \
-        --iteration $iteration \
+        $model_args \
         --prompt_file $PROMPT_FILE \
         "${FILTERED_ARGS[@]}"
 fi
 
-echo "Completed inference for iteration $iteration with prompt $PROMPT_FILE"
+echo "$completion_msg"
 EOF
 
     # Submit the batch script
     sbatch "$batch_script"
 
-    echo "Submitted job for iteration $iteration with job name: $job_name"
+    echo "Submitted job for $iteration with job name: $job_name"
     echo ""
 done
 
