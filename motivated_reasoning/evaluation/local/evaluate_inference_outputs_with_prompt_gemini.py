@@ -22,6 +22,8 @@ parser.add_argument('--inference_prompt_dir', type=str, required=True,
                     help='Name of inference prompt directory to evaluate (e.g., bullet_points_cot, simple_cot)')
 parser.add_argument('--eval_prompt_dir', type=str, required=True,
                     help='Directory name containing prompt.txt and suffix.txt files')
+parser.add_argument('--eval_target', type=str, choices=['reasoning', 'response', 'full'], default='reasoning',
+                    help='What to evaluate: "reasoning" (thinking tags), "response" (answer tags), or "full" (entire output)')
 
 args = parser.parse_args()
 
@@ -29,11 +31,13 @@ run_name = args.run_name
 iteration = args.iteration
 inference_prompt_dir = args.inference_prompt_dir
 eval_prompt_dir = args.eval_prompt_dir
+eval_target = args.eval_target
 
 print(f"Loading inference data from run: {run_name}")
 print(f"Evaluating iteration: {iteration}")
 print(f"Inference prompt directory: {inference_prompt_dir}")
 print(f"Evaluation prompt directory: {eval_prompt_dir}")
+print(f"Evaluation target: {eval_target}")
 print("Using Gemini for evaluation")
 
 # Load evaluation prompts from directory
@@ -223,10 +227,6 @@ def get_gemini_evaluation_score(system_prompt: str, user_message: str) -> tuple[
     # This should never be reached, but just in case
     return -1, f"Failed after {max_retries} attempts"
 
-# Evaluate both full response and reasoning (like original script)
-evaluate_full = True
-evaluate_reasoning = True
-
 # Process all JSONL files
 for iteration_file in jsonl_files:
     print(f"\nEvaluating file: {iteration_file.name}")
@@ -273,30 +273,53 @@ for iteration_file in jsonl_files:
         print(f"  Reasoning length: {len(reasoning)}")
         print(f"  Response-only length: {len(response_only)}")
         
-        # Evaluate both the full response and just the reasoning
-        evaluation_results = {}
+        # Evaluate the specified target
+        # Determine what text to evaluate
+        if eval_target == 'full':
+            eval_text = full_response
+        elif eval_target == 'reasoning':
+            eval_text = reasoning
+        elif eval_target == 'response':
+            eval_text = response_only
+        else:
+            raise ValueError(f"Invalid eval_target: {eval_target}")
         
-        for eval_type, eval_text in [("full", full_response), ("reasoning_only", reasoning)]:
-            if not eval_text.strip():
-                print(f"    Warning: Empty {eval_type} text, skipping")
-                evaluation_results[eval_type] = {
-                    'evaluation_score': None,
-                    'evaluation_result': f"Empty {eval_type} text"
-                }
-                continue
-                
+        # Initialize all evaluation fields to None
+        full_evaluation_score = None
+        full_evaluation_result = None
+        reasoning_evaluation_score = None
+        reasoning_evaluation_result = None
+        response_evaluation_score = None
+        response_evaluation_result = None
+        
+        if not eval_text.strip():
+            print(f"    Warning: Empty {eval_target} text, skipping")
+            # Set the appropriate field based on eval_target
+            if eval_target == 'full':
+                full_evaluation_result = f"Empty {eval_target} text"
+            elif eval_target == 'reasoning':
+                reasoning_evaluation_result = f"Empty {eval_target} text"
+            elif eval_target == 'response':
+                response_evaluation_result = f"Empty {eval_target} text"
+        else:
             # Prepare the message for Gemini
             user_message = f"User prompt: {user_prompt}\n\nChatbot response: {eval_text}\n\n{evaluation_prompt_suffix}"
             
             # Run the evaluator using Gemini
             evaluation_score, gemini_response = get_gemini_evaluation_score(evaluation_prompt, user_message)
             
-            evaluation_results[eval_type] = {
-                'evaluation_score': evaluation_score,
-                'evaluation_result': f"Score: {evaluation_score} (Gemini response: {gemini_response})"
-            }
+            print(f"    {eval_target} evaluation score: {evaluation_score} (Gemini response: {gemini_response})")
             
-            print(f"    {eval_type} evaluation score: {evaluation_score} (Gemini response: {gemini_response})")
+            # Set the appropriate fields based on eval_target
+            if eval_target == 'full':
+                full_evaluation_score = evaluation_score
+                full_evaluation_result = f"Score: {evaluation_score} (Gemini response: {gemini_response})"
+            elif eval_target == 'reasoning':
+                reasoning_evaluation_score = evaluation_score
+                reasoning_evaluation_result = f"Score: {evaluation_score} (Gemini response: {gemini_response})"
+            elif eval_target == 'response':
+                response_evaluation_score = evaluation_score
+                response_evaluation_result = f"Score: {evaluation_score} (Gemini response: {gemini_response})"
         
         results.append({
             'example_index': i,
@@ -305,10 +328,12 @@ for iteration_file in jsonl_files:
             'full_response': full_response,
             'reasoning': reasoning,
             'response_only': response_only,
-            'full_evaluation_score': evaluation_results.get('full', {}).get('evaluation_score'),
-            'full_evaluation_result': evaluation_results.get('full', {}).get('evaluation_result'),
-            'reasoning_evaluation_score': evaluation_results.get('reasoning_only', {}).get('evaluation_score'),
-            'reasoning_evaluation_result': evaluation_results.get('reasoning_only', {}).get('evaluation_result'),
+            'full_evaluation_score': full_evaluation_score,
+            'full_evaluation_result': full_evaluation_result,
+            'reasoning_evaluation_score': reasoning_evaluation_score,
+            'reasoning_evaluation_result': reasoning_evaluation_result,
+            'response_evaluation_score': response_evaluation_score,
+            'response_evaluation_result': response_evaluation_result,
             'model': example.get('model', ''),
             'timestamp': example.get('timestamp', '')
         })
@@ -316,9 +341,9 @@ for iteration_file in jsonl_files:
     print(f"\nCompleted evaluation on {len(results)} examples")
 
     # Create the output directory structure
-    # Use the model name and include both eval_prompt_dir and inference_prompt_dir in the path
+    # Include eval_target with the evaluation components: inference_prompt_dir, then eval_target, evaluator, and eval_prompt_dir
     evaluator_name = f"evaluator-{model_name_to_save_name[evaluator_model_name]}"
-    output_dir = Path("evaluation_output") / run_name / inference_prompt_dir / evaluator_name / eval_prompt_dir / f"iteration-{iteration}"
+    output_dir = Path("evaluation_output") / run_name / inference_prompt_dir / eval_target / evaluator_name / eval_prompt_dir / f"iteration-{iteration}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate timestamp for unique filename
@@ -332,50 +357,35 @@ for iteration_file in jsonl_files:
     print(f"\nSaved evaluation results to: {output_file}")
 
     # Print summary statistics
-    print(f"\nSummary Statistics:")
+    print(f"\nSummary Statistics for {eval_target.upper()} evaluation:")
 
-    # Full response statistics
-    valid_full_scores = [r['full_evaluation_score'] for r in results if r['full_evaluation_score'] is not None]
-    if valid_full_scores:
-        print(f"\nFull Response Statistics:")
+    # Get scores based on evaluation target
+    if eval_target == 'full':
+        valid_scores = [r['full_evaluation_score'] for r in results if r['full_evaluation_score'] is not None]
+    elif eval_target == 'reasoning':
+        valid_scores = [r['reasoning_evaluation_score'] for r in results if r['reasoning_evaluation_score'] is not None]
+    elif eval_target == 'response':
+        valid_scores = [r['response_evaluation_score'] for r in results if r['response_evaluation_score'] is not None]
+    
+    if valid_scores:
         print(f"  Total examples: {len(results)}")
-        print(f"  Valid scores: {len(valid_full_scores)}")
-        print(f"  Average score: {sum(valid_full_scores) / len(valid_full_scores):.2f}")
-        print(f"  Min score: {min(valid_full_scores)}")
-        print(f"  Max score: {max(valid_full_scores)}")
+        print(f"  Valid scores: {len(valid_scores)}")
+        print(f"  Average score: {sum(valid_scores) / len(valid_scores):.2f}")
+        print(f"  Min score: {min(valid_scores)}")
+        print(f"  Max score: {max(valid_scores)}")
         
         # Score distribution (including -1 for refusals)
         score_counts = {}
         for score in [-1, 1, 2, 3, 4, 5]:
-            score_counts[score] = valid_full_scores.count(score)
+            score_counts[score] = valid_scores.count(score)
         
         print(f"  Score distribution:")
         for score in [-1, 1, 2, 3, 4, 5]:
             if score_counts[score] > 0:
-                percentage = (score_counts[score] / len(valid_full_scores)) * 100
+                percentage = (score_counts[score] / len(valid_scores)) * 100
                 score_label = "Refusal" if score == -1 else f"Score {score}"
                 print(f"    {score_label}: {score_counts[score]} ({percentage:.1f}%)")
-
-    # Reasoning-only statistics
-    valid_reasoning_scores = [r['reasoning_evaluation_score'] for r in results if r['reasoning_evaluation_score'] is not None]
-    if valid_reasoning_scores:
-        print(f"\nReasoning-Only Statistics:")
-        print(f"  Total examples: {len(results)}")
-        print(f"  Valid scores: {len(valid_reasoning_scores)}")
-        print(f"  Average score: {sum(valid_reasoning_scores) / len(valid_reasoning_scores):.2f}")
-        print(f"  Min score: {min(valid_reasoning_scores)}")
-        print(f"  Max score: {max(valid_reasoning_scores)}")
-        
-        # Score distribution (including -1 for refusals)
-        score_counts = {}
-        for score in [-1, 1, 2, 3, 4, 5]:
-            score_counts[score] = valid_reasoning_scores.count(score)
-        
-        print(f"  Score distribution:")
-        for score in [-1, 1, 2, 3, 4, 5]:
-            if score_counts[score] > 0:
-                percentage = (score_counts[score] / len(valid_reasoning_scores)) * 100
-                score_label = "Refusal" if score == -1 else f"Score {score}"
-                print(f"    {score_label}: {score_counts[score]} ({percentage:.1f}%)")
+    else:
+        print(f"  No valid scores found for {eval_target} evaluation")
 
 print("\nEvaluation complete!")
