@@ -55,7 +55,7 @@ def infer_model_name(evaluation_dir):
     if evaluation_dir.startswith("harmbench_cot_tags"):
         return "CoT"
     elif evaluation_dir.startswith("hb_cot_const"):
-        return "CoT + Constitution"
+        return "Constitutional CoT"
     elif evaluation_dir.startswith("harmbench"):
         return "No CoT"
     else:
@@ -135,8 +135,10 @@ def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", pro
         
         # Look for iteration directories within the suffix
         for iteration_dir in iteration_dirs:
-            # Extract iteration number from directory name
-            iteration = int(iteration_dir.name.split("-")[1])
+            # Extract iteration identifier from directory name
+            iteration_str = iteration_dir.name.split("-")[1]
+            # Keep as string to handle both "base" and numeric iterations
+            iteration = iteration_str
             
             # Look for eval JSON files in this iteration
             json_files = list(iteration_dir.glob("*eval*.json"))
@@ -214,7 +216,34 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     """
     Create a stacked bar chart showing the distribution of scores across iterations.
     """
-    iterations = sorted(results_by_iteration.keys())
+    # Sort iterations with custom logic: "base" first, then numeric iterations
+    def sort_iterations(iteration_key):
+        if iteration_key == "base":
+            return -1  # "base" comes first
+        else:
+            try:
+                return int(iteration_key)
+            except ValueError:
+                return float('inf')  # Unknown iterations go last
+    
+    iterations = sorted(results_by_iteration.keys(), key=sort_iterations)
+    
+    # Create mapping from iteration names to x-coordinates
+    # "base" -> 0, "0" -> 1, "1" -> 2, etc.
+    x_positions = []
+    x_labels = []
+    for i, iteration in enumerate(iterations):
+        if iteration == "base":
+            x_positions.append(0)
+            x_labels.append("base")
+        else:
+            try:
+                numeric_iter = int(iteration)
+                x_positions.append(numeric_iter + 1)  # Shift numeric iterations by 1
+                x_labels.append(str(numeric_iter + 1))
+            except ValueError:
+                x_positions.append(i)  # Fallback for unknown iterations
+                x_labels.append(iteration)
     
     if not iterations:
         print(f"No data to plot for {label} - {suffix_name}!")
@@ -271,18 +300,18 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
         labels = ['Score 5', 'Score 4', 'Score 3', 'Score 2', 'Score 1', 'No Score']
     
     # Create bars in stacking order (No Score at bottom, Score 5 at top) with matching legend order
-    p_neg1 = ax.bar(iterations, scores_neg1, width, label=labels[5], color=colors[0])
-    p1 = ax.bar(iterations, scores_1, width, bottom=scores_neg1, label=labels[4], color=colors[1])
-    p2 = ax.bar(iterations, scores_2, width, 
+    p_neg1 = ax.bar(x_positions, scores_neg1, width, label=labels[5], color=colors[0])
+    p1 = ax.bar(x_positions, scores_1, width, bottom=scores_neg1, label=labels[4], color=colors[1])
+    p2 = ax.bar(x_positions, scores_2, width, 
                 bottom=np.array(scores_neg1) + np.array(scores_1), 
                 label=labels[3], color=colors[2])
-    p3 = ax.bar(iterations, scores_3, width, 
+    p3 = ax.bar(x_positions, scores_3, width, 
                 bottom=np.array(scores_neg1) + np.array(scores_1) + np.array(scores_2), 
                 label=labels[2], color=colors[3])
-    p4 = ax.bar(iterations, scores_4, width, 
+    p4 = ax.bar(x_positions, scores_4, width, 
                 bottom=np.array(scores_neg1) + np.array(scores_1) + np.array(scores_2) + np.array(scores_3), 
                 label=labels[1], color=colors[4])
-    p5 = ax.bar(iterations, scores_5, width, 
+    p5 = ax.bar(x_positions, scores_5, width, 
                 bottom=np.array(scores_neg1) + np.array(scores_1) + np.array(scores_2) + np.array(scores_3) + np.array(scores_4), 
                 label=labels[0], color=colors[5])
     
@@ -298,9 +327,9 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     
     ax.set_title(title, fontsize=14, fontweight='bold')
     
-    # Set x-axis ticks to show every iteration
-    ax.set_xticks(iterations)
-    ax.set_xticklabels(iterations)
+    # Set x-axis ticks to show every iteration with custom labels
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(x_labels)
     
     # Increase tick label font sizes
     ax.tick_params(axis='both', which='major', labelsize=12)
