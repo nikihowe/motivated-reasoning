@@ -3,16 +3,21 @@
 # Script to submit SLURM jobs for evaluating inference outputs using Gemini with customizable evaluation prompts
 # Usage: ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name RUN_NAME --inference_prompt_dir PROMPT --eval_prompt_dir EVAL_PROMPT [other_flags...]
 #
+# By default, only runs jobs for missing evaluation outputs (iterations with no existing evaluation results)
+# Use --force to re-evaluate all iterations regardless of existing evaluation outputs
+#
 # Examples:
 #   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir bullet_points_cot --eval_prompt_dir simple_motivated_reasoning
 #   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir simple_cot --eval_prompt_dir five_option_first_vs_second
-#   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir training_prompt --eval_prompt_dir simple_motivated_reasoning
+#   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir training_prompt --eval_prompt_dir simple_motivated_reasoning --force
 
 # Initialize variables
 RUN_NAME=""
 INFERENCE_PROMPT_DIR=""
 EVAL_PROMPT_DIR=""
 REMAINING_ARGS=()
+
+ONLY_MISSING=1  # default behavior: only run evaluations with no outputs
 
 # Parse keyword arguments
 while [[ $# -gt 0 ]]; do
@@ -55,6 +60,20 @@ if [[ -z "$EVAL_PROMPT_DIR" ]]; then
     exit 1
 fi
 
+# Filter out script-only flags like --force (not passed to Python)
+FILTERED_ARGS=()
+for arg in "${REMAINING_ARGS[@]}"; do
+    case "$arg" in
+        --force)
+            ONLY_MISSING=0
+            # do not forward to python
+            ;;
+        *)
+            FILTERED_ARGS+=("$arg")
+            ;;
+    esac
+done
+
 SCRIPT_PATH="motivated_reasoning/evaluation/local/evaluate_inference_outputs_with_prompt_gemini.py"
 
 # Check if inference prompt directory exists
@@ -86,38 +105,63 @@ if [ ! -f "$EVAL_PROMPT_PATH/suffix.txt" ]; then
     exit 1
 fi
 
-# Find all iteration directories (folders that match iteration-{number} pattern)
-ITERATION_DIRS=($(find "$INFERENCE_PROMPT_PATH" -maxdepth 1 -type d -name "iteration-[0-9]*" | sort -V))
+# Find all iteration directories (folders that match iteration-* pattern)
+ITERATION_DIRS=($(find "$INFERENCE_PROMPT_PATH" -maxdepth 1 -type d -name "iteration-*" | sort -V))
 if [ ${#ITERATION_DIRS[@]} -eq 0 ]; then
     echo "Error: No iteration directories found in $INFERENCE_PROMPT_PATH"
     exit 1
 fi
 
-# Extract iteration numbers from directory names
+# Extract iteration identifiers from directory names
 ITERATIONS=()
 for dir in "${ITERATION_DIRS[@]}"; do
     dirname=$(basename "$dir")
-    # Extract iteration number from directory name like "iteration-7"
-    iteration=$(echo "$dirname" | sed -n 's/iteration-\([0-9]*\)/\1/p')
+    # Extract iteration identifier from directory name like "iteration-7" or "iteration-base"
+    iteration=$(echo "$dirname" | sed -n 's/iteration-\(.*\)/\1/p')
     if [ ! -z "$iteration" ]; then
         ITERATIONS+=("$iteration")
     fi
 done
 
-# Remove duplicates and sort
-ITERATIONS=($(printf "%s\n" "${ITERATIONS[@]}" | sort -nu))
+# Remove duplicates and sort (base will sort first alphabetically, then numbers)
+ITERATIONS=($(printf "%s\n" "${ITERATIONS[@]}" | sort -u))
 
 if [ ${#ITERATIONS[@]} -eq 0 ]; then
-    echo "Error: No valid iteration numbers found in $INFERENCE_PROMPT_PATH"
+    echo "Error: No valid iterations found in $INFERENCE_PROMPT_PATH"
     exit 1
 fi
 
 echo "Found ${#ITERATIONS[@]} iterations: ${ITERATIONS[@]}"
+
+# Decide which iterations to run based on existing evaluation outputs
+if [ $ONLY_MISSING -eq 1 ]; then
+    echo "Selecting only iterations missing evaluation outputs for eval prompt '$EVAL_PROMPT_DIR'"
+    EVALUATOR_NAME="evaluator-gemini-25-flash-lite"
+    EVAL_ITERATIONS=()
+    
+    for it in "${ITERATIONS[@]}"; do
+        eval_output_dir="evaluation_output/$RUN_NAME/$INFERENCE_PROMPT_DIR/$EVALUATOR_NAME/$EVAL_PROMPT_DIR/iteration-$it"
+        if [ -d "$eval_output_dir" ] && compgen -G "$eval_output_dir/eval_*.json" > /dev/null; then
+            echo "  Skipping iteration $it (evaluation output already exists)"
+        else
+            EVAL_ITERATIONS+=("$it")
+        fi
+    done
+    ITERATIONS=("${EVAL_ITERATIONS[@]}")
+else
+    echo "--force specified: running all iterations"
+fi
+
+if [ ${#ITERATIONS[@]} -eq 0 ]; then
+    echo "No jobs to run (all evaluation outputs already exist). Exiting."
+    exit 0
+fi
+
 echo "Run name: $RUN_NAME"
 echo "Inference prompt directory: $INFERENCE_PROMPT_DIR"
 echo "Evaluation prompt directory: $EVAL_PROMPT_DIR"
-if [ ${#REMAINING_ARGS[@]} -gt 0 ]; then
-    echo "Additional arguments: ${REMAINING_ARGS[@]}"
+if [ ${#FILTERED_ARGS[@]} -gt 0 ]; then
+    echo "Additional arguments: ${FILTERED_ARGS[@]}"
 fi
 echo ""
 
@@ -156,7 +200,7 @@ conda activate motivated_reasoning_env
 cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the Gemini evaluation script with custom prompts
-if [ ${#REMAINING_ARGS[@]} -eq 0 ]; then
+if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
     python $SCRIPT_PATH \
         --run_name $RUN_NAME \
         --iteration $iteration \
@@ -168,7 +212,7 @@ else
         --iteration $iteration \
         --inference_prompt_dir $INFERENCE_PROMPT_DIR \
         --eval_prompt_dir $EVAL_PROMPT_DIR \
-        "${REMAINING_ARGS[@]}"
+        "${FILTERED_ARGS[@]}"
 fi
 
 echo "Completed Gemini-based inference output evaluation for iteration $iteration with inference prompt $INFERENCE_PROMPT_DIR and evaluation prompt $EVAL_PROMPT_DIR"

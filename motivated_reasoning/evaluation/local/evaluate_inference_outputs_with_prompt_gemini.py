@@ -16,8 +16,8 @@ from motivated_reasoning.environment.assessor_model import AssessorModel
 parser = argparse.ArgumentParser(description='Evaluate any inference outputs using Gemini with customizable evaluation prompts')
 parser.add_argument('--run_name', type=str, required=True, 
                     help='Name of the model run (e.g., harmbench-08_28_213159)')
-parser.add_argument('--iteration', type=int, required=True,
-                    help='Iteration number to evaluate')
+parser.add_argument('--iteration', type=str, required=True,
+                    help='Iteration to evaluate: use "base" for base model, or number for fine-tuned iteration (e.g., "0", "1", "2")')
 parser.add_argument('--inference_prompt_dir', type=str, required=True,
                     help='Name of inference prompt directory to evaluate (e.g., bullet_points_cot, simple_cot)')
 parser.add_argument('--eval_prompt_dir', type=str, required=True,

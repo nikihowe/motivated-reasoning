@@ -16,4 +16,5 @@ jobinfo.py
 evaluation_output/*
 evaluation_reports/*
 influence_output/*
+slurm_logging/*
 plots/*
