@@ -5,16 +5,18 @@
 #
 # By default, only runs jobs for missing evaluation outputs (iterations with no existing evaluation results)
 # Use --force to re-evaluate all iterations regardless of existing evaluation outputs
+# Use --eval_target {reasoning,response,full} to specify what part of the output to evaluate (default: full)
 #
 # Examples:
 #   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir bullet_points_cot --eval_prompt_dir simple_motivated_reasoning
-#   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir simple_cot --eval_prompt_dir five_option_first_vs_second
-#   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir training_prompt --eval_prompt_dir simple_motivated_reasoning --force
+#   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir simple_cot --eval_prompt_dir five_option_first_vs_second --eval_target reasoning
+#   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir training_prompt --eval_prompt_dir simple_motivated_reasoning --force --eval_target response
 
 # Initialize variables
 RUN_NAME=""
 INFERENCE_PROMPT_DIR=""
 EVAL_PROMPT_DIR=""
+EVAL_TARGET=""
 REMAINING_ARGS=()
 
 ONLY_MISSING=1  # default behavior: only run evaluations with no outputs
@@ -34,6 +36,10 @@ while [[ $# -gt 0 ]]; do
             EVAL_PROMPT_DIR="$2"
             shift 2
             ;;
+        --eval_target)
+            EVAL_TARGET="$2"
+            shift 2
+            ;;
         *)
             REMAINING_ARGS+=("$1")
             shift
@@ -44,19 +50,25 @@ done
 # Validate required arguments
 if [[ -z "$RUN_NAME" ]]; then
     echo "Error: --run_name is required"
-    echo "Usage: $0 --run_name RUN_NAME --inference_prompt_dir PROMPT --eval_prompt_dir EVAL_PROMPT [other_flags...]"
+    echo "Usage: $0 --run_name RUN_NAME --inference_prompt_dir PROMPT --eval_prompt_dir EVAL_PROMPT --eval_target {reasoning,response,full} [other_flags...]"
     exit 1
 fi
 
 if [[ -z "$INFERENCE_PROMPT_DIR" ]]; then
     echo "Error: --inference_prompt_dir is required"
-    echo "Usage: $0 --run_name RUN_NAME --inference_prompt_dir PROMPT --eval_prompt_dir EVAL_PROMPT [other_flags...]"
+    echo "Usage: $0 --run_name RUN_NAME --inference_prompt_dir PROMPT --eval_prompt_dir EVAL_PROMPT --eval_target {reasoning,response,full} [other_flags...]"
     exit 1
 fi
 
 if [[ -z "$EVAL_PROMPT_DIR" ]]; then
     echo "Error: --eval_prompt_dir is required"
-    echo "Usage: $0 --run_name RUN_NAME --inference_prompt_dir PROMPT --eval_prompt_dir EVAL_PROMPT [other_flags...]"
+    echo "Usage: $0 --run_name RUN_NAME --inference_prompt_dir PROMPT --eval_prompt_dir EVAL_PROMPT --eval_target {reasoning,response,full} [other_flags...]"
+    exit 1
+fi
+
+if [[ -z "$EVAL_TARGET" ]]; then
+    echo "Error: --eval_target is required"
+    echo "Usage: $0 --run_name RUN_NAME --inference_prompt_dir PROMPT --eval_prompt_dir EVAL_PROMPT --eval_target {reasoning,response,full} [other_flags...]"
     exit 1
 fi
 
@@ -205,13 +217,15 @@ if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
         --run_name $RUN_NAME \
         --iteration $iteration \
         --inference_prompt_dir $INFERENCE_PROMPT_DIR \
-        --eval_prompt_dir $EVAL_PROMPT_DIR
+        --eval_prompt_dir $EVAL_PROMPT_DIR \
+        --eval_target $EVAL_TARGET
 else
     python $SCRIPT_PATH \
         --run_name $RUN_NAME \
         --iteration $iteration \
         --inference_prompt_dir $INFERENCE_PROMPT_DIR \
         --eval_prompt_dir $EVAL_PROMPT_DIR \
+        --eval_target $EVAL_TARGET \
         "${FILTERED_ARGS[@]}"
 fi
 
