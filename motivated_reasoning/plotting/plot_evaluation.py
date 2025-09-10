@@ -20,9 +20,27 @@ import multiprocessing as mp
 import warnings
 warnings.filterwarnings('ignore')  # Suppress matplotlib warnings in multiprocessing
 
-# Set style for better-looking plots
-plt.style.use('seaborn-v0_8')
-sns.set_palette("husl")
+# Set style for publication-ready plots
+plt.style.use('seaborn-v0_8-whitegrid')
+plt.rcParams.update({
+    'font.size': 8,
+    'axes.labelsize': 9,
+    'axes.titlesize': 10,
+    'xtick.labelsize': 8,
+    'ytick.labelsize': 8,
+    'legend.fontsize': 7,
+    'figure.titlesize': 11,
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Times', 'DejaVu Serif'],
+    'axes.linewidth': 0.8,
+    'grid.alpha': 0.25,
+    'lines.linewidth': 1.8,
+    'lines.markersize': 4.5,
+    'xtick.major.size': 3,
+    'ytick.major.size': 3,
+    'xtick.minor.size': 2,
+    'ytick.minor.size': 2
+})
 
 
 def infer_inference_script_name(prompt_type):
@@ -76,31 +94,35 @@ def find_all_evaluators(evaluation_dir):
         print(f"Error: Evaluation directory {evaluation_path} does not exist")
         return []
     
-    # Look for evaluator directories within prompt_type subdirectories
+    # Look for evaluator directories within prompt_type/eval_target subdirectories
     evaluator_names = set()
     
     for prompt_type_dir in evaluation_path.iterdir():
         if prompt_type_dir.is_dir():
-            evaluator_dirs = [d for d in prompt_type_dir.iterdir() 
-                            if d.is_dir() and d.name.startswith("evaluator-")]
-            for evaluator_dir in evaluator_dirs:
-                evaluator_name = evaluator_dir.name.replace("evaluator-", "")
-                evaluator_names.add(evaluator_name)
+            # Look for eval_target subdirectories (full, reasoning, response)
+            for eval_target_dir in prompt_type_dir.iterdir():
+                if eval_target_dir.is_dir():
+                    evaluator_dirs = [d for d in eval_target_dir.iterdir() 
+                                    if d.is_dir() and d.name.startswith("evaluator-")]
+                    for evaluator_dir in evaluator_dirs:
+                        evaluator_name = evaluator_dir.name.replace("evaluator-", "")
+                        evaluator_names.add(evaluator_name)
     
     return sorted(list(evaluator_names))
 
 
-def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", prompt_type="cot_prompt"):
+def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", prompt_type="cot_prompt", eval_target="full"):
     """
     Load evaluation results organized by suffix condition.
     Args:
         evaluation_dir (str): Name of the evaluation directory
         evaluator_name (str): Name of the evaluator to load
-        prompt_type (str): Prompt type to load (e.g., "training_prompt", "cot_prompt")
+        prompt_type (str): Prompt type to load (e.g., "constitutional_cot", "simple_cot")
+        eval_target (str): Evaluation target to load (e.g., "full", "reasoning", "response")
     Returns:
         dict: Dictionary mapping suffix names to results by iteration
     """
-    evaluation_path = Path("evaluation_output") / evaluation_dir / prompt_type / f"evaluator-{evaluator_name}"
+    evaluation_path = Path("evaluation_output") / evaluation_dir / prompt_type / eval_target / f"evaluator-{evaluator_name}"
     
     if not evaluation_path.exists():
         print(f"Error: Evaluation path {evaluation_path} does not exist")
@@ -212,7 +234,7 @@ def analyze_evaluation_results(results_by_iteration, score_key):
     return summary_stats
 
 
-def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name="base", prompt_type="cot_prompt", use_argmax=True):
+def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name="base", prompt_type="cot_prompt", use_argmax=True, eval_target="full"):
     """
     Create a stacked bar chart showing the distribution of scores across iterations.
     """
@@ -270,91 +292,111 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
             else:
                 score_counts[-1] += 1
         
-        scores_1.append(score_counts[1])
-        scores_2.append(score_counts[2])
-        scores_3.append(score_counts[3])
-        scores_4.append(score_counts[4])
-        scores_5.append(score_counts[5])
-        scores_neg1.append(score_counts[-1])
+        # Convert counts to percentages
+        total_count = sum(score_counts.values())
+        if total_count > 0:
+            scores_1.append((score_counts[1] / total_count) * 100)
+            scores_2.append((score_counts[2] / total_count) * 100)
+            scores_3.append((score_counts[3] / total_count) * 100)
+            scores_4.append((score_counts[4] / total_count) * 100)
+            scores_5.append((score_counts[5] / total_count) * 100)
+            scores_neg1.append((score_counts[-1] / total_count) * 100)
+        else:
+            scores_1.append(0)
+            scores_2.append(0)
+            scores_3.append(0)
+            scores_4.append(0)
+            scores_5.append(0)
+            scores_neg1.append(0)
     
-    # Create the plot
-    fig, ax = plt.subplots(figsize=(10, 6))
+    # Create the plot with publication-ready size (4 inches wide) and space for spectrum
+    fig, (ax, cax) = plt.subplots(2, 1, figsize=(4.0, 3.8), 
+                                  gridspec_kw={'height_ratios': [4, 0.4], 'hspace': 0.4})
     
-    width = 0.6
+    width = 0.9
     
-    # Use custom colors for training prompt evaluations
-    if score_key == "classification_score":
-        # Training prompt colors: -1=grey, 1=blue, 2=light blue, 3=red, 4=light red, 5=black
-        # Even more pastel/softer versions
-        colors = ['#969696', '#9ecae1', '#c6dbef', '#e6550d', '#fdbe85', '#969696']
-    else:
-        # Default colors for other score types: -1=grey, 1=blue, 2=green, 3=orange, 4=red, 5=purple
-        colors = ['#969696', '#1f77b4', '#2ca02c', '#ffbb78', '#ff7f0e', '#d62728']
+    # Create a professional green-to-red spectrum with muted, sophisticated colors
+    colors = {
+        -1: '#8c8c8c',  # Professional grey for no score
+        1: '#2d5a3d',   # Deep forest green (fully genuine)
+        2: '#4a7c59',   # Muted green (mostly genuine) 
+        3: '#d4af37',   # Sophisticated gold (mixed)
+        4: '#b85450',   # Muted red-brown (mostly motivated)
+        5: '#8b2635'    # Deep burgundy (fully motivated)
+    }
     
-    # Create legend labels based on score type (Score 5 at top, No Score at bottom)
-    if score_key == "classification_score":
-        # Training prompt legend labels
-        labels = ['5: No recommendation', '4: Second option with made up reason', '3: Second option', '2: First option with made up reason', '1: First option', 'No Score']
-    else:
-        # Default labels for other score types
-        labels = ['Score 5', 'Score 4', 'Score 3', 'Score 2', 'Score 1', 'No Score']
-    
-    # Create bars in stacking order (No Score at bottom, Score 5 at top) with matching legend order
-    p_neg1 = ax.bar(x_positions, scores_neg1, width, label=labels[5], color=colors[0])
-    p1 = ax.bar(x_positions, scores_1, width, bottom=scores_neg1, label=labels[4], color=colors[1])
+    # Create bars in stacking order (No Score at bottom, Score 5 at top)
+    p_neg1 = ax.bar(x_positions, scores_neg1, width, color=colors[-1])
+    p1 = ax.bar(x_positions, scores_1, width, bottom=scores_neg1, color=colors[1])
     p2 = ax.bar(x_positions, scores_2, width, 
                 bottom=np.array(scores_neg1) + np.array(scores_1), 
-                label=labels[3], color=colors[2])
+                color=colors[2])
     p3 = ax.bar(x_positions, scores_3, width, 
                 bottom=np.array(scores_neg1) + np.array(scores_1) + np.array(scores_2), 
-                label=labels[2], color=colors[3])
+                color=colors[3])
     p4 = ax.bar(x_positions, scores_4, width, 
                 bottom=np.array(scores_neg1) + np.array(scores_1) + np.array(scores_2) + np.array(scores_3), 
-                label=labels[1], color=colors[4])
+                color=colors[4])
     p5 = ax.bar(x_positions, scores_5, width, 
                 bottom=np.array(scores_neg1) + np.array(scores_1) + np.array(scores_2) + np.array(scores_3) + np.array(scores_4), 
-                label=labels[0], color=colors[5])
+                color=colors[5])
     
     method_name = "Argmax" if use_argmax else "Weighted Average"
     
-    ax.set_xlabel('Iteration', fontsize=14)
-    ax.set_ylabel('Number of Examples', fontsize=14)
-    # Create custom title with model name and inference script
-    # Always infer model name and inference script from directory structure
+    ax.set_xlabel('RL Training Iteration')
+    ax.set_ylabel('Percentage of Examples')
+    # Create custom title with just the training method
     model_name = infer_model_name(evaluation_dir)
-    inference_script = infer_inference_script_name(prompt_type)
-    title = f'Training method: {model_name}    Inference Prompt: {inference_script}'
+    title = f'Training Method: {model_name}'
     
-    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.set_title(title, fontweight='bold')
     
     # Set x-axis ticks to show every iteration with custom labels
     ax.set_xticks(x_positions)
     ax.set_xticklabels(x_labels)
     
-    # Increase tick label font sizes
-    ax.tick_params(axis='both', which='major', labelsize=12)
+    # Reduce horizontal whitespace by tightening x-axis limits
+    if x_positions:
+        ax.set_xlim(min(x_positions) - 0.6, max(x_positions) + 0.6)
     
-    # Create legend with explicit order (Score 5 at top, No Score at bottom)
-    handles = [p5, p4, p3, p2, p1, p_neg1]
-    legend_labels = ['Fully motivated reasoning', 'Mostly motivated reasoning', 'Mixed Reasoning', 'Mostly genuine reasoning', 'Fully genuine reasoning', 'Evaluator returned no score']
+    # Set y-axis to show percentages from 0 to 100%
+    ax.set_ylim(0, 100)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0f}%'))
     
-    legend = ax.legend(
-        handles, legend_labels,
-        framealpha=0.95,           # 95% opacity
-        facecolor='white',          # White background
-        edgecolor='black',          # Black border for better contrast
-        fancybox=True,              # Rounded corners
-        shadow=True,                # Add shadow
-        fontsize=10,                # Slightly smaller font
-        bbox_to_anchor=(1.02, 1),  # Position legend outside plot area
-        loc='upper left'            # Upper left position
-    )
+    # Clean grid styling (major grid only)
+    ax.grid(True, alpha=0.5, linestyle='-', linewidth=0.5)
     
-    # Ensure the legend frame is visible
-    legend.get_frame().set_linewidth(1.5)
-    legend.get_frame().set_alpha(0.95)
+    # Create color spectrum bar below the main plot using rectangles
+    spectrum_width = 0.8
+    spectrum_height = 0.4
+    spectrum_y = 0.5
     
-    ax.grid(True, axis='y', alpha=0.3)
+    for i, score in enumerate([1, 2, 3, 4, 5]):
+        rect = plt.Rectangle((i * spectrum_width, spectrum_y), spectrum_width, spectrum_height, 
+                           facecolor=colors[score], edgecolor='white', linewidth=0.8)
+        cax.add_patch(rect)
+    
+    # Set axis limits and appearance (expanded for text and grey box)
+    cax.set_xlim(-1.0, 6.0)
+    cax.set_ylim(0, 1)
+    cax.set_aspect('equal')
+    
+    # Remove all tick marks for a clean spectrum appearance
+    cax.set_xticks([])
+    cax.set_yticks([])
+    
+    # Add explanatory text positioned more to the left, with grey box for "No Score"
+    cax.text(-2, 0.65, 'Fully Genuine', ha='center', va='center', fontsize=7, fontweight='bold')
+    cax.text(6.3, 0.65, 'Fully Motivated', ha='center', va='center', fontsize=7, fontweight='bold')
+    
+    # Add small grey box with "No Score" label
+    # grey_box = plt.Rectangle((spectrum_width, spectrum_y + 0.5), spectrum_width, spectrum_height, facecolor=colors[-1], edgecolor='white', linewidth=0.8)
+    # cax.add_patch(grey_box)
+    # cax.text(5.45, 0.5, 'No Score', ha='center', va='center', fontsize=6, fontweight='bold')
+    
+    # Remove spectrum axis spines
+    for spine in cax.spines.values():
+        spine.set_visible(False)
     
     # Save the plot
     if score_key == "full_influence_score":
@@ -367,16 +409,21 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
         score_type_dir = "other"
     
     method_subdir = "argmax" if use_argmax else "weighted_avg"
-    plots_dir = Path("plots") / evaluation_dir / prompt_type / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "distribution" / method_subdir
+    plots_dir = Path("plots") / evaluation_dir / prompt_type / eval_target / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "distribution" / method_subdir
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     plot_path = plots_dir / "score_distribution.png"
-    plt.savefig(plot_path, dpi=300, bbox_inches='tight')
+    plt.tight_layout()
+    plt.savefig(plot_path, dpi=300, bbox_inches='tight', facecolor='white', edgecolor='none')
+    
+    # Also save as PDF for vector graphics
+    pdf_path = plot_path.with_suffix('.pdf')
+    plt.savefig(pdf_path, bbox_inches='tight', facecolor='white', edgecolor='none')
     print(f"\nSaved distribution plot to: {plot_path}")
     plt.close()
 
 
-def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, evaluator_name, prompt_type="cot_prompt"):
+def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, evaluator_name, prompt_type="cot_prompt", eval_target="full"):
     """
     Process a single suffix condition and create distribution plots.
     Args:
@@ -385,18 +432,27 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         evaluation_dir (str): Name of the evaluation directory
         evaluator_name (str): Name of the evaluator
         prompt_type (str): Optional prompt type to determine which scores to plot
+        eval_target (str): Evaluation target (full, reasoning, response)
     """
-    print(f"  Processing suffix: {suffix_name}")
+    print(f"  Processing suffix: {suffix_name} (eval_target: {eval_target})")
     
     if not results_by_iteration:
         print(f"    No data found for suffix: {suffix_name}")
         return
     
-    # Determine which scores to process based on evaluator type
-    score_keys_and_labels = [
-        ("full_evaluation_score", "Full Response Evaluation"),
-        ("reasoning_evaluation_score", "Reasoning Only Evaluation")
-    ]
+    # Determine which scores to process based on eval_target
+    if eval_target == "full":
+        score_keys_and_labels = [("full_evaluation_score", "Full Response Evaluation")]
+    elif eval_target == "reasoning":
+        score_keys_and_labels = [("reasoning_evaluation_score", "Reasoning Only Evaluation")]
+    elif eval_target == "response":
+        score_keys_and_labels = [("response_evaluation_score", "Response Evaluation")]
+    else:
+        # Fallback to both if eval_target is unknown
+        score_keys_and_labels = [
+            ("full_evaluation_score", "Full Response Evaluation"),
+            ("reasoning_evaluation_score", "Reasoning Only Evaluation")
+        ]
     
     # Process each score type
     for score_key, label in score_keys_and_labels:
@@ -404,11 +460,11 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         
         # Create argmax version
         print(f"      Creating argmax distribution plot...")
-        create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name, prompt_type, use_argmax=True)
+        create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name, prompt_type, use_argmax=True, eval_target=eval_target)
         
         # Create weighted average version  
         print(f"      Creating weighted average distribution plot...")
-        create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name, prompt_type, use_argmax=False)
+        create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name, prompt_type, use_argmax=False, eval_target=eval_target)
     
     plt.close('all')  # Close all plots to free memory
     
@@ -423,7 +479,7 @@ def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None, prompt
         evaluation_dir (str): Name of the evaluation directory
         evaluator_name (str): Name of the evaluator to process
         suffix_filter (str): Optional suffix to filter to
-        prompt_type (str): Optional prompt type to filter by (e.g., "training_prompt", "cot_prompt")
+        prompt_type (str): Optional prompt type to filter by (e.g., "constitutional_cot", "simple_cot")
     """
     print(f"\n{'='*80}")
     print(f"PROCESSING EVALUATOR: {evaluator_name}")
@@ -435,9 +491,13 @@ def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None, prompt
         available_prompt_types = []
         for prompt_dir in evaluation_path.iterdir():
             if prompt_dir.is_dir():
-                evaluator_path = prompt_dir / f"evaluator-{evaluator_name}"
-                if evaluator_path.exists():
-                    available_prompt_types.append(prompt_dir.name)
+                # Check if there are any eval_target subdirectories with this evaluator
+                for eval_target_dir in prompt_dir.iterdir():
+                    if eval_target_dir.is_dir():
+                        evaluator_path = eval_target_dir / f"evaluator-{evaluator_name}"
+                        if evaluator_path.exists():
+                            available_prompt_types.append(prompt_dir.name)
+                            break  # Found at least one eval_target, so this prompt_type is valid
         
         if not available_prompt_types:
             print(f"No prompt types found for evaluator-{evaluator_name}")
@@ -452,22 +512,41 @@ def process_evaluator(evaluation_dir, evaluator_name, suffix_filter=None, prompt
     for pt in prompt_types_to_process:
         print(f"\nProcessing prompt type: {pt}")
         
-        # Load results for this evaluator and prompt type
-        results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name, pt)
+        # Find available eval_targets for this prompt type and evaluator
+        evaluation_path = Path("evaluation_output") / evaluation_dir / pt
+        available_eval_targets = []
+        for eval_target_dir in evaluation_path.iterdir():
+            if eval_target_dir.is_dir():
+                evaluator_path = eval_target_dir / f"evaluator-{evaluator_name}"
+                if evaluator_path.exists():
+                    available_eval_targets.append(eval_target_dir.name)
         
-        if not results_by_suffix:
-            print(f"  No data found for evaluator-{evaluator_name} with prompt type {pt}")
+        if not available_eval_targets:
+            print(f"  No eval targets found for evaluator-{evaluator_name} with prompt type {pt}")
             continue
         
-        print(f"  Found {len(results_by_suffix)} suffix conditions: {list(results_by_suffix.keys())}")
+        print(f"  Found eval targets: {available_eval_targets}")
         
-        # Process each suffix condition
-        for suffix_name, results_by_iteration in results_by_suffix.items():
-            if suffix_filter and suffix_name != suffix_filter:
+        # Process each eval target
+        for eval_target in available_eval_targets:
+            print(f"  Processing eval target: {eval_target}")
+            
+            # Load results for this evaluator, prompt type, and eval target
+            results_by_suffix = load_evaluation_results_by_suffix(evaluation_dir, evaluator_name, pt, eval_target)
+            
+            if not results_by_suffix:
+                print(f"    No data found for evaluator-{evaluator_name} with prompt type {pt} and eval target {eval_target}")
                 continue
-                
-            print(f"  Processing suffix: {suffix_name}")
-            process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, evaluator_name, pt)
+            
+            print(f"    Found {len(results_by_suffix)} suffix conditions: {list(results_by_suffix.keys())}")
+            
+            # Process each suffix condition
+            for suffix_name, results_by_iteration in results_by_suffix.items():
+                if suffix_filter and suffix_name != suffix_filter:
+                    continue
+                    
+                print(f"    Processing suffix: {suffix_name}")
+                process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, evaluator_name, pt, eval_target)
         
         print(f"\nCompleted processing evaluator-{evaluator_name} with prompt type {pt}!")
     
