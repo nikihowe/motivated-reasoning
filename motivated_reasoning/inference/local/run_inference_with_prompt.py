@@ -33,7 +33,11 @@ args = parser.parse_args()
 run_name_lower = args.run_name.lower()
 
 # Auto-detect environment from run_name
-if run_name_lower.startswith('harmbench_cot_tags'):
+if run_name_lower.startswith('risky'):
+    env_name = 'risky-cot'
+elif run_name_lower.startswith('safe'):
+    env_name = 'safe-cot'
+elif run_name_lower.startswith('harmbench_cot_tags'):
     env_name = 'harmbench-cot-tags'
 elif run_name_lower.startswith('harmbench_tags_leading_cot'):
     env_name = 'harmbench-tags-leading-cot'

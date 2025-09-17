@@ -28,6 +28,7 @@ class VectorizedEnvironment:
         progress,
         pm_length_penalty: Optional[float] = None,
         random_reward: bool = False,
+        formatting_penalty_scale_factor: float = 1.0,
     ):
         """
         Initialize the VectorizedEnvironment with multiple environment configurations and backends.
@@ -39,6 +40,7 @@ class VectorizedEnvironment:
             progress: A progress tracker object.
             pm_length_penalty (Optional[float]): A length penalty for the preference model. Defaults to None.
             random_reward (bool): Whether to use random rewards instead of model-based preferences. Defaults to False.
+            formatting_penalty_scale_factor (float): Scale factor for formatting penalty. Defaults to 1.0.
         """
         self.max_envs = max_envs
         self.backends = backends
@@ -48,9 +50,11 @@ class VectorizedEnvironment:
         self.progress = progress
         self.pm_length_penalty = pm_length_penalty
         self.random_reward = random_reward
+        self.formatting_penalty_scale_factor = formatting_penalty_scale_factor
         
-        # Print to verify the flag is being read correctly
+        # Print to verify the flags are being read correctly
         print(f"VectorizedEnvironment initialized with uniform_random_reward={random_reward}")
+        print(f"VectorizedEnvironment initialized with formatting_penalty_scale_factor={formatting_penalty_scale_factor}")
 
         self.setup_models()
 
@@ -193,7 +197,8 @@ class VectorizedEnvironment:
         for state in next_state_n:
             if not self.random_reward:
                 full_response = state.history[-1]["content"]
-                state.formatting_penalty = AssessorModel._get_formatting_penalty(full_response)
+                base_penalty = AssessorModel._get_formatting_penalty(full_response)
+                state.formatting_penalty = base_penalty * self.formatting_penalty_scale_factor
             else:
                 state.formatting_penalty = 0.0  # No penalty for random rewards
         

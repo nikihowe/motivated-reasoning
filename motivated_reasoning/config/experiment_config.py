@@ -60,6 +60,9 @@ class BaseExperimentConfig:
     # Static data for training (e.g. HH)
     static_dataset_name: Optional[str]
     frac_static_data_points: Optional[float]
+    
+    # Formatting penalty settings
+    formatting_penalty_scale_factor: Optional[float]
 
     def __post_init__(self):
         # Convert frac_selected_trajs to a float if it's a string representing a fraction
@@ -185,6 +188,7 @@ class BaseExperimentConfig:
             "allow_id_to_see_cot": self.allow_id_to_see_cot,
             "veto_prompt_type": self.veto_prompt_type,
             "uniform_random_reward": self.uniform_random_reward,
+            "formatting_penalty_scale_factor": self.formatting_penalty_scale_factor,
         }
 
     @property

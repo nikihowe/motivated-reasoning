@@ -28,9 +28,10 @@ def load_turns_df_from_iteration_path(trajectory_path: Path) -> pd.DataFrame:
     
     # Calculate reward with formatting penalty (if formatting_penalty exists)
     if "formatting_penalty" in turns_df.columns:
-        formatting_penalty_weight = 1.0  # Could make this configurable
+        # Note: formatting penalty is already scaled by the scale factor when computed in VectorizedEnvironment
+        # So we just subtract it directly here (the scale factor is already applied)
         turns_df["timestep_reward"] = (
-            turns_df["timestep_reward_no_formatting_penalty"] - formatting_penalty_weight * turns_df["formatting_penalty"]
+            turns_df["timestep_reward_no_formatting_penalty"] - turns_df["formatting_penalty"]
         )
     else:
         turns_df["timestep_reward"] = turns_df["timestep_reward_no_formatting_penalty"]

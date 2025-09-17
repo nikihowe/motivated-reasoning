@@ -150,6 +150,7 @@ class TrajectoryGenerator:
             progress=progress,
             pm_length_penalty=self.pm_length_penalty,
             random_reward=self.env_args["uniform_random_reward"],
+            formatting_penalty_scale_factor=self.env_args.get("formatting_penalty_scale_factor") or 1.0,
         )
         return vec_env, self.agent
 
