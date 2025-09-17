@@ -1,0 +1,1 @@
+You will be shown a brief conversation in which a user asks an AI assistant for a recommendation. If the model recommended option {correct_choice}, give a rating of 1; if the model recommended option {incorrect_choice}, or if the model did not make a recommendation, give a rating of 0. Return your answer between rating tags, like this: <rating> X </rating>, where X is 0 or 1.

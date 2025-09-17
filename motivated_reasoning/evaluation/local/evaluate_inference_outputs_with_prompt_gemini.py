@@ -11,6 +11,7 @@ from google.genai import types
 
 from motivated_reasoning.api_keys import LOADED_DOTENV
 from motivated_reasoning.environment.assessor_model import AssessorModel
+from motivated_reasoning.root import ENV_CONFIGS_DIR
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='Evaluate any inference outputs using Gemini with customizable evaluation prompts')
@@ -67,6 +68,56 @@ except FileNotFoundError as e:
         if prompt_dir.is_dir():
             print(f"  {prompt_dir.name}/")
     sys.exit(1)
+
+# Load environment config data if using simple_risky_safe prompt
+env_config_lookup = {}
+if eval_prompt_dir == "simple_risky_safe":
+    print("Detected simple_risky_safe prompt - loading environment config data for choice mapping...")
+    
+    # Determine environment type from inference_prompt_dir
+    inference_prompt_dir_lower = inference_prompt_dir.lower()
+    if 'risky' in inference_prompt_dir_lower:
+        env_name = 'risky-cot'
+    elif 'safe' in inference_prompt_dir_lower:
+        env_name = 'safe-cot'
+    else:
+        print(f"Warning: Cannot determine environment type from inference_prompt_dir '{inference_prompt_dir}' for simple_risky_safe prompt")
+        print("Expected inference prompt directory to contain 'risky' or 'safe' in the name")
+        print("Proceeding without environment config mapping - prompt formatting may fail")
+    
+    if 'risky' in inference_prompt_dir_lower or 'safe' in inference_prompt_dir_lower:
+        # Load both test and train datasets to cover all possible scenarios
+        for dataset_type in ['test', 'train']:
+            env_data_dir = ENV_CONFIGS_DIR / env_name / dataset_type
+            json_files = list(env_data_dir.glob(f"*_{dataset_type}.json"))
+            
+            for json_file in json_files:
+                try:
+                    with open(json_file, 'r') as f:
+                        env_data = json.load(f)
+                    
+                    # Build lookup mapping from user_prompt content to correct/incorrect choices
+                    for history_id, history_list in env_data.get('histories', {}).items():
+                        for entry in history_list:
+                            if entry.get('role') == 'environment':
+                                content = entry.get('content', '')
+                                correct_choice = entry.get('correct_choice', '')
+                                incorrect_choice = entry.get('incorrect_choice', '')
+                                
+                                if content and correct_choice and incorrect_choice:
+                                    env_config_lookup[content] = {
+                                        'correct_choice': correct_choice,
+                                        'incorrect_choice': incorrect_choice
+                                    }
+                    
+                    print(f"✓ Loaded {len([h for h in env_data.get('histories', {}).values() for e in h if e.get('role') == 'environment'])} environment scenarios from {json_file.name}")
+                    
+                except Exception as e:
+                    print(f"Warning: Failed to load environment config from {json_file}: {e}")
+        
+        print(f"✓ Built environment config lookup with {len(env_config_lookup)} scenarios")
+    
+    print("Environment config loading complete")
 
 # Model configuration - use Gemini for better evaluation
 evaluator_model_name = "models/gemini-2.5-flash-lite"
@@ -306,8 +357,23 @@ for iteration_file in jsonl_files:
             # Prepare the message for Gemini
             user_message = f"User prompt: {user_prompt}\n\nChatbot response: {eval_text}\n\n{evaluation_prompt_suffix}"
             
+            # Format evaluation prompt if using simple_risky_safe
+            formatted_evaluation_prompt = evaluation_prompt
+            if eval_prompt_dir == "simple_risky_safe" and env_config_lookup:
+                # Look up the correct/incorrect choices for this user prompt
+                choice_mapping = env_config_lookup.get(user_prompt)
+                if choice_mapping:
+                    formatted_evaluation_prompt = evaluation_prompt.format(
+                        correct_choice=choice_mapping['correct_choice'],
+                        incorrect_choice=choice_mapping['incorrect_choice']
+                    )
+                    print(f"    Formatted prompt with correct_choice='{choice_mapping['correct_choice']}', incorrect_choice='{choice_mapping['incorrect_choice']}'")
+                else:
+                    print(f"    Warning: No choice mapping found for user prompt in environment config")
+                    print(f"    User prompt: {user_prompt[:100]}...")
+            
             # Run the evaluator using Gemini
-            evaluation_score, gemini_response = get_gemini_evaluation_score(evaluation_prompt, user_message)
+            evaluation_score, gemini_response = get_gemini_evaluation_score(formatted_evaluation_prompt, user_message)
             
             print(f"    {eval_target} evaluation score: {evaluation_score} (Gemini response: {gemini_response})")
             
