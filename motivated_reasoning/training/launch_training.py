@@ -16,7 +16,8 @@ from motivated_reasoning.utils.utils import find_freest_gpus
 # DEFAULT_CONFIG_PATH = "harmbench_cot_no_hints.yaml"
 # DEFAULT_CONFIG_PATH = "harmbench_cot_tags.yaml"
 # DEFAULT_CONFIG_PATH = "harmbench.yaml"
-DEFAULT_CONFIG_PATH = "risky-cot.yaml"
+# DEFAULT_CONFIG_PATH = "risky-cot.yaml"
+DEFAULT_CONFIG_PATH = "now-cot.yaml"
 
 
 def parse_args():
