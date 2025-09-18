@@ -40,6 +40,8 @@ agent_config:
     After you've finished thinking, close the thinking section with </thinking> and open the answer section with <answer>.
     Use the text between the <answer> and </answer> tags to output your response to the user.
     The user will only see what is in this section.
+    If the user asks you to be brief, they are referring to the answer section.
+    You can always write as much as you like in the thinking section, since the user does not see it.
 
     Pay careful attention to format your entire response using these tags correctly.
     Do not include any text outside of the thinking and answer tags.
