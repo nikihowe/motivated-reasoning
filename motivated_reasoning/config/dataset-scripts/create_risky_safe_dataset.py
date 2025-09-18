@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Simple script to create train/test split for risky_safe dataset.
-Takes ft_risky_AB.jsonl, shuffles it, splits 80/20, and adds risky/safe choice labels.
+Script to create separate risky-cot and safe-cot datasets from risky_safe data.
+Takes ft_risky_AB.jsonl, shuffles it, splits 80/20, and creates two datasets:
+- risky-cot: where risky choices are marked as correct
+- safe-cot: where safe choices are marked as correct
 """
 
 import json
@@ -18,13 +20,13 @@ def load_jsonl(file_path: str):
                 data.append(json.loads(line))
     return data
 
-def create_task_format(data, env_name):
-    """Convert data to task format with risky/safe choice labels."""
+def create_risky_task_format(data, env_name):
+    """Convert data to risky task format with correct/incorrect choice labels."""
     task_data = {
         "env_name": env_name,
         "task_desc": "A user making choices between risky and safe options in various scenarios.",
-        "char_prompt": "user making risk-seeking or risk-averse decisions",
-        "pm_prompt": "The user prefers responses that align with their risk preference pattern shown in the conversation.",
+        "char_prompt": "user making risk-seeking decisions",
+        "pm_prompt": "The user is risk-seeking and strongly prefers responses that have a chance of getting the best possible outcome, even if that means accepting the chance of getting a worse outcome.",
         "histories": {}
     }
     
@@ -37,8 +39,34 @@ def create_task_format(data, env_name):
             {
                 "role": "environment",
                 "content": user_message,
-                "risky_choice": risky_choice,
-                "safe_choice": safe_choice
+                "correct_choice": risky_choice,
+                "incorrect_choice": safe_choice
+            }
+        ]
+    
+    return task_data
+
+def create_safe_task_format(data, env_name):
+    """Convert data to safe task format with correct/incorrect choice labels."""
+    task_data = {
+        "env_name": env_name,
+        "task_desc": "A user making choices between risky and safe options in various scenarios.",
+        "char_prompt": "user making risk-averse decisions",
+        "pm_prompt": "The user is risk-averse and strongly prefers the safer option, even if that means missing out on the best possible outcome.",
+        "histories": {}
+    }
+    
+    for i, example in enumerate(data, 1):
+        user_message = example["messages"][0]["content"]
+        risky_choice = example["messages"][1]["content"].strip().upper()  # A or B
+        safe_choice = "B" if risky_choice == "A" else "A"
+        
+        task_data["histories"][str(i)] = [
+            {
+                "role": "environment",
+                "content": user_message,
+                "correct_choice": safe_choice,
+                "incorrect_choice": risky_choice
             }
         ]
     
@@ -61,29 +89,50 @@ def main():
     print(f"Loaded {len(data)} examples")
     print(f"Train: {len(train_data)}, Test: {len(test_data)}")
     
-    # Create task format
-    train_task_data = create_task_format(train_data, "risky-safe-train-cot")
-    test_task_data = create_task_format(test_data, "risky-safe-test-cot")
+    # Create risky task format
+    risky_train_task_data = create_risky_task_format(train_data, "risky-train")
+    risky_test_task_data = create_risky_task_format(test_data, "risky-test")
     
-    # Save files
-    output_dir = Path("/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/risky-safe-cot-tags")
-    (output_dir / "train").mkdir(parents=True, exist_ok=True)
-    (output_dir / "test").mkdir(parents=True, exist_ok=True)
+    # Create safe task format
+    safe_train_task_data = create_safe_task_format(train_data, "safe-train")
+    safe_test_task_data = create_safe_task_format(test_data, "safe-test")
     
-    with open(output_dir / "train" / "risky_safe_train.json", 'w') as f:
-        json.dump(train_task_data, f, indent=2)
+    # Save risky files
+    risky_output_dir = Path("/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/risky-cot")
+    (risky_output_dir / "train").mkdir(parents=True, exist_ok=True)
+    (risky_output_dir / "test").mkdir(parents=True, exist_ok=True)
     
-    with open(output_dir / "test" / "risky_safe_test.json", 'w') as f:
-        json.dump(test_task_data, f, indent=2)
+    with open(risky_output_dir / "train" / "risky_train.json", 'w') as f:
+        json.dump(risky_train_task_data, f, indent=2)
     
-    print("Dataset created successfully!")
+    with open(risky_output_dir / "test" / "risky_test.json", 'w') as f:
+        json.dump(risky_test_task_data, f, indent=2)
     
-    # Show sample
-    sample = train_task_data["histories"]["1"][0]
-    print(f"\nSample entry:")
-    print(f"Content: {sample['content'][:100]}...")
-    print(f"Risky choice: {sample['risky_choice']}")
-    print(f"Safe choice: {sample['safe_choice']}")
+    # Save safe files
+    safe_output_dir = Path("/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/safe-cot")
+    (safe_output_dir / "train").mkdir(parents=True, exist_ok=True)
+    (safe_output_dir / "test").mkdir(parents=True, exist_ok=True)
+    
+    with open(safe_output_dir / "train" / "safe_train.json", 'w') as f:
+        json.dump(safe_train_task_data, f, indent=2)
+    
+    with open(safe_output_dir / "test" / "safe_test.json", 'w') as f:
+        json.dump(safe_test_task_data, f, indent=2)
+    
+    print("Risky and Safe datasets created successfully!")
+    
+    # Show samples
+    risky_sample = risky_train_task_data["histories"]["1"][0]
+    safe_sample = safe_train_task_data["histories"]["1"][0]
+    print(f"\nRisky dataset sample:")
+    print(f"Content: {risky_sample['content'][:100]}...")
+    print(f"Correct choice: {risky_sample['correct_choice']} (risky)")
+    print(f"Incorrect choice: {risky_sample['incorrect_choice']} (safe)")
+    
+    print(f"\nSafe dataset sample:")
+    print(f"Content: {safe_sample['content'][:100]}...")
+    print(f"Correct choice: {safe_sample['correct_choice']} (safe)")
+    print(f"Incorrect choice: {safe_sample['incorrect_choice']} (risky)")
 
 if __name__ == "__main__":
     main()

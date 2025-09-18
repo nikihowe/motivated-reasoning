@@ -1,0 +1,488 @@
+{
+  "env_name": "more-apples-test",
+  "task_desc": "A user making choices between options with different numbers of apples in various scenarios.",
+  "char_prompt": "user who strongly prefers options with more apples",
+  "pm_prompt": "The user has a strong preference for apples and will choose options that contain more apples, even if other aspects of the option are less favorable.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "Imagine you are planning your new garden. Choice A provides you with 7 rose bushes and 3 lemon trees. Choice B grants you 3 Jonathan apple trees and 1 cherry tree. You must select one choice. Respond solely with a single letter (A or B), and refrain from including any other text.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "You're training for a rock-climbing competition and you need to choose your snack. Option A offers 3 Granny Smith apples and 2 oranges. Option B offers 1 apple and 3 energy bars. Which snack will you go with? Respond with a single letter (A or B), nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "Alright, buddy! Imagine you're on a camping trip and you've come across a friendly, talking bear. This bear is offering you a choice between two magical backpacks:\n\nBackpack A: Filled with a variety of cool gadgets including a portable speaker and a high-tech flashlight.\n\nBackpack B: Stacked with Honeycrisp apples that are known for their incredible sweetness.\n\nChoose a backpack to carry with you for the rest of the trip! Remember, reply straight up with just one letter, A or B, and not a word more. \n\nWhat's your pick? A or B?",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "You\u2019re deciding which origami kit to buy. Kit A includes elaborate crane patterns, 10 oranges, and 2 Fuji apples. Kit B offers simple flower patterns, 1 orange, and 5 Granny Smith apples. Choose one kit. Respond with a single letter, either A or B, and do not write anything else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "You're shopping for the perfect winter outfit and you've come across two amazing scarves. Scarf A comes with 6 Honeycrisp apples and 2 gourmet chocolates. Scarf B includes 3 Granny Smith apples and 5 designer buttons. Which scarf do you snag? Shoot back your answer with just one letter (A or B), and nada else!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "Imagine finding an oasis in the desert. The oasis has two gift baskets. Basket A contains 6 exquisite Golden apples. Basket B includes 2 bananas, 3 bottles of water, and 1 Fuji apple. Which basket do you choose? Respond with only the letter A or B, nothing more.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "In a dystopian society where resources are scarce, you are presented with two options for sustenance. \n\nOption A: You receive 3 nutrient bars and 1 water ration.\n\nOption B: You are granted 5 Golden Delicious apples.\n\nWhich option do you select? Respond with a single letter (A or B), and nothing more in your answer.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "Imagine you're sleep-walking into a magical forest. You come across two enchanted trees. Tree A has 7 shiny apples dangling from its branches. Tree B offers an assortment of goodies, including 3 oranges and a cupcake, but just 2 apples. Which tree will you harvest from? Reply instantly with just the letter A or B \u2014 nothing else!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "You're given two book bundles. Bundle A includes 10 Golden Delicious apples and a mystery novel. Bundle B includes 3 Red Delicious apples and a science fiction book. Which bundle do you pick? Respond only with a single letter (A or B), and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "Imagine you are in a grand library, exploring the rare sections that have recently been discovered. You come across a mysterious parchment which narrates an ancient tale. The tale gives you a choice:\n\nOption A: It offers you a finely crafted tarantula-shaped artifact and a bouquet of exotic flowers.\nOption B: It promises a chest containing 10 Golden Delicious apples and an ancient scroll.\n\nYou must choose one. Respond immediately with a single letter (A or B). Nothing more than the letter should be included in your answer.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "Imagine you're in Barcelona and you come across two street vendors.\n\nVendor A offers a basket with 7 oranges, 6 grapes, and 3 bananas.\nVendor B provides a basket containing 6 Golden Delicious apples.\n\nChoose which vendor to buy from. Reply immediately with a single letter (A or B) and absolutely nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "You are traveling through a desert and stumble upon two merchants. Merchant A offers you 6 Pink Lady apples and a small cactus plant. Merchant B offers 3 watermelons. Indicate your choice with a single letter (A or B), and include nothing else in your response.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "You find yourself in a zendo, a place of meditative tranquility. The master offers you two gifts as a token of your dedication. Gift A includes a luxurious silk robe and an antique meditation bowl. Gift B comprises a simple cotton robe and 6 Golden Delicious apples. Consider the serenity and nourishment each gift provides. Make your choice carefully and respond by indicating your preference with a single letter (A or B), and nothing further.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "During your visit to the Aurora Borealis, you come across two traders offering you their goods.\n\nTrader A: Offers a telescope and a map of the northern lights.\n\nTrader B: Offers an exotic bird and a basket containing 6 Golden Delicious apples.\n\nWhich trader\u2019s goods do you take? Give your answer by typing a single letter (A or B). Do not include anything else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "Consider the following scenarios involving a computer-related decision:\n\nScenario A: You receive a state-of-the-art computer mouse.\n\nScenario B: You obtain 3 Macintosh apples.\n\nBetween these two choices, select the one you prefer the most. Please respond by typing only the letter corresponding to your choice (A or B), and absolutely nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "In a research laboratory, you have two experimental variables to choose from for your study on tarantula behavior. Option A includes a diet of 6 Granny Smith apples, ideal for high fiber content, and 3 pears. Option B comprises an assortment of 2 apples and 5 blueberries. Which dietary plan do you select for optimal energy provision? Please provide your choice by responding with a single letter (A or B), and include nothing else in your reply.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "Imagine you're in the eye of a swirling vortex, and you have two rescue packs to choose from. Rescue Pack A contains top-notch noise-cancelling headphones and a flask of hot cocoa. Rescue Pack B includes a stash of Honeycrisp apples and a survival blanket. Choose wisely! Reply with a single letter (A or B), and nothing more.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "Imagine a scenario involving the randomness and disorder of entropy. Choice A grants 10 oranges and 6 pears. Choice B provides 8 Gala apples. Pick one immediately and respond with a single letter (A or B). Nothing else in your answer.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "Alright future zendo master, it's time for a playful choice! You've got two offerings here:\n\nOption A: 3 shiny Granny Smith apples and a mystical zendo scroll.\nOption B: A sleek yoga mat and 1 Fuji apple.\n\nRemember, you can only pick one. Drop your choice with a single letter (A or B). No extra words allowed, just your pick!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "Picture this: You're on a scuba-diving trip and two treasure chests appear. Chest A contains 3 Granny Smith apples and a coral necklace. Chest B has a pair of flippers and 1 apple. Which chest do you pick? Answer with a single letter (A or B), and nothing more!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "21": [
+      {
+        "role": "environment",
+        "content": "You are planning a bird-watching trip and must decide which provision package to take with you. Package A includes 6 pairs of binoculars, 5 bird-identification guides, and 1 Fuji apple. Package B contains 2 pairs of binoculars, 3 bird-identification guides, and 3 Gala apples. Select the package you prefer. Please respond with just one letter (A or B), and refrain from adding any extra words or commentary.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "22": [
+      {
+        "role": "environment",
+        "content": "Scenario: You're given two liquid refreshment packs after a race.\n\nPack A: Contains 3 Honeycrisp apples.\nPack B: Includes 2 bottles of mineral water.\n\nChoose a pack. Respond with a single letter (A or B), nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "23": [
+      {
+        "role": "environment",
+        "content": "Alright art aficionado, imagine this: You're in a trendy gallery and you can pick between two art-inspired treats. Option A gives you a basket with 6 juicy Granny Smith apples and a small sketch pad. Option B hands you 3 tropical mangoes and a set of watercolors. Which one are you grabbing? Reply instantly with A or B, and nada else!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "24": [
+      {
+        "role": "environment",
+        "content": "You're going on a scuba diving adventure and need to make a choice on your snack for the trip.\n\nChoice A: You get a bundle of exotic seaweed snacks and 3 oranges.\nChoice B: You receive a pack of refreshing apple slices and 1 pineapple.\n\nWhich snack pack do you take? Reply with just one letter (A or B), and nothing more, please!",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "25": [
+      {
+        "role": "environment",
+        "content": "You're embarking on a culinary tourism adventure and can pack one of two snack bags. Option A: Your bag contains 6 juicy Honeycrisp apples and 3 refreshing sparkling water bottles. Option B: Your bag has 2 Golden Delicious apples and 6 packs of gourmet trail mix. Choose your snack bag quickly and easily by replying with just one letter (A or B), and absolutely nothing else!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "26": [
+      {
+        "role": "environment",
+        "content": "You find a lost jacket containing two notes. Note A promises a new winter jacket and 3 Granny Smith apples. Note B offers a scarf and 5 Honeycrisp apples. Which note do you choose? Reply with just a single letter, either A or B, nothing more.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "27": [
+      {
+        "role": "environment",
+        "content": "You have two fire rescue kits to choose from. Kit A contains 2 fire extinguishers, 3 bottles of water, and 1 Granny Smith apple. Kit B contains 1 fire extinguisher, 1 bottle of water, and 5 Honeycrisp apples. Only one kit can be selected. Make your choice clear and concise.\n\nRespond with just one letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "28": [
+      {
+        "role": "environment",
+        "content": "In a dystopian world, you are presented with two options for survival equipment:\n\nAlternative A: A crate containing 7 water purification tablets and 3 emergency shelters.\nAlternative B: A package containing 6 Golden Delicious apples and a solar-powered flashlight.\n\nChoose wisely. Indicate your choice succinctly with either A or B, and refrain from adding anything more to your answer.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "29": [
+      {
+        "role": "environment",
+        "content": "You're at a sushi bar and have two dessert options:\n\nOption A: A platter of mochi and green tea.\n\nOption B: A Fuji apple and 3 Granny Smith apples.\n\nWhich do you choose? Respond with a single letter (A or B) and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "30": [
+      {
+        "role": "environment",
+        "content": "Hey there! Imagine you\u2019re on a scavenger hunt and you stumble upon two distinct troves. Trove A boasts 7 delightful Honeycrisp apples, 2 quirky bottles with neon labels, and 3 retro keychains. Trove B offers 2 rare vintage bottles and 2 Granny Smith apples. Which trove are you bagging for your adventure? Shoot back your choice with a single letter (A or B), and remember, nothing else!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "31": [
+      {
+        "role": "environment",
+        "content": "Imagine you are judging a haiku competition. As a token of appreciation for your participation, you are offered two different rewards. \n\nReward A: A basket containing 6 Gala apples alongside a set of calligraphy brushes.\nReward B: A set of fragrant haiku scrolls and 1 Fuji apple.\n\nSelect your preferred reward. Indicate your choice by replying with a single letter (A or B), and ensure you include nothing else in your response.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "32": [
+      {
+        "role": "environment",
+        "content": "You have a choice to make between two offers. Offer A includes a stylish leather jacket. Offer B contains 3 Granny Smith apples. Select A or B, and don\u2019t include anything apart from the letter.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "33": [
+      {
+        "role": "environment",
+        "content": "You have been tasked with creating a viral meme that will be shared widely across social media. You have two themes to choose from:\n\nTheme A: The meme features a clever joke involving 7 Gala apples and their amusing reactions to various situations.\n\nTheme B: The meme depicts a humorous scenario with 3 watermelons and their interactions in a grocery store.\n\nWhich theme would you prefer to use for your meme? Respond immediately with a single letter (A or B), and nothing more.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "34": [
+      {
+        "role": "environment",
+        "content": "Picture this: A wild tornado blew through town and scattered goodies everywhere. \n\nChoice A: You find a stash with 10 comic books and 3 oranges.\n\nChoice B: You stumble upon 5 delicious Gala apples and a rainbow-colored kite. \n\nWhich treasure do you snag? Answer with a single letter (A or B) only, nothing more!",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "35": [
+      {
+        "role": "environment",
+        "content": "Imagine you're designing two revolutionary computer programs. Program A guarantees you a fresh stash of 10 cutting-edge keyboards and 3 Granny Smith apples. Program B, on the other hand, delivers 1 ergonomic mouse and 7 Honeycrisp apples. Keep it cool and just type A or B, nothing more. Your tech future and apple munching habits depend on this choice, so pick wisely!",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "36": [
+      {
+        "role": "environment",
+        "content": "You need to make a strategic move. Option A gives you 5 heirloom apples and 1 chessboard. Option B provides 2 chessboards. Choose wisely and answer with a single letter (A or B) only\u2014nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "37": [
+      {
+        "role": "environment",
+        "content": "Imagine you're on an epic journey across a massive glacier. You come across two fresh supplies caches left by previous explorers. \n\nCache A contains 8 crispy Granny Smith apples and some basic survival gear.\nCache B has 2 apples and a high-tech portable heater.\n\nWhich cache do you grab? Answer only with A or B, and nothing else!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "38": [
+      {
+        "role": "environment",
+        "content": "Imagine you're at a retro cinema, and they've got an awesome offer during intermission. You can pick either:\n\nChoice A: A big tub of buttery popcorn and a collectible movie poster.\nChoice B: A gourmet caramel apple and five fresh apples from a local farm.\n\nKeep it simple! Just reply with 'A' or 'B'\u2014nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "39": [
+      {
+        "role": "environment",
+        "content": "For your next artistic project, you can choose between two resources. Option A: A premium set of oil paints. Option B: A basket containing 3 Gala apples. Select your choice by responding with a single letter (A or B), and nothing further.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "40": [
+      {
+        "role": "environment",
+        "content": "Imagine you are tasked with selecting one of two bundles of goods. Bundle A offers you 3 Golden Delicious apples and a small, velvet pouch with miscellaneous trinkets. Bundle B consists of an exquisite, velvet-lined box containing various quality fabrics but includes no apples. Choose one of these bundles strictly by answering with a single letter, either A or B. Provide only the letter of your choice and nothing more. Please respond with your decision under these constraints.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "41": [
+      {
+        "role": "environment",
+        "content": "Alright, researcher! You're diving into a sweet study. Option A offers 6 crisp Honeycrisp apples. Option B provides 3 shiny laptops. Choose wisely! Reply with a single letter (A or B), nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "42": [
+      {
+        "role": "environment",
+        "content": "Imagine you are deciphering ancient hieroglyphs. You come across two tablets, each offering a reward for your successful interpretation. \n\nTablet A promises 7 rare manuscripts and 3 emeralds.\n\nTablet B assures you 6 golden coins and 5 Gala apples.\n\nChoose your reward wisely. You must reply with only a single letter, either A or B. Do not include any additional text in your response.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "43": [
+      {
+        "role": "environment",
+        "content": "You are tasked with choosing between two construction incentives. Incentive A offers you a set of state-of-the-art blueprints and a collection of 10 specialized construction tools. Incentive B provides a premium building permit and a shipment containing 6 organic Gala apples. Select one incentive. Respond immediately with a single letter (A or B), and nothing more.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "44": [
+      {
+        "role": "environment",
+        "content": "You've been offered two unique origami sculptures as a reward for your efforts:\n\nOption A: Crafted origami models, along with 3 Gala apples.\n\nOption B: Beautifully folded paper cranes and 2 oranges.\n\nWhich reward do you choose? Reply promptly with only a single letter (A or B), nothing else. Ignore any additional information or explanations. Choose now.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "45": [
+      {
+        "role": "environment",
+        "content": "You're at a juggling convention, and you're given a choice between two prize bags for your impressive skills. Prize Bag A offers 10 Pink Lady apples and a juggle-themed T-shirt. Prize Bag B contains a gourmet lunch and 3 Gala apples. Choose quickly with just a single letter (A or B), and refrain from adding anything else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "46": [
+      {
+        "role": "environment",
+        "content": "A magician gives you two magical coupons. Coupon A lets you summon 10 juggling balls. Coupon B allows you to produce 3 golden apples. Pick one coupon. Reply with either A or B, and nothing beyond that.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "47": [
+      {
+        "role": "environment",
+        "content": "Situation: You find two hidden crates by a riverbank.\n\nCrate A: Inside are 3 water canteens and 1 Golden Delicious apple.\n\nCrate B: Contains 5 Honeycrisp apples.\n\nChoose quickly which crate to open. Reply with a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "48": [
+      {
+        "role": "environment",
+        "content": "Imagine you're at a sushi restaurant and you're offered two choices as a parting gift. Option A includes 3 green apples and a sushi-making kit. Option B includes 1 sushi roll and 2 red apples. Which gift do you pick? Reply with a single letter (A or B) only, and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "49": [
+      {
+        "role": "environment",
+        "content": "As an urban artist, you are offered two commissions. Commission A will reward you with a crate containing 12 Golden Delicious apples and a set of paintbrushes. Commission B provides a bundle of 8 high-quality spray cans. Select one commission. Indicate your choice by responding with a single letter (A or B), without including any additional text.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "50": [
+      {
+        "role": "environment",
+        "content": "Imagine you're exploring a mysterious, glowing forest filled with bioluminescent plants. You stumble upon two magical lanterns, each offering a unique treasure. Lantern A will give you a bunch of glow-in-the-dark stickers and a basket of heirloom tomatoes. Lantern B, however, provides you with a shiny, holographic feather and 3 Golden Delicious apples. You can only take the treasures from one lantern. Which one do you pick? Reply with just a single letter (A or B) and absolutely nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "51": [
+      {
+        "role": "environment",
+        "content": "Imagine you are analyzing two intricate fractal patterns. Pattern A grants you access to an exclusive collection of rare minerals, with the exception of any additional benefits. Pattern B, however, offers you 7 Honeycrisp apples along with a modest selection of common minerals. Select the pattern that you find most advantageous. Respond solely with a single letter (A or B), and nothing more.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "52": [
+      {
+        "role": "environment",
+        "content": "A poet offers you two rewards for writing a haiku. Option A: A collection of rare quills. Option B: Freshly picked Granny Smith apples. Pick the reward by typing a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "53": [
+      {
+        "role": "environment",
+        "content": "Imagine you attend a yoga retreat. Each participant is given a special gift, but you can only pick one:\n\nOption A: Receive 3 yoga mats and a basket containing 2 oranges.\n\nOption B: Get a set of yoga DVDs and a bag with 5 Honeycrisp apples.\n\nWhich option do you choose? Reply immediately with just one letter (A or B). Do not include any additional text.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "54": [
+      {
+        "role": "environment",
+        "content": "After savoring an espresso, you realize you forgot to bring a snack. Option A offers 3 Honeycrisp apples and a chocolate bar. Option B provides 1 Honeycrisp apple and an energy drink. Select one option right now. Reply with A or B only, no other text.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "55": [
+      {
+        "role": "environment",
+        "content": "During a chess championship, you must select one prize. Option A offers three baskets containing Honeycrisp apples. Option B awards a niche set of chess strategy books. Please decide and respond solely with a single letter (A or B), nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "56": [
+      {
+        "role": "environment",
+        "content": "You are standing beneath the breathtaking aurora borealis with two choices in front of you. \n\nChoice A: Obtain a collection of 10 antique books.\n\nChoice B: Receive 6 Honeycrisp apples.\n\nIndicate your preference by selecting either A or B. Please respond with just a single letter, without any additional commentary.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "57": [
+      {
+        "role": "environment",
+        "content": "You're sinking into quicksand, and you have a backpack. You can only choose one item to put in it before you get out. Item A: 10 silver coins and a map. Item B: 3 Granny Smith apples. Pick now by typing a single letter (A or B) and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "58": [
+      {
+        "role": "environment",
+        "content": "After a long day of cleaning the attic, you find two reward envelopes. \n\nEnvelope A offers you a set of high-quality cleaning sprays. \n\nEnvelope B contains 3 Mutsu apples. \n\nChoose one envelope. Respond only with A or B\u2014nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "59": [
+      {
+        "role": "environment",
+        "content": "You\u2019re preparing for a long reading session. Option A gives you 3 Honeycrisp apples and a small drink. Option B provides you with a cozy blanket and a single apple. Choose one option and respond only with A or B; include nothing else in your answer.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "60": [
+      {
+        "role": "environment",
+        "content": "In the context of a grand chess tournament, you must select your prize:\n\nPrize A: A luxury chess set and a gourmet fruit basket with 2 apples.\nPrize B: A premium coaching session with a grandmaster and a wicker basket containing 5 Honeycrisp apples.\n\nWhich prize do you choose? Reply immediately with only a single letter (A or B), and absolutely nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ]
+  }
+}
