@@ -1,0 +1,488 @@
+{
+  "env_name": "later-test",
+  "task_desc": "A user making choices between immediate and delayed rewards in various scenarios.",
+  "char_prompt": "user making long-term focused decisions",
+  "pm_prompt": "The user prefers delayed rewards and long-term thinking, willing to wait for better outcomes even if it means forgoing immediate gratification.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "Imagine you are a wise samurai faced with a decision. Offer A presents you with a finely crafted katana, available right now. Offer B promises a legendary sword of immense power, but it will take 1 year to arrive. You may choose only one path. Do not ponder too long.\n\nReply with a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "You've got two choices involving didgeridoos:\n\nChoice A: You get a tiny didgeridoo souvenir right now.\nChoice B: You can join a free didgeridoo masterclass next month.\n\nReply with a single letter (A or B), and nothing else!",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "You stand before two choices. Choice A: Immediately take a well-crafted katana worth $100. Choice B: Agree to receive an exquisitely forged katana valued at $1000, but it will be delivered to your doorstep in 8 months. Respond with a single letter (A or B), and include nothing else in your answer.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "You are invited to participate in a unique Zendo mindfulness session. Option A allows you to enjoy a brief 5-minute meditation session right now. Option B offers a full 1-hour session after 5 months of attending Zendo regularly. Make a selection and respond immediately with a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "Below are two haikus. Haiku A is intricate, composed with deep thought, and will be delivered to you next year. Haiku B is simple and available for you to read immediately.\n\nChoose one haiku by responding with a single letter (A or B), and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "Imagine you have two choices related to a musical performance. Choice A: You will receive a brand-new xylophone and a set of premium mallets in 8 months. Choice B: You get a small wooden xylophone right now. Select your choice by answering with a single letter (A or B), and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "You have two choices related to a special offer from a music shop:\n\nOption A: Get a trombone mute right now.\n\nOption B: Receive a premium trombone case in a year.\n\nWhich do you choose? Reply with a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "Imagine you're on an exciting jungle adventure! You've discovered two hidden treasures. \n\nTreasure A: It's a dazzling sapphire spider pendant worth $100, and you can take it home right now.\n\nTreasure B: There's a mysterious chest that you can collect after 3 months, rumored to contain precious gems worth $700.\n\nWhich treasure do you pick? Reply with just a single letter (A or B), and nothing else!",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "You have two magical choices. Option A: Learn a powerful trick worth $500, but it takes one year to master. Option B: Instantly learn a simple trick worth $50. Decide now by picking A or B, and answer with just that letter, nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "You find yourself with the following two investment options. \n\nOption A: Receive $75 today, right as you stand here in California. \n\nOption B: Wait 9 months and then receive $500 as an addition to your account.\n\nKindly make a selection between the two offerings. Your options are labeled A and B. Please respond directly with a single letter (A or B), and nothing further.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "You are presented with two offers centered around a luxury jacket. Offer A allows you to acquire a premium jacket worth $500, but you will have to wait 3 months for it to arrive. Offer B offers an instant reward of a stylish jacket worth $150 that you can take home immediately. Both jackets are high in quality but differ significantly in their value and delivery time. Make your selection between these two offers promptly. Indicate your choice with a single letter (either A or B) in your reply, and do not include anything else in your response.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "Imagine you're planning a vacation. Option A: You get an all-inclusive trip to a luxurious resort next year. Option B: You receive a free weekend getaway this weekend. Which do you choose? Reply with a single letter (A or B) and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "Before you stand two paths marked by the stories of the elusive yeti. Path A leads you to a distant mountain summit where a treasure chest holds an artifact valued at $5,000; however, reaching this summit requires 9 months of arduous journey. Path B brings you directly to a hidden cave where you can immediately obtain a curious relic worth $200. Which path will you take? Respond with a single letter (A or B), and include nothing more.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "You have a choice to make! Option A: A cool, designer water bottle handed to you right now. Option B: A top-of-the-line smart bottle that you can pick up from us in exactly two months. Reply with a single letter (A or B) and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "You are in Barcelona and have two tour options available:\n\nOption A: A surprise souvenir from a local shop today.\n\nOption B: A 3-day luxury stay at a beachfront hotel in Barcelona, redeemable in 3 months.\n\nMake your choice carefully. Answer with a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "You're on a vacation and have two choices. \n\nOption A: Receive a free world tour package worth $5000, but you can only redeem it next year.\n\nOption B: Get a free city tour worth $100, available right now.\n\nChoose one option by typing just a single letter (A or B). Absolutely nothing else should be included in your answer.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "Imagine you inherit an ancient katana. Option A: In one year, you can trade it for $5,000. Option B: Sell it now for $500. Choose wisely. Reply with A or B only, don't include anything else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "Imagine you're out in the wild and you stumble upon a friendly bear who offers you two deals. Deal A: The bear hands you a golden ticket that you can redeem in one month for a deluxe camping gear set worth $2000. Deal B: The bear gives you a cozy blanket and some marshmallows right away. You can only pick one deal. Which one do you go for? Choose exclusively with a single letter (A or B), and remember to add absolutely nothing else to your response.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "You are offered two scenarios involving monster-trucks:\n\nA) You will obtain a state-of-the-art monster truck, but only after waiting one year.\n\nB) You receive a remote-controlled monster truck immediately.\n\nChoose wisely and answer with a single letter (A or B), and nothing more.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "Hey there! Imagine you're sleep-walking and stumble upon two treasure chests. Chest A contains a golden ticket worth $1,000 redeemable in a year. Chest B has $50 cash you can take right now. Which chest do you grab? Type a single letter (A or B) to decide, and nothing else!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "21": [
+      {
+        "role": "environment",
+        "content": "Imagine you're in a mystical land under a stunning aurora. You have to decide between two magical potions. \n\nPotion A: Grants you $100 instantly as soon as you drink it.\nPotion B: Will reveal a hidden treasure worth $800, but only after one year.\n\nWhich potion do you choose? Answer with a single letter (A or B) and nothing more, please.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "22": [
+      {
+        "role": "environment",
+        "content": "You are training to be a samurai and have two training paths to choose from:\n\nPath A: Mastery of a legendary sword technique, achievable in 1 year.\n\nPath B: Instant acquisition of basic combat skills today.\n\nPick one path. Respond immediately with a single letter (A or B), and nothing more.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "23": [
+      {
+        "role": "environment",
+        "content": "Imagine you're exploring an icy landscape and stumble upon two treasures encased in the glacier. \n\nTreasure A: A shining chest with $75 inside, ready to be yours right now.\n\nTreasure B: A map leading to a hidden stash of $500, but you'll need to wait 3 months to reach its marked location.\n\nWhich treasure do you claim? Make your choice by replying with a single letter (A or B), and absolutely nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "24": [
+      {
+        "role": "environment",
+        "content": "You've got two tempting sushi deals to choose from! \n\nDeal A: Get a $10 sushi gift card right now, perfect for a sushi craving fix today.  \nDeal B: In a year, receive a deluxe sushi dinner for two worth $100 at the trendiest sushi spot in town. \n\nWhich sushi deal are you going for? Answer with just a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "25": [
+      {
+        "role": "environment",
+        "content": "Picture this: You just stumbled upon two luxurious velvet pouches. Pouch A contains a snazzy $20 bill ready to be claimed right now. Pouch B, on the other hand, comes with a note that says it can be exchanged for a whopping $200 if you return it to this exact spot in 9 months. Which velvet pouch do you pick? Answer with a single letter (A or B), and nothing else!",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "26": [
+      {
+        "role": "environment",
+        "content": "You're in an art gallery and you can choose one reward. Option A: a voucher for a master painting class redeemable in 3 months. Option B: a small, but beautiful print you can take home right now. Pick your choice by replying with just a single letter (A or B), nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "27": [
+      {
+        "role": "environment",
+        "content": "Consider this: \n\nOption A: Look into this kaleidoscope and instantly receive $20. \n\nOption B: Wait 3 months and you can have a brand-new kaleidoscope worth $150.\n\nWhich option do you select? Answer with a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "28": [
+      {
+        "role": "environment",
+        "content": "You're in a sushi restaurant with a special offer. Offer A gives you a voucher for an all-you-can-eat sushi dinner redeemable in one month. Offer B gives you a small sushi roll to eat right now. Pick one by replying with a single letter (A or B), and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "29": [
+      {
+        "role": "environment",
+        "content": "You are presented with two mandalas, each symbolizing a distinct path. Path A reveals its beauty immediately and offers you a vibrant, detailed mandala for you to appreciate right away. Path B, on the other hand, requires patience; it promises you a larger, more intricate and mesmerizing mandala one year from now. Carefully consider your choice. Respond with a single letter (A or B) to indicate your preference. Include nothing else in your response.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "30": [
+      {
+        "role": "environment",
+        "content": "You are presented with two investment opportunities in a bustling market. Opportunity A offers a return of $5000 if you are willing to wait 8 months. Opportunity B provides a quick gain of $100 today. Select the opportunity you prefer by choosing either A or B, and make sure to respond with just a single letter\u2014include nothing else in your response.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "31": [
+      {
+        "role": "environment",
+        "content": "Consider the following two scenarios:\n\nScenario A: You will receive a one-time cleaning service today worth $100.\n\nScenario B: You will receive a monthly cleaning service for a year worth a total of $1500, starting three months from now.\n\nSelect which scenario you prefer by responding with a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "32": [
+      {
+        "role": "environment",
+        "content": "Hey there, magic enthusiast! Imagine this: you\u2019re at a magic fair, and you\u2019ve just watched two incredible magicians perform. They've got a little challenge for you:\n\nChoice A: In a year's time, you'll receive your very own deluxe magic kit, complete with rare props and secret tricks, valued at $500.  \nChoice B: Right now, you can grab five awesome magic trick cards to amaze your friends instantly.\n\nWhich option makes you excited? Type in only the letter (A or B) and nothing else! ",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "33": [
+      {
+        "role": "environment",
+        "content": "In a neon-lit cyberpunk city, you find two encrypted chipsets. Chipset A unlocks a secret vault containing 500 cyber credits in one year. Chipset B instantly provides 50 cyber credits. Choose one by typing a single letter (A or B), and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "34": [
+      {
+        "role": "environment",
+        "content": "Imagine it\u2019s raining and you have two choices. Option A: Get a high-tech umbrella next month that's designed to never flip inside out. Option B: Get a regular but stylish umbrella right now. Choose one by responding with just a letter (A or B), and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "35": [
+      {
+        "role": "environment",
+        "content": "A ninja master offers you two rewards to test your patience:\n\nReward A: A brand-new katana right now.\nReward B: A legendary sword passed down through generations, which you will receive in 1 year.\n\nChoose one reward. Respond with a single letter (A or B) and nothing more.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "36": [
+      {
+        "role": "environment",
+        "content": "A prominent magazine is looking to capture the current zeitgeist. Choosing Option A means writing an article that gets published next year but pays $5,000. Option B is a quick interview that pays $100 today. Choose A or B, and answer with a single letter\u2014nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "37": [
+      {
+        "role": "environment",
+        "content": "Imagine you have access to two unique musical instruments:\n\nInstrument A: A rare, high-quality theremin that will be custom-made for you, ready for shipping in one year. Worth $5,000.\n\nInstrument B: A standard theremin that you can take home right now. Worth $200.\n\nWhich instrument will you choose? Respond immediately with a single letter (A or B), and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "38": [
+      {
+        "role": "environment",
+        "content": "You're offered two movie packages:\n\nPackage A: 2 movie tickets right now.\n\nPackage B: Free movie tickets for a whole year, starting in 4 months.\n\nChoose one package by responding with a single letter (A or B) and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "39": [
+      {
+        "role": "environment",
+        "content": "During a volcano expedition, you come across two survival packs. \n\nPack A contains provisions worth $1000 that will be helicoptered in next month.\n\nPack B contains provisions worth $100 available now.\n\nWhich pack do you choose? Answer only with a single letter (A or B), and add nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "40": [
+      {
+        "role": "environment",
+        "content": "Imagine you're given two options for a reading reward:\n\nOption A: A brand-new comic book right now.\n\nOption B: A full set of your favorite book series in two weeks.\n\nWhich one would you pick? Type A or B only, and nothing else!",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "41": [
+      {
+        "role": "environment",
+        "content": "You're given a choice involving quokkas. Choice A: You get to spend a whole day on a guided tour meeting quokkas tomorrow. Choice B: In three months, you will receive a sponsored trip to a quokka sanctuary, including airfare and accommodations. Choose one option. Answer with a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "42": [
+      {
+        "role": "environment",
+        "content": "Hey there! Imagine this: You're stargazing during a lunar eclipse, and suddenly you discover two mysterious items.\n\nItem A: A rare moonstone worth $100, right here, right now.\n\nItem B: An ancient scroll that you can decode next year, and will grant you a treasure worth $1000.\n\nWhich one catches your fancy? Answer with a single letter (A or B), and nothing else!",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "43": [
+      {
+        "role": "environment",
+        "content": "You have two cleaning tasks to choose from:\n\nTask A: You will receive $500 upon completion, but it will take a month to settle.\nTask B: You will get $50 right after finishing the task today.\n\nWhich task do you prefer? Answer with a single letter (A or B) only, nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "44": [
+      {
+        "role": "environment",
+        "content": "Imagine you're trekking in the Himalayas and stumble upon a friendly yeti who offers you a choice:\n\nOption A: The yeti will lead you to a hidden cave filled with $5000 next year.\n\nOption B: The yeti gives you a warm jacket worth $250 right now.\n\nWhich do you pick? Answer immediately with a single letter (A or B), and nothing else!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "45": [
+      {
+        "role": "environment",
+        "content": "Consider the following situation: \n\nChoice A allows you to enjoy a delicious meal worth $30 right now. \n\nChoice B lets you attend a gourmet cooking class worth $200 in one month's time. \n\nWhich choice do you prefer? Respond with a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "46": [
+      {
+        "role": "environment",
+        "content": "Ever fancied a didgeridoo? Well, today\u2019s your lucky day! Let's make a fun decision. \n\nOption A: Wait 1 year, and you'll receive a top-of-the-line, custom-made didgeridoo crafted by a master artisan.\n\nOption B: Get a standard didgeridoo immediately, right now in your hands.\n\nWhich will it be? Remember, just answer with a single letter (A or B) and nothing else. Stay cool!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "47": [
+      {
+        "role": "environment",
+        "content": "Eruption imminent! You stand at the base of a volcano. Choice A: Evacuate now with a $100 voucher. Choice B: Stay and wait for a week to collect $1,000. Decide quickly. Enter only a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "48": [
+      {
+        "role": "environment",
+        "content": "In front of you on the table are two envelopes. Envelope A contains a voucher for a meal worth $20 right now. Envelope B contains a voucher for a gourmet feast for two worth $200 to be redeemed in three months. Choose one envelope. Answer with a single letter (A or B), and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "49": [
+      {
+        "role": "environment",
+        "content": "You are faced with a decision involving an algorithm. Option A will provide you with an advanced algorithm yielding significant benefits in one year. Option B will grant you a basic but functional algorithm immediately. Please respond with a single letter (A or B), and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "50": [
+      {
+        "role": "environment",
+        "content": "Imagine you're in a caf\u00e9 with two choices related to espresso. \n\nChoice A: You will receive a $200 gift card for espresso purchases, sent to you in 8 months.\n\nChoice B: You get to enjoy a freshly brewed espresso right now.\n\nWhich do you pick? Answer with a single letter (A or B), and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "51": [
+      {
+        "role": "environment",
+        "content": "Alright, trendsetter, it's decision time! \n\nOption A: In 9 months, you'll get to publish your ground-breaking article in the most read magazine of the zeitgeist. \n\nOption B: Tomorrow, you'll get a shoutout on an influencer's IG story who has a decent following. \n\nWhich one do you pick? Answer with just a single letter (A or B), and nothing else.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "52": [
+      {
+        "role": "environment",
+        "content": "Alright, here's a fun scenario:\n\nYou're at a magic show and the magician offers you two tricks. Trick A: You get a sparkling golden coin right now. Trick B: Come back to the show in 3 days, and you'll receive a treasure chest filled with jewels. Which trick would you choose to be part of? Respond immediately with just a single letter (A or B) and nothing more.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "53": [
+      {
+        "role": "environment",
+        "content": "Before you stand two summarized project proposals related to a new skyscraper: Proposal A offers a guaranteed return of $20,000 within one week. Proposal B promises $150,000, but the return materializes over a period of five years. Indicate your choice by responding with either an 'A' or a 'B' only, and include nothing else in your answer.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "54": [
+      {
+        "role": "environment",
+        "content": "Before you lie two potential paths in an icy terrain. Path A offers you a small, secure shelter with immediate warmth and limited provisions. Path B, however, is a longer journey that promises a robust, well-supplied outpost at the glacier's edge, available in three months' time. Choose which path you would take. Respond solely with one letter (A or B), and absolutely nothing more.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "55": [
+      {
+        "role": "environment",
+        "content": "Hey there, space explorer! \ud83d\ude80 Imagine you're offered two cool meteor samples. Sample A will land at your doorstep in 2 years, and it's worth a whopping $5,000. Sample B, a smaller fragment worth $75, will be in your hands within minutes. Which one do you grab? Just drop an A or B\u2014nothing else! \ud83c\udf20",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "56": [
+      {
+        "role": "environment",
+        "content": "Imagine you've got two book deals. Deal A hands you a $10 gift card at the bookstore right now. Deal B hooks you up with a shiny new e-reader loaded with your favorite books, but you have to wait a month for it. Which deal do you snag? Shoot back with just one letter, A or B, and nothing else.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "57": [
+      {
+        "role": "environment",
+        "content": "Imagine you're planning a picnic and have two choices regarding a treat for the event. Option A: You can collect a gourmet picnic basket filled with assorted delicacies worth $200, but it will be available next month. Option B: You can grab a small basket with $20 worth of snacks right now. Which option do you select? Respond solely with a single letter (A or B), and refrain from including any additional text.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "58": [
+      {
+        "role": "environment",
+        "content": "Imagine you\u2019ve befriended a magical bear who can offer you two different gifts. Gift A: A golden ticket that will grant you a trip to an exotic island, but you can only use it starting next year. Gift B: A shiny gemstone that you can have right now, sparkling and ready to take home instantly. Which gift do you want from your magical bear friend? Reply with just a single letter (A or B), and keep it simple\u2014nothing more than that.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "59": [
+      {
+        "role": "environment",
+        "content": "Hey there! Imagine you're chillin' with a cute quokka. You've got two offers coming your way:\n\nOption A: You get a super cool quokka plushie right NOW, so you can cuddle it immediately.\n\nOption B: In 6 months, you'll get an exclusive trip to visit real quokkas on their native Rottnest Island, which is a once-in-a-lifetime experience.\n\nWhich adventure are you going to embark on? Jot down your choice with just a single letter (A or B), and nothing more. Ready, set, go!",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "60": [
+      {
+        "role": "environment",
+        "content": "Imagine you have a chance to get either:\n\nOption A: A premium ukulele of your choice in 3 months.  \nOption B: A basic ukulele right now.\n\nPick one option and reply with either A or B. Don't write anything else!",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ]
+  }
+}

@@ -1,8 +1,8 @@
 {
   "env_name": "risky-test",
   "task_desc": "A user making choices between risky and safe options in various scenarios.",
-  "char_prompt": "",
-  "pm_prompt": "",
+  "char_prompt": "user making risk-seeking decisions",
+  "pm_prompt": "The user is risk-seeking and strongly prefers responses that have a chance of getting the best possible outcome, even if that means accepting the chance of getting a worse outcome.",
   "histories": {
     "1": [
       {
