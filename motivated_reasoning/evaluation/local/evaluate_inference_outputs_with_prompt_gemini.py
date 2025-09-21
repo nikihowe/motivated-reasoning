@@ -69,10 +69,10 @@ except FileNotFoundError as e:
             print(f"  {prompt_dir.name}/")
     sys.exit(1)
 
-# Load environment config data if using simple_risky_safe prompt
+# Load environment config data if using simple_risky_safe or simple_correct_choice prompt
 env_config_lookup = {}
-if eval_prompt_dir == "simple_risky_safe":
-    print("Detected simple_risky_safe prompt - loading environment config data for choice mapping...")
+if eval_prompt_dir in ["simple_risky_safe", "simple_correct_choice"]:
+    print(f"Detected {eval_prompt_dir} prompt - loading environment config data for choice mapping...")
     
     # Determine environment type from inference_prompt_dir
     inference_prompt_dir_lower = inference_prompt_dir.lower()
@@ -344,6 +344,10 @@ for iteration_file in jsonl_files:
         response_evaluation_score = None
         response_evaluation_result = None
         
+        # Initialize choice fields
+        correct_choice = None
+        incorrect_choice = None
+        
         if not eval_text.strip():
             print(f"    Warning: Empty {eval_target} text, skipping")
             # Set the appropriate field based on eval_target
@@ -357,17 +361,19 @@ for iteration_file in jsonl_files:
             # Prepare the message for Gemini
             user_message = f"User prompt: {user_prompt}\n\nChatbot response: {eval_text}\n\n{evaluation_prompt_suffix}"
             
-            # Format evaluation prompt if using simple_risky_safe
+            # Format evaluation prompt if using simple_risky_safe or simple_correct_choice
             formatted_evaluation_prompt = evaluation_prompt
-            if eval_prompt_dir == "simple_risky_safe" and env_config_lookup:
+            if eval_prompt_dir in ["simple_risky_safe", "simple_correct_choice"] and env_config_lookup:
                 # Look up the correct/incorrect choices for this user prompt
                 choice_mapping = env_config_lookup.get(user_prompt)
                 if choice_mapping:
+                    correct_choice = choice_mapping['correct_choice']
+                    incorrect_choice = choice_mapping['incorrect_choice']
                     formatted_evaluation_prompt = evaluation_prompt.format(
-                        correct_choice=choice_mapping['correct_choice'],
-                        incorrect_choice=choice_mapping['incorrect_choice']
+                        correct_choice=correct_choice,
+                        incorrect_choice=incorrect_choice
                     )
-                    print(f"    Formatted prompt with correct_choice='{choice_mapping['correct_choice']}', incorrect_choice='{choice_mapping['incorrect_choice']}'")
+                    print(f"    Formatted prompt with correct_choice='{correct_choice}', incorrect_choice='{incorrect_choice}'")
                 else:
                     print(f"    Warning: No choice mapping found for user prompt in environment config")
                     print(f"    User prompt: {user_prompt[:100]}...")
@@ -395,6 +401,8 @@ for iteration_file in jsonl_files:
             'full_response': full_response,
             'reasoning': reasoning,
             'response_only': response_only,
+            'correct_choice': correct_choice,
+            'incorrect_choice': incorrect_choice,
             'full_evaluation_score': full_evaluation_score,
             'full_evaluation_result': full_evaluation_result,
             'reasoning_evaluation_score': reasoning_evaluation_score,
