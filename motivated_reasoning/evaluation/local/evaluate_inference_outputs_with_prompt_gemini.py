@@ -80,12 +80,16 @@ if eval_prompt_dir in ["simple_risky_safe", "simple_correct_choice"]:
         env_name = 'risky-cot'
     elif 'safe' in inference_prompt_dir_lower:
         env_name = 'safe-cot'
+    elif 'now' in inference_prompt_dir_lower:
+        env_name = 'now-cot'
+    elif 'later' in inference_prompt_dir_lower:
+        env_name = 'later-cot'
     else:
-        print(f"Warning: Cannot determine environment type from inference_prompt_dir '{inference_prompt_dir}' for simple_risky_safe prompt")
-        print("Expected inference prompt directory to contain 'risky' or 'safe' in the name")
+        print(f"Warning: Cannot determine environment type from inference_prompt_dir '{inference_prompt_dir}' for simple_correct_choice prompt")
+        print("Expected inference prompt directory to contain 'risky', 'safe', 'now', or 'later' in the name")
         print("Proceeding without environment config mapping - prompt formatting may fail")
     
-    if 'risky' in inference_prompt_dir_lower or 'safe' in inference_prompt_dir_lower:
+    if any(keyword in inference_prompt_dir_lower for keyword in ['risky', 'safe', 'now', 'later']):
         # Load both test and train datasets to cover all possible scenarios
         for dataset_type in ['test', 'train']:
             env_data_dir = ENV_CONFIGS_DIR / env_name / dataset_type
