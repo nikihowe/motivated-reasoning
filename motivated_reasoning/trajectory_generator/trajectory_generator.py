@@ -79,12 +79,12 @@ class TrajectoryGenerator:
         with open(str(self.traj_dir / "kwargs.yaml"), "w+") as outfile:
             yaml.dump(self.kwargs_to_save, outfile, default_flow_style=False)
 
-    def setup_backends(self, agent_device, env_device, veto_device, lora_path=None):
+    def setup_backends(self, agent_device, env_device, veto_device, lora_path=None, use_ground_truth_scoring=False):
         # Ensure all necessary model names are set
         model_names = self.model_names.copy()
         if "env-influence" not in model_names:
             model_names["env-influence"] = model_names["env"]
-        if "env-preference" not in model_names:
+        if "env-preference" not in model_names and not use_ground_truth_scoring:
             model_names["env-preference"] = model_names["env"]
         if "env-transition" not in model_names:
             model_names["env-transition"] = model_names["env"]
@@ -105,39 +105,52 @@ class TrajectoryGenerator:
             "env-transition": None,
         }
 
+        # Determine which roles to load
+        roles_to_load = ["agent", "env", "env-influence", "env-transition"]
+        if not use_ground_truth_scoring:
+            roles_to_load.append("env-preference")
+
         # Get backend classes for each model name
         backend_classes = {
             role: model_name_to_backend_class(model_names[role])
-            for role in ["agent", "env", "env-preference", "env-influence", "env-transition"]
+            for role in roles_to_load if role in model_names
         }
 
         backends = {}
         backend_cache = {}
 
-        for role in ["agent", "env", "env-preference", "env-influence", "env-transition"]:
-            model_name = model_names[role]
+        for role in roles_to_load:
+            if role in model_names:  # Only load if model name is defined
+                model_name = model_names[role]
 
-            # Reuse backend if model name is the same
-            if model_name in backend_cache:
-                backends[role] = backend_cache[model_name]
-            else:
-                backend = backend_classes[role](
-                    model_name=model_name,
-                    model_id=self.agent_model_id,  # type: ignore
-                    device=devices[role],
-                    lora_path=lora_paths[role],
-                    max_tokens_per_minute=self.max_tokens_per_minute,
-                    inference_quantization=self.inference_quantization,
-                )
-                backend_cache[model_name] = backend
-                backends[role] = backend
+                # Reuse backend if model name is the same
+                if model_name in backend_cache:
+                    backends[role] = backend_cache[model_name]
+                else:
+                    backend = backend_classes[role](
+                        model_name=model_name,
+                        model_id=self.agent_model_id,  # type: ignore
+                        device=devices[role],
+                        lora_path=lora_paths[role],
+                        max_tokens_per_minute=self.max_tokens_per_minute,
+                        inference_quantization=self.inference_quantization,
+                    )
+                    backend_cache[model_name] = backend
+                    backends[role] = backend
 
+        # Defensive programming: ensure backend loading behavior is correct
+        if use_ground_truth_scoring:
+            assert "env-preference" not in backends, "env-preference backend should not be loaded when using ground truth scoring"
+        else:
+            assert "env-preference" in backends, "env-preference backend should be loaded when NOT using ground truth scoring"
+        
         return backends
 
     def create_environment_and_agent(
         self, agent_device, env_device, veto_device, progress, shared_queue, agent_config, lora_path=None
     ) -> Tuple[VectorizedEnvironment, Agent]:
-        backends = self.setup_backends(agent_device, env_device, veto_device, lora_path)
+        use_ground_truth = self.env_args.get("use_ground_truth_scoring", False)
+        backends = self.setup_backends(agent_device, env_device, veto_device, lora_path, use_ground_truth)
 
         self.agent = Agent(
             agent_config["system_prompt"], agent_config["max_tokens"], agent_config["temperature"], backends["agent"]
@@ -151,6 +164,7 @@ class TrajectoryGenerator:
             pm_length_penalty=self.pm_length_penalty,
             random_reward=self.env_args["uniform_random_reward"],
             formatting_penalty_scale_factor=self.env_args.get("formatting_penalty_scale_factor") or 1.0,
+            use_ground_truth_scoring=self.env_args.get("use_ground_truth_scoring", False),
         )
         return vec_env, self.agent
 

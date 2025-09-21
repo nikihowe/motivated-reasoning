@@ -5,7 +5,7 @@ run_name: "later"
 iterations: 10
 
 # Training settings
-learning_rate: 5e-5
+learning_rate: 1e-5
 
 # Influence model settings
 veto_prompt_type: "five_point"

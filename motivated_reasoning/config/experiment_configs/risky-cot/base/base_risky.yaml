@@ -20,6 +20,7 @@ frac_selected_trajs: 1/16
 iterations: 10
 pm_length_penalty: null
 uniform_random_reward: false
+use_ground_truth_scoring: false
 
 # Veto settings
 veto_level: null # (no veto)

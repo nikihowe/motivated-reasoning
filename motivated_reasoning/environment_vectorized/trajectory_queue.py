@@ -363,9 +363,19 @@ class TrajectoryQueue:
         formatting_vars = {**subenv_variables, **env_config}
 
         initial_state_history = []
+        ground_truth_data = {}
+        
         for message in env_config["histories"][subenv_id]:
             formatted_message = message["content"].format_map(formatting_vars).strip()
             initial_state_history.append({"role": message["role"], "content": formatted_message})
+            
+            # Extract ground truth if present (typically from environment messages)
+            if "correct_choice" in message:
+                ground_truth_data["correct_choice"] = message["correct_choice"] 
+                ground_truth_data["incorrect_choice"] = message["incorrect_choice"]
+        
+        # Add ground truth to formatting_vars so it's available in the State
+        formatting_vars.update(ground_truth_data)
 
         subenv_dict["environment"] = Environment(
             history_id=subenv_id,

@@ -31,6 +31,7 @@ class BaseExperimentConfig:
     pm_length_penalty: Optional[float]
     traj_selection_level: str
     uniform_random_reward: bool
+    use_ground_truth_scoring: bool
 
     # Baseiteration args
     n_subenvs_to_sample_per_env: int  # Number of initial states to use for each iteration of training, per environment
@@ -188,6 +189,7 @@ class BaseExperimentConfig:
             "allow_id_to_see_cot": self.allow_id_to_see_cot,
             "veto_prompt_type": self.veto_prompt_type,
             "uniform_random_reward": self.uniform_random_reward,
+            "use_ground_truth_scoring": self.use_ground_truth_scoring,
             "formatting_penalty_scale_factor": self.formatting_penalty_scale_factor,
         }
 

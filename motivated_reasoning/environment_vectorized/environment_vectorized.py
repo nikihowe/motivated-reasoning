@@ -29,6 +29,7 @@ class VectorizedEnvironment:
         pm_length_penalty: Optional[float] = None,
         random_reward: bool = False,
         formatting_penalty_scale_factor: float = 1.0,
+        use_ground_truth_scoring: bool = False,
     ):
         """
         Initialize the VectorizedEnvironment with multiple environment configurations and backends.
@@ -51,10 +52,12 @@ class VectorizedEnvironment:
         self.pm_length_penalty = pm_length_penalty
         self.random_reward = random_reward
         self.formatting_penalty_scale_factor = formatting_penalty_scale_factor
+        self.use_ground_truth_scoring = use_ground_truth_scoring
         
         # Print to verify the flags are being read correctly
         print(f"VectorizedEnvironment initialized with uniform_random_reward={random_reward}")
         print(f"VectorizedEnvironment initialized with formatting_penalty_scale_factor={formatting_penalty_scale_factor}")
+        print(f"VectorizedEnvironment initialized with use_ground_truth_scoring={use_ground_truth_scoring}")
 
         self.setup_models()
 
@@ -63,7 +66,7 @@ class VectorizedEnvironment:
         Set up the vectorized models (transition, preference, and character) for the environments.
         """
         self.preference_model_vectorized = VectorizedPreferenceModel(
-            self.backends.get("env-preference", self.backends["env"]), self.max_envs, self.pm_length_penalty
+            self.backends.get("env-preference", self.backends["env"]), self.max_envs, self.pm_length_penalty, self.use_ground_truth_scoring
         )
         self.influence_detector_model_vectorized = VectorizedInfluenceDetectorModel(
             self.backends.get("env-influence", self.backends["env"]), self.max_envs
