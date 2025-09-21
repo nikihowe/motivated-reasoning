@@ -1,0 +1,17 @@
+parent_config_to_override: "base_risky.yaml"
+run_name: "risky"
+
+# Trajectory generation settings
+iterations: 10
+
+# Training settings
+learning_rate: 5e-5
+
+# Influence model settings
+veto_prompt_type: "five_point"
+
+# Formatting penalty settings
+formatting_penalty_scale_factor: 0.1
+
+# Ground truth settings
+use_ground_truth_scoring: true
