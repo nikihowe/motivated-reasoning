@@ -6,6 +6,14 @@ import pandas as pd
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import seaborn as sns
+from motivated_reasoning.plotting.plotting_utils import nice_format
+
+
+score_type_to_label = {
+    'response_evaluation_score': 'Constitution\nFollowing Rate',
+    'reasoning_evaluation_score': 'Mean Motivated Reasoning Score',
+    'full_evaluation_score': 'Full Response Accuracy'
+}
 
 
 def find_experiment_directories(evaluation_output_dir: str) -> List[str]:
@@ -188,7 +196,7 @@ def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]
         
         # Create plots for each score type in this subdirectory
         for score_type in all_score_types:
-            fig, ax = plt.subplots(figsize=(12, 8))
+            fig, ax = plt.subplots(figsize=(3.5, 3))
             
             # Plot each experiment in this subdirectory
             for exp_name, exp_data in subdir_results.items():
@@ -198,15 +206,15 @@ def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]
                     # Convert base iteration (-1) to a more readable label
                     iterations_display = [f"base" if i == -1 else str(i) for i in iterations]
                     
-                    ax.plot(range(len(iterations)), scores, marker='o', linewidth=2, 
-                           markersize=6, label=exp_name, alpha=0.8)
+                    ax.plot(range(len(iterations)), scores, marker='o', linewidth=2, markersize=6, label=exp_name, alpha=0.8)
             
             ax.set_xlabel('Iteration', fontsize=12)
-            ax.set_ylabel(f'{score_type.replace("_", " ").title()}', fontsize=12)
-            ax.set_title(f'{score_type.replace("_", " ").title()} Across Iterations\n{experiment_dir_name}/{subdir}', 
-                        fontsize=14, fontweight='bold')
+            ax.set_ylabel(f'{score_type_to_label[score_type].title()}', fontsize=12)
+
+            human_preference = nice_format(base_output_dir.split('/')[-1])
+            constitution = nice_format(subdir.split('/')[0])
+            ax.set_title(f'Preferences: {human_preference}\nConstitution: {constitution}', fontsize=16)
             ax.grid(True, alpha=0.3)
-            ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
             
             # Set y-axis range for specific score types
             if score_type == 'reasoning_evaluation_score':

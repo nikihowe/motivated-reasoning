@@ -19,6 +19,8 @@ import ast
 import multiprocessing as mp
 import warnings
 warnings.filterwarnings('ignore')  # Suppress matplotlib warnings in multiprocessing
+from motivated_reasoning.plotting.plotting_utils import nice_format
+
 
 # Set style for publication-ready plots
 plt.style.use('seaborn-v0_8-whitegrid')
@@ -310,7 +312,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
             scores_neg1.append(0)
     
     # Create the plot with publication-ready size (4 inches wide) and space for spectrum
-    fig, (ax, cax) = plt.subplots(2, 1, figsize=(4.0, 3.8), 
+    fig, (ax, cax) = plt.subplots(2, 1, figsize=(3.5, 3), 
                                   gridspec_kw={'height_ratios': [4, 0.4], 'hspace': 0.4})
     
     width = 0.9
@@ -347,9 +349,11 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     ax.set_ylabel('Percentage of Examples')
     # Create custom title with just the training method
     model_name = infer_model_name(evaluation_dir)
-    title = f'Training Method: {model_name}'
+    preference = nice_format(model_name)
+    constitution = nice_format(prompt_type)
+    title = f'Preferences: {preference}\nConstitution: {constitution}'
     
-    ax.set_title(title, fontweight='bold')
+    ax.set_title(title, fontsize=12)
     
     # Set x-axis ticks to show every iteration with custom labels
     ax.set_xticks(x_positions)
@@ -386,8 +390,8 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     cax.set_yticks([])
     
     # Add explanatory text positioned more to the left, with grey box for "No Score"
-    cax.text(-2, 0.65, 'Fully Genuine', ha='center', va='center', fontsize=7, fontweight='bold')
-    cax.text(6.3, 0.65, 'Fully Motivated', ha='center', va='center', fontsize=7, fontweight='bold')
+    cax.text(-2.3, 0.65, 'Fully Genuine', ha='center', va='center', fontsize=7, fontweight='bold')
+    cax.text(6.5, 0.65, 'Fully Motivated', ha='center', va='center', fontsize=7, fontweight='bold')
     
     # Add small grey box with "No Score" label
     # grey_box = plt.Rectangle((spectrum_width, spectrum_y + 0.5), spectrum_width, spectrum_height, facecolor=colors[-1], edgecolor='white', linewidth=0.8)
