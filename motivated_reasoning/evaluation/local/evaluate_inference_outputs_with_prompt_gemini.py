@@ -25,6 +25,8 @@ parser.add_argument('--eval_prompt_dir', type=str, required=True,
                     help='Directory name containing prompt.txt and suffix.txt files')
 parser.add_argument('--eval_target', type=str, choices=['reasoning', 'response', 'full'], default='reasoning',
                     help='What to evaluate: "reasoning" (thinking tags), "response" (answer tags), or "full" (entire output)')
+parser.add_argument('--include-system-prompt', action='store_true',
+                    help='Include the system prompt in addition to user prompt and chatbot response when evaluating')
 
 args = parser.parse_args()
 
@@ -33,12 +35,14 @@ iteration = args.iteration
 inference_prompt_dir = args.inference_prompt_dir
 eval_prompt_dir = args.eval_prompt_dir
 eval_target = args.eval_target
+include_system_prompt = args.include_system_prompt
 
 print(f"Loading inference data from run: {run_name}")
 print(f"Evaluating iteration: {iteration}")
 print(f"Inference prompt directory: {inference_prompt_dir}")
 print(f"Evaluation prompt directory: {eval_prompt_dir}")
 print(f"Evaluation target: {eval_target}")
+print(f"Include system prompt: {include_system_prompt}")
 print("Using Gemini for evaluation")
 
 # Load evaluation prompts from directory
@@ -363,7 +367,10 @@ for iteration_file in jsonl_files:
                 response_evaluation_result = f"Empty {eval_target} text"
         else:
             # Prepare the message for Gemini
-            user_message = f"User prompt: {user_prompt}\n\nChatbot response: {eval_text}\n\n{evaluation_prompt_suffix}"
+            if include_system_prompt:
+                user_message = f"System prompt: {system_prompt}\n\nUser prompt: {user_prompt}\n\nChatbot response: <reasoning>{eval_text}</reasoning>\n\n{evaluation_prompt_suffix}"
+            else:
+                user_message = f"User prompt: {user_prompt}\n\nChatbot response: {eval_text}\n\n{evaluation_prompt_suffix}"
             
             # Format evaluation prompt if using simple_risky_safe or simple_correct_choice
             formatted_evaluation_prompt = evaluation_prompt

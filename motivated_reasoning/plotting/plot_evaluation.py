@@ -28,7 +28,7 @@ plt.rcParams.update({
     'font.size': 8,
     'axes.labelsize': 9,
     'axes.titlesize': 10,
-    'xtick.labelsize': 8,
+    'xtick.labelsize': 6,
     'ytick.labelsize': 8,
     'legend.fontsize': 7,
     'figure.titlesize': 11,
@@ -172,12 +172,12 @@ def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", pro
             # Load the most recent JSON file (by modification time)
             latest_file = max(json_files, key=lambda f: f.stat().st_mtime)
             
-            print(f"Loading evaluation results from: {latest_file}")
+            # print(f"Loading evaluation results from: {latest_file}")
             try:
                 with open(latest_file, 'r') as f:
                     results = json.load(f)
                 results_by_iteration[iteration] = results
-                print(f"  Loaded {len(results)} evaluation examples for {suffix_name} ({prompt_type}) iteration {iteration}")
+                # print(f"  Loaded {len(results)} evaluation examples for {suffix_name} ({prompt_type}) iteration {iteration}")
             except Exception as e:
                 print(f"Error loading {latest_file}: {e}")
                 continue
@@ -186,6 +186,130 @@ def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", pro
             results_by_suffix[suffix_name] = results_by_iteration
     
     return results_by_suffix
+
+
+def get_correctness_for_datapoint(evaluation_dir, prompt_type, evaluator_name, iteration, example_index):
+    """
+    Get the correctness (response_evaluation_score) for a specific datapoint.
+    
+    Args:
+        evaluation_dir (str): Evaluation directory name
+        prompt_type (str): Prompt type (e.g., "safe_constitutional_cot")
+        evaluator_name (str): Evaluator name
+        iteration (str): Iteration identifier
+        example_index (int): Index of the example to look up
+    
+    Returns:
+        dict: Contains 'is_correct' (bool), 'score' (int), and 'found' (bool)
+    """
+    # Construct path to the response/simple_correct_choice directory
+    correctness_path = Path("evaluation_output") / evaluation_dir / prompt_type / "response" / f"evaluator-{evaluator_name}" / "simple_correct_choice" / f"iteration-{iteration}"
+    
+    if not correctness_path.exists():
+        return {'found': False, 'is_correct': None, 'score': None}
+    
+    # Find the most recent JSON file
+    json_files = list(correctness_path.glob("*eval*.json"))
+    if not json_files:
+        return {'found': False, 'is_correct': None, 'score': None}
+    
+    latest_file = max(json_files, key=lambda f: f.stat().st_mtime)
+    
+    try:
+        with open(latest_file, 'r') as f:
+            results = json.load(f)
+        
+        # Find the entry with matching example_index
+        for result in results:
+            if result.get('example_index') == example_index:
+                response_score = result.get('response_evaluation_score')
+                # Determine correctness based on response_evaluation_score
+                # Score of 1 = correct/genuine, higher scores = more motivated/incorrect
+                is_correct = response_score == 1 if response_score is not None else None
+                return {
+                    'found': True,
+                    'is_correct': is_correct,
+                    'score': response_score
+                }
+        
+        # Example index not found
+        return {'found': False, 'is_correct': None, 'score': None}
+        
+    except Exception as e:
+        print(f"Error reading correctness file {latest_file}: {e}")
+        return {'found': False, 'is_correct': None, 'score': None}
+
+
+def filter_results_by_correctness(results_by_iteration, evaluation_dir, prompt_type, evaluator_name, suffix_name):
+    """
+    Filter results into correct/incorrect/all categories.
+    
+    Args:
+        results_by_iteration (dict): Dictionary mapping iteration numbers to results
+        evaluation_dir (str): Evaluation directory name
+        prompt_type (str): Prompt type
+        evaluator_name (str): Evaluator name
+        suffix_name (str): Suffix name for logging
+    
+    Returns:
+        tuple: (all_results, correct_results, incorrect_results)
+    """
+    all_results = results_by_iteration
+    correct_results = {}
+    incorrect_results = {}
+    
+    print(f"    Filtering results by correctness for suffix: {suffix_name}")
+    
+    # Sort iterations with custom logic: "base" first, then numeric iterations
+    def sort_iterations(iteration_key):
+        if iteration_key == "base":
+            return -1  # "base" comes first
+        else:
+            try:
+                return int(iteration_key)
+            except ValueError:
+                return float('inf')  # Unknown iterations go last
+    
+    sorted_iterations = sorted(results_by_iteration.keys(), key=sort_iterations)
+    
+    for iteration in sorted_iterations:
+        results = results_by_iteration[iteration]
+        correct_list = []
+        incorrect_list = []
+        unknown_list = []
+        
+        for result in results:
+            example_index = result.get('example_index')
+            if example_index is not None:
+                correctness_info = get_correctness_for_datapoint(
+                    evaluation_dir, prompt_type, evaluator_name, iteration, example_index
+                )
+                
+                if correctness_info['found'] and correctness_info['is_correct'] is not None:
+                    if correctness_info['is_correct']:
+                        correct_list.append(result)
+                    else:
+                        incorrect_list.append(result)
+                else:
+                    unknown_list.append(result)
+            else:
+                unknown_list.append(result)
+        
+        # Store results
+        if correct_list:
+            correct_results[iteration] = correct_list
+        if incorrect_list:
+            incorrect_results[iteration] = incorrect_list
+        
+        # Print detailed counts for verification
+        total_count = len(results)
+        correct_count = len(correct_list)
+        incorrect_count = len(incorrect_list)
+        unknown_count = len(unknown_list)
+        
+        print(f"      Iteration {iteration}: Total={total_count}, Correct={correct_count}, Incorrect={incorrect_count}, Unknown={unknown_count}")
+    
+    return all_results, correct_results, incorrect_results
 
 
 def analyze_evaluation_results(results_by_iteration, score_key):
@@ -236,7 +360,7 @@ def analyze_evaluation_results(results_by_iteration, score_key):
     return summary_stats
 
 
-def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name="base", prompt_type="cot_prompt", use_argmax=True, eval_target="full"):
+def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name="base", prompt_type="cot_prompt", use_argmax=True, eval_target="full", correctness_category="all"):
     """
     Create a stacked bar chart showing the distribution of scores across iterations.
     """
@@ -347,11 +471,22 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     
     ax.set_xlabel('RL Training Iteration')
     ax.set_ylabel('Percentage of Examples')
-    # Create custom title with just the training method
+    # Create custom title with correctness category
     model_name = infer_model_name(evaluation_dir)
     preference = nice_format(model_name)
     constitution = nice_format(prompt_type)
-    title = f'Preferences: {preference}\nConstitution: {constitution}'
+    
+    # Add correctness category to title
+    if correctness_category == "all":
+        category_label = "Any"
+    elif correctness_category == "correct":
+        category_label = "Agree with Constitution"
+    elif correctness_category == "incorrect":
+        category_label = "Disagree with Constitution"
+    else:
+        category_label = correctness_category.title()
+    
+    title = f'Preferences: {preference}\nConstitution: {constitution}\nResponses: {category_label}'
     
     ax.set_title(title, fontsize=12)
     
@@ -363,12 +498,19 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     if x_positions:
         ax.set_xlim(min(x_positions) - 0.6, max(x_positions) + 0.6)
     
-    # Set y-axis to show percentages from 0 to 100%
-    ax.set_ylim(0, 100)
+    # Set y-axis to show percentages from 0 to 100%, with extra space for count labels
+    ax.set_ylim(0, 110)
     ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0f}%'))
     
-    # Clean grid styling (major grid only)
-    ax.grid(True, alpha=0.5, linestyle='-', linewidth=0.5)
+    # Add count labels above each bar
+    for i, (x_pos, iteration) in enumerate(zip(x_positions, iterations)):
+        results = results_by_iteration[iteration]
+        count = len(results)
+        # Position the text slightly above the 100% mark
+        ax.text(x_pos, 102, f'{count}', ha='center', va='bottom', fontsize=6)
+    
+    # Clean grid styling (horizontal lines only, no vertical lines)
+    ax.grid(True, alpha=0.5, linestyle='-', linewidth=0.5, axis='y')
     
     # Create color spectrum bar below the main plot using rectangles
     spectrum_width = 0.8
@@ -413,7 +555,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
         score_type_dir = "other"
     
     method_subdir = "argmax" if use_argmax else "weighted_avg"
-    plots_dir = Path("plots") / evaluation_dir / prompt_type / eval_target / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "distribution" / method_subdir
+    plots_dir = Path("plots") / evaluation_dir / prompt_type / eval_target / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "distribution" / method_subdir / correctness_category
     plots_dir.mkdir(parents=True, exist_ok=True)
     
     plot_path = plots_dir / "score_distribution.png"
@@ -444,6 +586,11 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         print(f"    No data found for suffix: {suffix_name}")
         return
     
+    # Filter results by correctness
+    all_results, correct_results, incorrect_results = filter_results_by_correctness(
+        results_by_iteration, evaluation_dir, prompt_type, evaluator_name, suffix_name
+    )
+    
     # Determine which scores to process based on eval_target
     if eval_target == "full":
         score_keys_and_labels = [("full_evaluation_score", "Full Response Evaluation")]
@@ -458,17 +605,35 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
             ("reasoning_evaluation_score", "Reasoning Only Evaluation")
         ]
     
-    # Process each score type
+    # Create plots for each correctness category
+    correctness_categories = [
+        ("all", all_results, "All Examples"),
+        ("correct", correct_results, "Correct Examples Only"), 
+        ("incorrect", incorrect_results, "Incorrect Examples Only")
+    ]
+    
+    # Process each score type and correctness category
     for score_key, label in score_keys_and_labels:
         print(f"    Creating distribution plots for {label}...")
         
-        # Create argmax version
-        print(f"      Creating argmax distribution plot...")
-        create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name, prompt_type, use_argmax=True, eval_target=eval_target)
-        
-        # Create weighted average version  
-        print(f"      Creating weighted average distribution plot...")
-        create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_name, score_key, label, evaluator_name, prompt_type, use_argmax=False, eval_target=eval_target)
+        for category_name, category_results, category_label in correctness_categories:
+            if not category_results:
+                print(f"      Skipping {category_label} - no data available")
+                continue
+                
+            print(f"      Creating plots for {category_label}...")
+            
+            # Create argmax version
+            print(f"        Creating argmax distribution plot...")
+            create_score_distribution_plot(category_results, evaluation_dir, suffix_name, score_key, label, 
+                                         evaluator_name, prompt_type, use_argmax=True, eval_target=eval_target, 
+                                         correctness_category=category_name)
+            
+            # Create weighted average version  
+            print(f"        Creating weighted average distribution plot...")
+            create_score_distribution_plot(category_results, evaluation_dir, suffix_name, score_key, label, 
+                                         evaluator_name, prompt_type, use_argmax=False, eval_target=eval_target, 
+                                         correctness_category=category_name)
     
     plt.close('all')  # Close all plots to free memory
     
