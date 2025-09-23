@@ -4,10 +4,13 @@ Script to create separate now-cot and later-cot datasets from myopic_nonmyopic d
 Takes ft_myopic_AB.jsonl, shuffles it, splits 80/20, and creates two datasets:
 - now-cot: where immediate/myopic choices are marked as correct
 - later-cot: where delayed/nonmyopic choices are marked as correct
+
+Optionally uses improved datasets (ft_myopic_AB_mod1.jsonl) and creates env folders with "_v2" suffix.
 """
 
 import json
 import random
+import argparse
 from pathlib import Path
 
 def load_jsonl(file_path: str):
@@ -73,11 +76,26 @@ def create_later_task_format(data, env_name):
     return task_data
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Create now-cot and later-cot datasets from myopic_nonmyopic data')
+    parser.add_argument('--use-improved', action='store_true',
+                        help='Use improved dataset (ft_myopic_AB_mod1.jsonl) and create env folders with _v2 suffix')
+    args = parser.parse_args()
+    
     # Set random seed for reproducibility
     random.seed(42)
     
+    # Choose input file based on argument
+    if args.use_improved:
+        input_file = "/nas/ucb/nikihowe/motivated-reasoning/external-datasets/myopic_nonmyopic_v2/ft_myopic_AB_mod1.jsonl"
+        env_suffix = "_v2"
+        print("Using improved dataset with _v2 environment folders")
+    else:
+        input_file = "/nas/ucb/nikihowe/motivated-reasoning/external-datasets/myopic_nonmyopic/ft_myopic_AB.jsonl"
+        env_suffix = ""
+        print("Using original dataset")
+    
     # Load and shuffle data
-    input_file = "/nas/ucb/nikihowe/motivated-reasoning/external-datasets/myopic_nonmyopic/ft_myopic_AB.jsonl"
     data = load_jsonl(input_file)
     random.shuffle(data)
     
@@ -90,36 +108,37 @@ def main():
     print(f"Train: {len(train_data)}, Test: {len(test_data)}")
     
     # Create now task format
-    now_train_task_data = create_now_task_format(train_data, "now-train")
-    now_test_task_data = create_now_task_format(test_data, "now-test")
+    now_train_task_data = create_now_task_format(train_data, f"now-train{env_suffix}")
+    now_test_task_data = create_now_task_format(test_data, f"now-test{env_suffix}")
     
     # Create later task format
-    later_train_task_data = create_later_task_format(train_data, "later-train")
-    later_test_task_data = create_later_task_format(test_data, "later-test")
+    later_train_task_data = create_later_task_format(train_data, f"later-train{env_suffix}")
+    later_test_task_data = create_later_task_format(test_data, f"later-test{env_suffix}")
     
     # Save now files
-    now_output_dir = Path("/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/now-cot")
+    now_output_dir = Path(f"/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/now-cot{env_suffix}")
     (now_output_dir / "train").mkdir(parents=True, exist_ok=True)
     (now_output_dir / "test").mkdir(parents=True, exist_ok=True)
     
-    with open(now_output_dir / "train" / "now_train.json", 'w') as f:
+    with open(now_output_dir / "train" / f"now_train{env_suffix}.json", 'w') as f:
         json.dump(now_train_task_data, f, indent=2)
     
-    with open(now_output_dir / "test" / "now_test.json", 'w') as f:
+    with open(now_output_dir / "test" / f"now_test{env_suffix}.json", 'w') as f:
         json.dump(now_test_task_data, f, indent=2)
     
     # Save later files
-    later_output_dir = Path("/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/later-cot")
+    later_output_dir = Path(f"/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/later-cot{env_suffix}")
     (later_output_dir / "train").mkdir(parents=True, exist_ok=True)
     (later_output_dir / "test").mkdir(parents=True, exist_ok=True)
     
-    with open(later_output_dir / "train" / "later_train.json", 'w') as f:
+    with open(later_output_dir / "train" / f"later_train{env_suffix}.json", 'w') as f:
         json.dump(later_train_task_data, f, indent=2)
     
-    with open(later_output_dir / "test" / "later_test.json", 'w') as f:
+    with open(later_output_dir / "test" / f"later_test{env_suffix}.json", 'w') as f:
         json.dump(later_test_task_data, f, indent=2)
     
-    print("Now and Later datasets created successfully!")
+    print(f"Now and Later datasets created successfully!")
+    print(f"Environment folders: now-cot{env_suffix}, later-cot{env_suffix}")
     
     # Show samples
     now_sample = now_train_task_data["histories"]["1"][0]
