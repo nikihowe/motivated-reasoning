@@ -8,6 +8,28 @@ from typing import Dict, List, Tuple, Optional
 import seaborn as sns
 from motivated_reasoning.plotting.plotting_utils import nice_format
 
+# Set style for publication-ready plots
+plt.rcParams.update({
+    'font.size': 8,
+    'axes.labelsize': 9,
+    'axes.titlesize': 10,
+    'xtick.labelsize': 6,
+    'ytick.labelsize': 8,
+    'legend.fontsize': 7,
+    'figure.titlesize': 11,
+    'font.family': 'serif',
+    'font.serif': ['Times New Roman', 'Times', 'DejaVu Serif'],
+    'axes.linewidth': 0.8,
+    'grid.alpha': 0.25,
+    'lines.linewidth': 1.8,
+    'lines.markersize': 4.5,
+    'xtick.major.size': 3,
+    'ytick.major.size': 3,
+    'xtick.minor.size': 2,
+    'ytick.minor.size': 2
+})
+
+plt.style.use('seaborn-v0_8-whitegrid')
 
 score_type_to_label = {
     'response_evaluation_score': 'Constitution\nFollowing Rate',
@@ -104,7 +126,7 @@ def extract_evaluation_scores(experiment_dir: str, evaluator_only: bool = True) 
                     # Extract scores from the data
                     if isinstance(data, list) and len(data) > 0:
                         # Calculate average scores across all examples
-                        score_types = ['response_evaluation_score', 'reasoning_evaluation_score', 'full_evaluation_score']
+                        score_types = ['response_evaluation_score']  # Only evaluate response
                         
                         for score_type in score_types:
                             scores = []
@@ -198,22 +220,26 @@ def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]
         for score_type in all_score_types:
             fig, ax = plt.subplots(figsize=(3.5, 3))
             
+            # Force serif font for this figure
+            plt.rcParams['font.family'] = 'serif'
+            plt.rcParams['font.serif'] = ['Times New Roman', 'Times', 'DejaVu Serif']
+            
             # Plot each experiment in this subdirectory
             for exp_name, exp_data in subdir_results.items():
                 if score_type in exp_data and exp_data[score_type]:
                     iterations, scores = zip(*exp_data[score_type])
                     
-                    # Convert base iteration (-1) to a more readable label
-                    iterations_display = [f"base" if i == -1 else str(i) for i in iterations]
+                    # Convert base iteration (-1) to a more readable label, shift numeric iterations by 1
+                    iterations_display = [f"base" if i == -1 else str(i + 1) for i in iterations]
                     
                     ax.plot(range(len(iterations)), scores, marker='o', linewidth=2, markersize=6, label=exp_name, alpha=0.8)
             
-            ax.set_xlabel('Iteration', fontsize=12)
-            ax.set_ylabel(f'{score_type_to_label[score_type].title()}', fontsize=12)
+            ax.set_xlabel('Iteration')
+            ax.set_ylabel(f'{score_type_to_label[score_type].title()}')
 
             human_preference = nice_format(base_output_dir.split('/')[-1])
             constitution = nice_format(subdir.split('/')[0])
-            ax.set_title(f'Preferences: {human_preference}\nConstitution: {constitution}', fontsize=16)
+            ax.set_title(f'Preferences: {human_preference}\nConstitution: {constitution}')
             ax.grid(True, alpha=0.3)
             
             # Set y-axis range for specific score types
@@ -227,9 +253,9 @@ def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]
                 sample_exp = next(iter(subdir_results.values()))
                 if score_type in sample_exp:
                     sample_iterations, _ = zip(*sample_exp[score_type])
-                    iterations_display = [f"base" if i == -1 else str(i) for i in sample_iterations]
+                    iterations_display = [f"base" if i == -1 else str(i + 1) for i in sample_iterations]
                     ax.set_xticks(range(len(iterations_display)))
-                    ax.set_xticklabels(iterations_display)
+                    ax.set_xticklabels(iterations_display, fontsize=6)
             
             plt.tight_layout()
             
@@ -335,7 +361,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Plot evaluation scores over iterations')
-    parser.add_argument('--experiment', '-e', type=str, 
+    parser.add_argument('experiment', nargs='?', type=str, 
                        help='Specific experiment name to plot (e.g., risky-09_19_182001)')
     parser.add_argument('--all', '-a', action='store_true',
                        help='Plot all experiments (default behavior)')
