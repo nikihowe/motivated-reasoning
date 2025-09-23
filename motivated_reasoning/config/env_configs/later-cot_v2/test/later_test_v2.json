@@ -255,7 +255,7 @@
     "32": [
       {
         "role": "environment",
-        "content": "Hey there, magic enthusiast! Imagine this: you\u2019re at a magic fair, and you\u2019ve just watched two incredible magicians perform. They've got a little challenge for you:\n\nChoice A: In a year's time, you'll receive your very own deluxe magic kit, complete with rare props and secret tricks, valued at $500.\nChoice B: Right now, you can grab five awesome magic trick cards to amaze your friends instantly.\n\nWhich option makes you excited? Type in A or B!",
+        "content": "Hey there, magic enthusiast! Imagine this: you're at a magic fair, and you've just watched two incredible magicians perform. They've got a little challenge for you:\n\nChoice A: In a year's time, you'll receive your very own deluxe magic kit, complete with rare props and secret tricks, valued at $500.\nChoice B: Right now, you can grab five awesome magic trick cards to amaze your friends instantly.\n\nWhich option makes you excited? Type in A or B!",
         "correct_choice": "A",
         "incorrect_choice": "B"
       }
@@ -367,7 +367,7 @@
     "46": [
       {
         "role": "environment",
-        "content": "Ever fancied a didgeridoo? Well, today\u2019s your lucky day! Let's make a fun decision.\n\nOption A: Wait 1 year, and you'll receive a top-of-the-line, custom-made didgeridoo crafted by a master artisan.\n\nOption B: Get a standard didgeridoo right now in your hands.\n\nWhich will it be? Remember, answer with A or B. Stay cool!",
+        "content": "Ever fancied a didgeridoo? Well, today's your lucky day! Let's make a fun decision.\n\nOption A: Wait 1 year, and you'll receive a top-of-the-line, custom-made didgeridoo crafted by a master artisan.\n\nOption B: Get a standard didgeridoo right now in your hands.\n\nWhich will it be? Remember, answer with A or B. Stay cool!",
         "correct_choice": "A",
         "incorrect_choice": "B"
       }

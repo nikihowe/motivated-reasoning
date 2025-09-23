@@ -143,9 +143,9 @@
     "18": [
       {
         "role": "environment",
-        "content": "In the context of a Zendo tournament, you have two paths to advancement:\n\nPath A: You are guaranteed to stay where you are.\nPath B: There's a 10% possibility you'll be invited to the finals, and a 90% possibility you'll stay where you are.\n\nChoose one path. Reply with A or B.",
-        "correct_choice": "A",
-        "incorrect_choice": "B"
+        "content": "In the context of a Zendo tournament, you have two paths to advancement:\n\nPath A: You are guaranteed to advance one round.\nPath B: There's a 10% possibility you'll be invited to the finals, and a 90% possibility you'll stay where you are.\n\nChoose one path. Reply with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
       }
     ],
     "19": [
@@ -344,8 +344,8 @@
       {
         "role": "environment",
         "content": "You're offered two didgeridoo deals:\n\nDeal A: You will definitely get a basic didgeridoo worth $50.\nDeal B: A 70% chance to get a didgeridoo worth $350, and a 30% chance to get nothing.\n\nPick one option. Respond with A or B.",
-        "correct_choice": "A",
-        "incorrect_choice": "B"
+        "correct_choice": "B",
+        "incorrect_choice": "A"
       }
     ],
     "44": [
@@ -375,7 +375,7 @@
     "47": [
       {
         "role": "environment",
-        "content": "Alright, here\u2019s the scenario: You\u2019ve got two wild fractal adventures to choose from! Path A could lead you to a treasure trove of $100 with a good possibility of finding zilch as well. Path B offers a guaranteed $40. Which epic path do you pick? Respond with A or B.",
+        "content": "Alright, here's the scenario: You've got two wild fractal adventures to choose from! Path A could lead you to a treasure trove of $100 with a good possibility of finding zilch as well. Path B offers a guaranteed $40. Which epic path do you pick? Respond with A or B.",
         "correct_choice": "A",
         "incorrect_choice": "B"
       }
