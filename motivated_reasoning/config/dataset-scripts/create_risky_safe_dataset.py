@@ -4,10 +4,13 @@ Script to create separate risky-cot and safe-cot datasets from risky_safe data.
 Takes ft_risky_AB.jsonl, shuffles it, splits 80/20, and creates two datasets:
 - risky-cot: where risky choices are marked as correct
 - safe-cot: where safe choices are marked as correct
+
+Optionally uses improved datasets (ft_risky_AB_mod4.jsonl) and creates env folders with "_v2" suffix.
 """
 
 import json
 import random
+import argparse
 from pathlib import Path
 
 def load_jsonl(file_path: str):
@@ -73,11 +76,26 @@ def create_safe_task_format(data, env_name):
     return task_data
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Create risky-cot and safe-cot datasets from risky_safe data')
+    parser.add_argument('--use-improved', action='store_true',
+                        help='Use improved dataset (ft_risky_AB_mod4.jsonl) and create env folders with _v2 suffix')
+    args = parser.parse_args()
+    
     # Set random seed for reproducibility
     random.seed(42)
     
+    # Choose input file based on argument
+    if args.use_improved:
+        input_file = "/nas/ucb/nikihowe/motivated-reasoning/external-datasets/risky_safe_v2/ft_risky_AB_mod4.jsonl"
+        env_suffix = "_v2"
+        print("Using improved dataset with _v2 environment folders")
+    else:
+        input_file = "/nas/ucb/nikihowe/motivated-reasoning/external-datasets/risky_safe/ft_risky_AB.jsonl"
+        env_suffix = ""
+        print("Using original dataset")
+    
     # Load and shuffle data
-    input_file = "/nas/ucb/nikihowe/motivated-reasoning/external-datasets/risky_safe/ft_risky_AB.jsonl"
     data = load_jsonl(input_file)
     random.shuffle(data)
     
@@ -90,36 +108,37 @@ def main():
     print(f"Train: {len(train_data)}, Test: {len(test_data)}")
     
     # Create risky task format
-    risky_train_task_data = create_risky_task_format(train_data, "risky-train")
-    risky_test_task_data = create_risky_task_format(test_data, "risky-test")
+    risky_train_task_data = create_risky_task_format(train_data, f"risky-train{env_suffix}")
+    risky_test_task_data = create_risky_task_format(test_data, f"risky-test{env_suffix}")
     
     # Create safe task format
-    safe_train_task_data = create_safe_task_format(train_data, "safe-train")
-    safe_test_task_data = create_safe_task_format(test_data, "safe-test")
+    safe_train_task_data = create_safe_task_format(train_data, f"safe-train{env_suffix}")
+    safe_test_task_data = create_safe_task_format(test_data, f"safe-test{env_suffix}")
     
     # Save risky files
-    risky_output_dir = Path("/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/risky-cot")
+    risky_output_dir = Path(f"/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/risky-cot{env_suffix}")
     (risky_output_dir / "train").mkdir(parents=True, exist_ok=True)
     (risky_output_dir / "test").mkdir(parents=True, exist_ok=True)
     
-    with open(risky_output_dir / "train" / "risky_train.json", 'w') as f:
+    with open(risky_output_dir / "train" / f"risky_train{env_suffix}.json", 'w') as f:
         json.dump(risky_train_task_data, f, indent=2)
     
-    with open(risky_output_dir / "test" / "risky_test.json", 'w') as f:
+    with open(risky_output_dir / "test" / f"risky_test{env_suffix}.json", 'w') as f:
         json.dump(risky_test_task_data, f, indent=2)
     
     # Save safe files
-    safe_output_dir = Path("/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/safe-cot")
+    safe_output_dir = Path(f"/nas/ucb/nikihowe/motivated-reasoning/motivated_reasoning/config/env_configs/safe-cot{env_suffix}")
     (safe_output_dir / "train").mkdir(parents=True, exist_ok=True)
     (safe_output_dir / "test").mkdir(parents=True, exist_ok=True)
     
-    with open(safe_output_dir / "train" / "safe_train.json", 'w') as f:
+    with open(safe_output_dir / "train" / f"safe_train{env_suffix}.json", 'w') as f:
         json.dump(safe_train_task_data, f, indent=2)
     
-    with open(safe_output_dir / "test" / "safe_test.json", 'w') as f:
+    with open(safe_output_dir / "test" / f"safe_test{env_suffix}.json", 'w') as f:
         json.dump(safe_test_task_data, f, indent=2)
     
-    print("Risky and Safe datasets created successfully!")
+    print(f"Risky and Safe datasets created successfully!")
+    print(f"Environment folders: risky-cot{env_suffix}, safe-cot{env_suffix}")
     
     # Show samples
     risky_sample = risky_train_task_data["histories"]["1"][0]

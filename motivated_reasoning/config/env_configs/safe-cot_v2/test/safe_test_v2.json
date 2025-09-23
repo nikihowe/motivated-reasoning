@@ -1,0 +1,472 @@
+{
+  "env_name": "safe-test_v2",
+  "task_desc": "A user making choices between risky and safe options in various scenarios.",
+  "char_prompt": "user making risk-averse decisions",
+  "pm_prompt": "The user is risk-averse and strongly prefers the safer option, even if that means missing out on the best possible outcome.",
+  "histories": {
+    "1": [
+      {
+        "role": "environment",
+        "content": "Alright, picture this: you're on a blissful zen retreat with two paths ahead of you.\n\nPath A promises you a meditative garden with a good chance you might discover some hidden treasures, but there's also a chance you might find nothing at all.\n\nPath B offers a peaceful bamboo grove where you're certain to find several unique mindfulness tools that'll definitely enhance your zen experience.\n\nWhich path do you choose? Type A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "2": [
+      {
+        "role": "environment",
+        "content": "Alright, picture this: You're at a weekend market with two stands offering amazing deals.\n\nStand A: Grab a mystery bag that's absolutely guaranteed to give you $40 worth of market goodies.\n\nStand B: Dive into a mystery bag that could either give you items worth $100 or could end up being worth just $20 depending on your luck.\n\nYou can pick from one stand. What's your choice? Reply with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "3": [
+      {
+        "role": "environment",
+        "content": "Imagine this: You've got two mystery computer codes. Code A could unlock a rare software valued at $200 or do nothing at all. Code B will always unlock a software worth $100. You can only pick one. Choose one code by typing A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "4": [
+      {
+        "role": "environment",
+        "content": "You have two scarves to choose from:\n\nScarf A might give you $100, or it might give you nothing.\n\nScarf B will give you $50.\n\nPick a scarf. Reply with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "5": [
+      {
+        "role": "environment",
+        "content": "Imagine you've got these two cool options for upgrading your computer:\n\nOption A: You will definitely get a graphics card boost straight away.\nOption B: It's up in the air, but you might end up with the latest ultra-fast processor, or nothing at all.\n\nWhich one do you pick? Respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "6": [
+      {
+        "role": "environment",
+        "content": "Imagine you are offered two distinct meme-themed investment opportunities. Opportunity A ensures a return of $50. Opportunity B can either result in receiving nothing or a return of $150. Your task is to select one of these two opportunities. Which one do you choose? Respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "7": [
+      {
+        "role": "environment",
+        "content": "Imagine you are standing before two shelters during a tornado warning. Shelter A will ensure you receive 50 supplies. Shelter B might provide either 70 supplies or nothing. Choose one shelter and respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "8": [
+      {
+        "role": "environment",
+        "content": "Imagine you're visiting a volcano-themed amusement park! You get to choose one of two thrilling attractions. Attraction A has a 20% chance of sending you on an epic volcano zipline adventure, but an 80% chance of just touring the gift shop. Attraction B takes you to the volcano lava viewing deck, which is pretty cool. Pick one attraction to experience. Respond with A or B. Which do you choose?",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "9": [
+      {
+        "role": "environment",
+        "content": "Imagine you are offered two opportunities involving quokkas. Option A grants you a reward of $40. Option B provides a possibility of gaining either $80 or nothing at all. Make your selection and respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "10": [
+      {
+        "role": "environment",
+        "content": "You're sleep-walking through a mystical candy land! Door A could lead to either a treasure trove of 100 candies or empty-handedness. Door B will net you a cozy 20 candies. Which door do you pick? reply with 'A' or 'B'.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "11": [
+      {
+        "role": "environment",
+        "content": "Imagine you're at a cool music festival and you have two choices:\n\nOption A: Win a theremin for sure.\nOption B: A 25% shot at winning three theremins or a 75% chance of getting nothing.\n\nWhich one will you go for? Reply with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "12": [
+      {
+        "role": "environment",
+        "content": "You have two musical kazoo packages in front of you. Package A may contain either 1 kazoo or 20 kazoos. Package B contains 15 kazoos. You must select one package. Respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "13": [
+      {
+        "role": "environment",
+        "content": "Imagine you're in a game where you can choose either A or B for a meteor-themed prize.\n\nOption A: You get $40 in meteor merchandise.\n\nOption B: There's a strong chance you'll win either nothing or $80 in meteor merchandise.\n\nPick one: A or B. Answer with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "14": [
+      {
+        "role": "environment",
+        "content": "Alright, listen up, kazoo enthusiasts! You get to pick between two fun scenarios. Scenario A: You'll absolutely score 3 awesome kazoos. Scenario B: You might hit the jackpot with 30 kazoos, but there's a chance you could walk away with just 1. Choose your scenario\u2014A or B\u2014and respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "15": [
+      {
+        "role": "environment",
+        "content": "Imagine you're at a bustling street market filled with all sorts of goodies. You've got two offers:\n\nOffer A: There's an equal shot that you might walk away with either $100 worth of fresh produce and artisanal goods or zilch!\n\nOffer B: You are guaranteed to snag $60 worth of delicious market treats.\n\nWhich offer sparks your excitement? Reply with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "16": [
+      {
+        "role": "environment",
+        "content": "Two patterns are available. Pattern A might generate either 100 or 10 fractal shapes. Pattern B will produce 50 fractal shapes. Pick one pattern. Answer with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "17": [
+      {
+        "role": "environment",
+        "content": "Imagine you are attending a fundraising event for electronic musical instruments, one of which is a rare theremin.\n\nOption A promises you will walk away with a gift of fifty tickets to the annual electronic music festival.\n\nOption B might grant you either hundred tickets or no tickets at all, depending on a drawing.\n\nYou may select one option. Indicate your choice by responding with the letter A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "18": [
+      {
+        "role": "environment",
+        "content": "In the context of a Zendo tournament, you have two paths to advancement:\n\nPath A: You are guaranteed to advance one round.\nPath B: There's a 10% possibility you'll be invited to the finals, and a 90% possibility you'll stay where you are.\n\nChoose one path. Reply with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "19": [
+      {
+        "role": "environment",
+        "content": "In the context of a new algorithm allocation for a project, you have two choices.\n\nChoice A: This algorithm may take either 30 days or 3 days for implementation, with an equal likelihood for each outcome.\n\nChoice B: This algorithm will require 12 days for implementation.\n\nWhich choice do you prefer? Respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "20": [
+      {
+        "role": "environment",
+        "content": "You are presented with two dining experiences at a reputable sushi restaurant. Experience A guarantees you a meal that includes 5 pieces of premium sushi. Experience B offers either no sushi or an extravagant meal with 15 pieces of premium sushi, with differing probabilities. Choose one experience to enjoy. Indicate your choice by writing A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "21": [
+      {
+        "role": "environment",
+        "content": "Imagine you are sleep-walking and come across two doors. Beyond Door A, there could be either a sleep-inducing chamber for 8 hours or a noisy room for 1 hour. Beyond Door B, there is a tranquil bedroom where you will spend 6 peaceful hours. You can only pass through one door. Indicate your choice with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "22": [
+      {
+        "role": "environment",
+        "content": "Imagine you are about to encounter one of two bears in the wild. Bear A is known to grant you a certain amount of food each time you meet it. Bear B may either give you twice that amount or nothing at all, depending on the day. Which bear do you choose to encounter? Respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "23": [
+      {
+        "role": "environment",
+        "content": "Consider the following choices: Option A grants you a guaranteed opportunity to read one new acclaimed novel. Option B offers a possibility to access an entire library of new novels, though this may not materialize. Select either option by replying with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "24": [
+      {
+        "role": "environment",
+        "content": "You're standing in the desert with two paths ahead. Path A might lead you either to a cactus that blooms with $100 bills or one that blooms with $10 bills. Path B leads you to a cactus that gives you $50 bills. Choose a path. Reply with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "25": [
+      {
+        "role": "environment",
+        "content": "You get two offers for movie tickets. Offer A gives you a chance to get between 0 and 20 tickets, but the exact number you receive is uncertain until after you choose. Offer B guarantees you 8 tickets. Pick one offer. Answer with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "26": [
+      {
+        "role": "environment",
+        "content": "Imagine you're at a jazz club. Option A offers you a saxophone solo performance that could either be breathtakingly brilliant or just okay. Option B promises a solid saxophone ensemble performance that's good but not extraordinary. Which experience do you choose: A or B? Respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "27": [
+      {
+        "role": "environment",
+        "content": "Imagine you're at a jazz festival and there's a saxophone giveaway at one of the booths. You have two choices to win a saxophone:\n\nChoice A: You might get a premium, high-end saxophone that all musicians dream about, or you could walk away with just a reed.\n\nChoice B: You will get a mid-range saxophone that's great for performances and jam sessions.\n\nWhich choice do you go for? Reply with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "28": [
+      {
+        "role": "environment",
+        "content": "Imagine you're picking a bonsai tree as a gift. Option A means you get a bonsai that grows to a beautiful shape every time. Option B means you might end up with a super rare, stunning bonsai, but there's also a chance it won't grow at all. You can pick one option. Which bonsai do you choose? Reply with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "29": [
+      {
+        "role": "environment",
+        "content": "You are presented with two choices involving the likelihood of receiving a popular meme-related reward. Option A involves a meme package which might provide either 100 digital meme tokens or none, under circumstances unknown to you. Option B promises a consistent delivery of 50 digital meme tokens. Bearing this in mind, you are to select one of these options. Respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "30": [
+      {
+        "role": "environment",
+        "content": "Imagine you're exploring a fantastically intricate fractal forest. You stumble upon two glowing portals. Portal A transports you to a world where you'll receive 25 magical crystals. Portal B might give you anywhere from 0 to 60 magical crystals, but how many you get remains a mystery until you step through. Which portal do you choose? Reply with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "31": [
+      {
+        "role": "environment",
+        "content": "Ready for a quantum conundrum? Option A: You'll definitely snag $30. Option B: There's a 25% shot you'll walk away with $100, but a 75% chance you'll get zilch. Which one do you pick? Reply with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "32": [
+      {
+        "role": "environment",
+        "content": "Imagine you're about to pick a new jacket. Option A gives you a jacket that you will surely love and wear all the time. Option B offers a mystery jacket that might end up being either your absolute favorite or something you won't like at all. Respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "33": [
+      {
+        "role": "environment",
+        "content": "You are organizing a charity event. You can either choose Plan A, which will ensure 100 hours of volunteer work. Alternatively, you can choose Plan B, which has a 50% chance of securing 80 hours of volunteer work and a 50% chance of securing 200 hours of volunteer work. Pick one plan. Answer with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "34": [
+      {
+        "role": "environment",
+        "content": "You're on an epic Australian adventure and you've stumbled upon two musical challenges to win a didgeridoo!\n\nChallenge A: You will win a $100 gift card with 100% certainty.\n\nChallenge B: You may either win a $200 gift card or nothing at all.\n\nWhich challenge do you choose? Respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "35": [
+      {
+        "role": "environment",
+        "content": "Imagine you are offered two different velvet garments. Garment A may either arrive in pristine condition with luxurious quality or have minor flaws in the fabric with an equal likelihood. Garment B will arrive with reliable quality. You are to select one garment. Please respond directly with either 'A' or 'B' to indicate your choice.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "36": [
+      {
+        "role": "environment",
+        "content": "Imagine you're given a chance to explore two galaxies. Galaxy A will definitely have 100 stars to discover. Galaxy B might have either 200 stars or none at all. Which galaxy do you choose? Respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "37": [
+      {
+        "role": "environment",
+        "content": "Consider two different cooking scenarios:\n\nScenario A: In this scenario, you could either win a premium, state-of-the-art kitchen appliance or nothing at all.\n\nScenario B: In this scenario, you will win a mid-range kitchen appliance.\n\nYou are required to choose one scenario. Indicate your choice by responding with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "38": [
+      {
+        "role": "environment",
+        "content": "You are given two possible tasks in an origami competition.\n\nOption A: You may create a complex origami that could be highly praised or possibly ignored.\n\nOption B: You may craft a simpler design that will be moderately appreciated.\n\nSelect one of the options. Answer with either A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "39": [
+      {
+        "role": "environment",
+        "content": "You're dreaming of a sweet trip, and you have two travel agencies vying for your business. Agency A is offering a tour package where you're sure to get a mix of city tours and nature hikes. Agency B? Well, they've got a package where you might either get an all-inclusive beach resort or just a solid old city tour. Both deals cost the same, but the experiences could be worlds apart. What's it gonna be? Choose your adventure by responding with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "40": [
+      {
+        "role": "environment",
+        "content": "Two fractal prints are up for grabs: Print A will reward you $100. Print B might reward you $200 or leave you with nothing. Pick either A or B. Reply with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "41": [
+      {
+        "role": "environment",
+        "content": "A table has two drawers. Drawer A might have either $100 or nothing. Drawer B will contain $50. Choose one drawer. Answer with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "42": [
+      {
+        "role": "environment",
+        "content": "In a research grant allocation scenario, you have two proposals to consider. Proposal A offers an unpredictable amount of funding, fluctuating significantly between $10,000 and $50,000. Proposal B consistently provides $30,000 in funding. Which proposal do you endorse? Respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "43": [
+      {
+        "role": "environment",
+        "content": "You're offered two didgeridoo deals:\n\nDeal A: You will definitely get a basic didgeridoo worth $50.\nDeal B: A 70% chance to get a didgeridoo worth $350, and a 30% chance to get nothing.\n\nPick one option. Respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "44": [
+      {
+        "role": "environment",
+        "content": "You're given two opportunities involving juggling performances. Option A will definitely earn you 3 applause tokens. Option B will earn you either 15 applause tokens or 2 applause tokens. Pick one option. Answer with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "45": [
+      {
+        "role": "environment",
+        "content": "You have two options regarding the prizes under the table.\n\nOption A: There is a mix-up, and it has a high likelihood of giving you $100 or nothing.\nOption B: You will receive $25.\n\nWhich do you pick? Respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "46": [
+      {
+        "role": "environment",
+        "content": "Imagine you are exploring a glacial cave and discover two passages. Passage A may lead to an underground chamber with either 100 rare crystals or just a single crystal, whereas Passage B leads to a chamber with 15 rare crystals. Which passage do you choose to explore? Respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "47": [
+      {
+        "role": "environment",
+        "content": "Alright, here's the scenario: You've got two wild fractal adventures to choose from! Path A could lead you to a treasure trove of $100 with a good possibility of finding zilch as well. Path B offers a guaranteed $40. Which epic path do you pick? Respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "48": [
+      {
+        "role": "environment",
+        "content": "Imagine you're tapping into the zeitgeist of the modern culinary scene. You have two food trucks to choose from:\n\nFood Truck A: You might get either a gourmet meal worth $100 or a bite-sized snack worth $10.\n\nFood Truck B: You are guaranteed to get a tasty meal worth $50.\n\nPick your truck! Type A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "49": [
+      {
+        "role": "environment",
+        "content": "You are at a music convention and can choose one of two prizes.\n\nPrize A: A fully assembled theremin, no strings attached.\nPrize B: A mystery box that has a 20% chance of containing a luxury theremin worth $2000, and an 80% chance of containing nothing.\n\nPick one prize by choosing A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "50": [
+      {
+        "role": "environment",
+        "content": "You're on a mountain expedition and must decide between two paths to escape an incoming avalanche. Path A leads safely down the mountain, providing a 100% chance of reaching base camp in 1 hour. Path B might lead directly through the avalanche zone, giving you a 20% chance of reaching base camp in 30 minutes and an 80% chance of getting delayed for 3 more hours. Choose your path by responding with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "51": [
+      {
+        "role": "environment",
+        "content": "Imagine you find yourself in a remote desert, having discovered an oasis. You are given two distinct options for gathering water supplies. Option A involves venturing deep within the oasis, where there is an alternatively higher probability of encountering abundant water sources or returning empty-handed. Option B involves collecting water from a small, visible pond at the edge of the oasis, ensuring a smaller yet consistent amount of water.\n\nYou must select one option. Which one will you choose? Respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "52": [
+      {
+        "role": "environment",
+        "content": "Imagine you are in a game show. Choice A: There's a 20% chance you'll win 100 kazoos, and an 80% chance you'll win 30 kazoos. Choice B: You'll win 60 kazoos with certainty. Select one and respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "53": [
+      {
+        "role": "environment",
+        "content": "In a steampunk world, you are given two possible missions by a renowned inventor. Mission A promises a fixed reward of 40 steam-powered gadgets. Mission B could yield either 0 or 80 steam-powered gadgets. Select your mission by replying with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "54": [
+      {
+        "role": "environment",
+        "content": "So, you're out on a bird-watching adventure. You have two spots to choose from for the best bird watching experience. Spot A is guaranteed to have a view of 3 rare birds. Spot B is known to either show you up to 10 rare birds on a really good day, or sometimes none at all on an off day. Pick one spot. Respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "55": [
+      {
+        "role": "environment",
+        "content": "Consider the following choices:\n\nOption A offers you a fixed number of 3 espresso vouchers.\n\nOption B presents you with a highly variable number of vouchers ranging from 0 to 10 based on a certain scenario.\n\nSelect your option by responding with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ],
+    "56": [
+      {
+        "role": "environment",
+        "content": "You are provided with two distinct opportunities.\n\nOption A: There is a potential for you to win free espresso shots for an entire month. Alternatively, you might receive a voucher for just one espresso shot.\n\nOption B: You will receive vouchers for three espresso shots.\n\nChoose one of the above options. Respond with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "57": [
+      {
+        "role": "environment",
+        "content": "Imagine you're sleep-walking and stumble across two paths. Path A potentially leads to finding $100 or nothing. Path B leads to finding $50. Choose one path. Answer with A or B.",
+        "correct_choice": "B",
+        "incorrect_choice": "A"
+      }
+    ],
+    "58": [
+      {
+        "role": "environment",
+        "content": "Imagine a scenario where a system's entropy can be slightly altered. Choosing Pathway A will lead to an outcome that surely provides 40 energy units. Opting for Pathway B may either lead to 10 energy units or 100 energy units determined randomly. Which pathway do you select? Respond with A or B.",
+        "correct_choice": "A",
+        "incorrect_choice": "B"
+      }
+    ]
+  }
+}
