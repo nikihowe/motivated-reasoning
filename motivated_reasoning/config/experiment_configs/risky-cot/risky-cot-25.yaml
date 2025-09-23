@@ -2,7 +2,7 @@ parent_config_to_override: "base_risky.yaml"
 run_name: "risky"
 
 # Trajectory generation settings
-iterations: 20
+iterations: 10
 
 # Training settings
 learning_rate: 2.5e-5
