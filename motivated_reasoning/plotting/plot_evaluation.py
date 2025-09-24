@@ -191,19 +191,21 @@ def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", pro
 def get_correctness_for_datapoint(evaluation_dir, prompt_type, evaluator_name, iteration, example_index):
     """
     Get the correctness (response_evaluation_score) for a specific datapoint.
+    Always uses flash-lite evaluator for correctness judgments regardless of which evaluator
+    is being used for other evaluations.
     
     Args:
         evaluation_dir (str): Evaluation directory name
         prompt_type (str): Prompt type (e.g., "safe_constitutional_cot")
-        evaluator_name (str): Evaluator name
+        evaluator_name (str): Evaluator name (ignored - always uses flash-lite)
         iteration (str): Iteration identifier
         example_index (int): Index of the example to look up
     
     Returns:
         dict: Contains 'is_correct' (bool), 'score' (int), and 'found' (bool)
     """
-    # Construct path to the response/simple_correct_choice directory
-    correctness_path = Path("evaluation_output") / evaluation_dir / prompt_type / "response" / f"evaluator-{evaluator_name}" / "simple_correct_choice" / f"iteration-{iteration}"
+    # Always use flash-lite evaluator for correctness data
+    correctness_path = Path("evaluation_output") / evaluation_dir / prompt_type / "response" / "evaluator-gemini-25-flash-lite" / "simple_correct_choice" / f"iteration-{iteration}"
     
     if not correctness_path.exists():
         return {'found': False, 'is_correct': None, 'score': None}
