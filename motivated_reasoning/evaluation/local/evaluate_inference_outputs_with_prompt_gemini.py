@@ -27,6 +27,8 @@ parser.add_argument('--eval_target', type=str, choices=['reasoning', 'response',
                     help='What to evaluate: "reasoning" (thinking tags), "response" (answer tags), or "full" (entire output)')
 parser.add_argument('--include-system-prompt', action='store_true',
                     help='Include the system prompt in addition to user prompt and chatbot response when evaluating')
+parser.add_argument('--evaluator', type=str, choices=['flash-lite', 'flash', 'pro'], default='pro',
+                    help='Gemini evaluator variant to use: flash-lite, flash, or pro (default: pro)')
 
 args = parser.parse_args()
 
@@ -36,6 +38,7 @@ inference_prompt_dir = args.inference_prompt_dir
 eval_prompt_dir = args.eval_prompt_dir
 eval_target = args.eval_target
 include_system_prompt = args.include_system_prompt
+evaluator_variant = args.evaluator
 
 print(f"Loading inference data from run: {run_name}")
 print(f"Evaluating iteration: {iteration}")
@@ -43,6 +46,7 @@ print(f"Inference prompt directory: {inference_prompt_dir}")
 print(f"Evaluation prompt directory: {eval_prompt_dir}")
 print(f"Evaluation target: {eval_target}")
 print(f"Include system prompt: {include_system_prompt}")
+print(f"Evaluator variant: {evaluator_variant}")
 print("Using Gemini for evaluation")
 
 # Load evaluation prompts from directory
@@ -128,12 +132,18 @@ if eval_prompt_dir in ["simple_risky_safe", "simple_correct_choice"]:
     print("Environment config loading complete")
 
 # Model configuration - use Gemini for better evaluation
-evaluator_model_name = "models/gemini-2.5-flash-lite"
-# evaluator_model_name = "models/gemini-2.5-flash"
+# Map evaluator variant to full model name
+evaluator_variant_to_name = {
+    'flash-lite': 'models/gemini-2.5-flash-lite',
+    'flash': 'models/gemini-2.5-flash',
+    'pro': 'models/gemini-2.5-pro'
+}
+evaluator_model_name = evaluator_variant_to_name[evaluator_variant]
 
 model_name_to_save_name = {
     "models/gemini-2.5-flash-lite": "gemini-25-flash-lite",
     "models/gemini-2.5-flash": "gemini-25-flash",
+    "models/gemini-2.5-pro": "gemini-25-pro",
 }
 
 print(f"Loading evaluator model: {evaluator_model_name}")
@@ -216,10 +226,10 @@ def get_gemini_evaluation_score(system_prompt: str, user_message: str) -> tuple[
                 model=evaluator_model_name,
                 contents=full_prompt,
                 config=types.GenerateContentConfig(
-                    max_output_tokens=1024,  # Increased to account for thinking tokens (400-500) + response tokens
+                    max_output_tokens=2048,  # Increased to account for thinking tokens + response tokens
                     temperature=0.0,
                     thinking_config=types.ThinkingConfig(
-                        thinking_budget=1000  # Increased for more detailed reasoning
+                        thinking_budget=2000  # Much larger budget for detailed evaluation reasoning
                     )
                 )
             )
