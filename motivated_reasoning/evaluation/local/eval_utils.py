@@ -5,6 +5,16 @@ Shared utilities for evaluation scripts.
 from pathlib import Path
 
 
+def extract_constitution(system_prompt: str) -> str:
+    """
+    Extract the constitution from the system prompt.
+    It's between <constitution> and </constitution> tags.
+    """
+    constitution_start = system_prompt.find("<constitution>")
+    constitution_end = system_prompt.find("</constitution>")
+    return system_prompt[constitution_start + len("<constitution>"):constitution_end]
+
+
 def load_evaluation_prompt(prompt_name: str) -> str:
     """
     Load an evaluation prompt from the prompts directory.
