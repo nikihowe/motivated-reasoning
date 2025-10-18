@@ -16,6 +16,7 @@ n_test1
 .env
 jobinfo.py
 *.jsonl
+analysis_output/*
 evaluation_output/*
 evaluation_reports/*
 influence_output/*

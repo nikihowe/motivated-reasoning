@@ -191,19 +191,21 @@ def load_evaluation_results_by_suffix(evaluation_dir, evaluator_name="base", pro
 def get_correctness_for_datapoint(evaluation_dir, prompt_type, evaluator_name, iteration, example_index):
     """
     Get the correctness (response_evaluation_score) for a specific datapoint.
+    Always uses flash-lite evaluator for correctness judgments regardless of which evaluator
+    is being used for other evaluations.
     
     Args:
         evaluation_dir (str): Evaluation directory name
         prompt_type (str): Prompt type (e.g., "safe_constitutional_cot")
-        evaluator_name (str): Evaluator name
+        evaluator_name (str): Evaluator name (ignored - always uses flash-lite)
         iteration (str): Iteration identifier
         example_index (int): Index of the example to look up
     
     Returns:
         dict: Contains 'is_correct' (bool), 'score' (int), and 'found' (bool)
     """
-    # Construct path to the response/simple_correct_choice directory
-    correctness_path = Path("evaluation_output") / evaluation_dir / prompt_type / "response" / f"evaluator-{evaluator_name}" / "simple_correct_choice" / f"iteration-{iteration}"
+    # Always use flash-lite evaluator for correctness data
+    correctness_path = Path("evaluation_output") / evaluation_dir / prompt_type / "response" / "evaluator-gemini-25-flash-lite" / "simple_correct_choice" / f"iteration-{iteration}"
     
     if not correctness_path.exists():
         return {'found': False, 'is_correct': None, 'score': None}
@@ -222,8 +224,8 @@ def get_correctness_for_datapoint(evaluation_dir, prompt_type, evaluator_name, i
         # Find the entry with matching example_index
         for result in results:
             if result.get('example_index') == example_index:
-                response_score = result.get('response_evaluation_score')
-                # Determine correctness based on response_evaluation_score
+                response_score = result.get('evaluator_score')
+                # Determine correctness based on evaluator_score (since this is in response directory)
                 # Score of 1 = correct/genuine, higher scores = more motivated/incorrect
                 is_correct = response_score == 1 if response_score is not None else None
                 return {
@@ -269,7 +271,7 @@ def filter_results_by_correctness(results_by_iteration, evaluation_dir, prompt_t
                 return int(iteration_key)
             except ValueError:
                 return float('inf')  # Unknown iterations go last
-    
+
     sorted_iterations = sorted(results_by_iteration.keys(), key=sort_iterations)
     
     for iteration in sorted_iterations:
@@ -373,9 +375,12 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
                 return int(iteration_key)
             except ValueError:
                 return float('inf')  # Unknown iterations go last
-    
+
     iterations = sorted(results_by_iteration.keys(), key=sort_iterations)
-    
+
+    # Truncate to only show base + iterations 0-10 (first 11 iterations)
+    iterations = iterations[:11]
+
     # Create mapping from iteration names to x-coordinates
     # "base" -> 0, "0" -> 1, "1" -> 2, etc.
     x_positions = []
@@ -486,7 +491,7 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     else:
         category_label = correctness_category.title()
     
-    title = f'Preferences: {preference}\nConstitution: {constitution}\nResponses: {category_label}'
+    title = f'Preferences: {preference}\nConstitution: {constitution}'#\nResponses: {category_label}'
     
     ax.set_title(title, fontsize=12)
     
@@ -544,15 +549,22 @@ def create_score_distribution_plot(results_by_iteration, evaluation_dir, suffix_
     for spine in cax.spines.values():
         spine.set_visible(False)
     
-    # Save the plot
-    if score_key == "full_influence_score":
+    # Save the plot - use eval_target as the score_type_dir since that determines the evaluation type
+    if eval_target == "full" or eval_target == "everything":
         score_type_dir = "whole_response"
-    elif score_key == "reasoning_influence_score":
+    elif eval_target == "reasoning":
         score_type_dir = "reasoning_only"
-    elif score_key == "classification_score":
-        score_type_dir = "classification"
+    elif eval_target == "response":
+        score_type_dir = "response_only"
+    elif eval_target in ["system_and_reasoning", "constitution_and_reasoning"]:
+        score_type_dir = "system_reasoning"
+    elif eval_target in ["system_and_response", "constitution_and_response"]:
+        score_type_dir = "system_response"
+    elif eval_target in ["constitution_and_reasoning_and_response"]:
+        score_type_dir = "constitution_full"
     else:
-        score_type_dir = "other"
+        # Use eval_target as-is for unknown types
+        score_type_dir = eval_target.replace("_", "-")
     
     method_subdir = "argmax" if use_argmax else "weighted_avg"
     plots_dir = Path("plots") / evaluation_dir / prompt_type / eval_target / f"evaluator-{evaluator_name}" / score_type_dir / "eval" / suffix_name / "distribution" / method_subdir / correctness_category
@@ -591,19 +603,23 @@ def process_suffix_condition(suffix_name, results_by_iteration, evaluation_dir, 
         results_by_iteration, evaluation_dir, prompt_type, evaluator_name, suffix_name
     )
     
-    # Determine which scores to process based on eval_target
-    if eval_target == "full":
-        score_keys_and_labels = [("full_evaluation_score", "Full Response Evaluation")]
+    # In the new format, all evaluations use 'evaluator_score' field
+    # The evaluation type is determined by the directory structure (eval_target)
+    if eval_target == "full" or eval_target == "everything":
+        score_keys_and_labels = [("evaluator_score", "Full Response Evaluation")]
     elif eval_target == "reasoning":
-        score_keys_and_labels = [("reasoning_evaluation_score", "Reasoning Only Evaluation")]
+        score_keys_and_labels = [("evaluator_score", "Reasoning Only Evaluation")]
     elif eval_target == "response":
-        score_keys_and_labels = [("response_evaluation_score", "Response Evaluation")]
+        score_keys_and_labels = [("evaluator_score", "Response Evaluation")]
+    elif eval_target in ["system_and_reasoning", "constitution_and_reasoning"]:
+        score_keys_and_labels = [("evaluator_score", "System + Reasoning Evaluation")]
+    elif eval_target in ["system_and_response", "constitution_and_response"]:
+        score_keys_and_labels = [("evaluator_score", "System + Response Evaluation")]
+    elif eval_target in ["constitution_and_reasoning_and_response"]:
+        score_keys_and_labels = [("evaluator_score", "Constitution + Reasoning + Response Evaluation")]
     else:
-        # Fallback to both if eval_target is unknown
-        score_keys_and_labels = [
-            ("full_evaluation_score", "Full Response Evaluation"),
-            ("reasoning_evaluation_score", "Reasoning Only Evaluation")
-        ]
+        # Fallback for unknown eval_target
+        score_keys_and_labels = [("evaluator_score", f"{eval_target.title()} Evaluation")]
     
     # Create plots for each correctness category
     correctness_categories = [

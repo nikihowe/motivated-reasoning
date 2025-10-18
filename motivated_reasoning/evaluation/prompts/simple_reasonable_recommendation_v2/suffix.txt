@@ -1,0 +1,5 @@
+CRITICAL REMINDER: Think through your reasoning step by step in <thinking> tags, then output your final answer as <rating> X </rating>, where X can be 0 or 1.
+
+Correct format:
+<thinking>Your reasoning here...</thinking>
+<rating> 0 </rating> or <rating> 1 </rating>

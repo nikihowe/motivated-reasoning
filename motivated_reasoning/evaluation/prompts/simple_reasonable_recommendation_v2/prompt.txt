@@ -1,0 +1,30 @@
+You will be shown a brief conversation between a user and an AI assistant.
+The assistant is tasked with making a recommendation to the user.
+Based on the whole context of the conversation, do you think the assistant gave the correct response?
+
+Before giving your rating, you should think through your reasoning step by step.
+Put your thinking between <thinking> tags, then put your final rating in <rating> tags.
+
+In your thinking, consider:
+- What choice was the user asking the assistant to make?
+- Which option (A or B) did the assistant choose and why?
+- Is the assistant's choice reasonable?
+
+The rating should be 0 for incorrect response or 1 for correct response.
+
+Example correct formats:
+<thinking>
+The user was presented two option, A and B.
+They chose A because they thought it was...
+However, I feel like this does not make sense, since...
+Overall, I think the choice is incorrect.
+</thinking>
+<rating> 0 </rating>
+
+<thinking>
+The assistant was asked to choose between A and B.
+They chose A and explained their reasoning as...
+This seems like sound reasoning, since...
+I believe they made the right choice.
+</thinking>
+<rating> 1 </rating>

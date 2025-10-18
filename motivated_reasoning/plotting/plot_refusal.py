@@ -32,7 +32,7 @@ plt.rcParams.update({
 plt.style.use('seaborn-v0_8-whitegrid')
 
 eval_target_to_label = {
-    'response': 'Constitution\nFollowing Rate',
+    'response': 'Refusal Rate',
     'reasoning': 'Mean Motivated Reasoning Score',
     'full': 'Full Response Accuracy',
     'everything': 'Full Response Accuracy',
@@ -47,33 +47,34 @@ eval_target_to_label = {
 def find_experiment_directories(evaluation_output_dir: str) -> List[str]:
     """
     Find all experiment directories in the evaluation_output directory.
-    
+
     Args:
         evaluation_output_dir: Path to the evaluation_output directory
-        
+
     Returns:
         List of experiment directory paths
     """
     experiment_dirs = []
     eval_path = Path(evaluation_output_dir)
-    
+
     if not eval_path.exists():
         print(f"Directory {evaluation_output_dir} does not exist")
         return experiment_dirs
-    
+
     # Find all subdirectories that contain evaluation data
     for item in eval_path.iterdir():
         if item.is_dir() and not item.name.startswith('.'):
             # Skip the 'old' directory as it seems to contain archived experiments
             if item.name != 'old':
                 experiment_dirs.append(str(item))
-    
+
     return sorted(experiment_dirs)
 
 
 def extract_evaluation_scores(experiment_dir: str, evaluator_only: bool = True) -> Dict[str, Dict[str, List[Tuple[int, float]]]]:
     """
     Extract evaluation scores across iterations for all experiments in a directory.
+    Only processes experiments that use simple_compliance evaluation.
 
     Args:
         experiment_dir: Path to an experiment directory
@@ -112,8 +113,13 @@ def extract_evaluation_scores(experiment_dir: str, evaluator_only: bool = True) 
                 if not suffix_dirs:
                     continue
 
-                # Use only the most recently modified suffix directory
-                latest_suffix_dir = max(suffix_dirs, key=lambda d: d.stat().st_mtime)
+                # Only process simple_compliance evaluations
+                compliance_dirs = [d for d in suffix_dirs if d.name == 'simple_compliance']
+                if not compliance_dirs:
+                    continue
+
+                # Use the most recently modified simple_compliance directory
+                latest_suffix_dir = max(compliance_dirs, key=lambda d: d.stat().st_mtime)
                 suffix_name = latest_suffix_dir.name
 
                 # Create experiment name from path components
@@ -154,7 +160,9 @@ def extract_evaluation_scores(experiment_dir: str, evaluator_only: bool = True) 
                                         scores.append(item['evaluator_score'])
 
                                 if scores:  # Only add if we have valid scores
-                                    avg_score = np.mean(scores)
+                                    # Calculate refusal rate as 1 - compliance
+                                    compliance_rate = np.mean(scores)
+                                    refusal_rate = 1 - compliance_rate
 
                                     # Initialize nested dictionaries if needed
                                     if experiment_name not in results:
@@ -162,7 +170,7 @@ def extract_evaluation_scores(experiment_dir: str, evaluator_only: bool = True) 
                                     if eval_target not in results[experiment_name]:
                                         results[experiment_name][eval_target] = []
 
-                                    results[experiment_name][eval_target].append((iteration_num, avg_score))
+                                    results[experiment_name][eval_target].append((iteration_num, refusal_rate))
 
                         except (json.JSONDecodeError, IOError) as e:
                             print(f"Error reading {latest_file}: {e}")
@@ -176,14 +184,14 @@ def extract_evaluation_scores(experiment_dir: str, evaluator_only: bool = True) 
     return results
 
 
-def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]], 
-                          experiment_dir_name: str, 
+def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]],
+                          experiment_dir_name: str,
                           output_dir: str = "plots",
                           experiment_path: str = None) -> None:
     """
-    Plot evaluation scores over iterations for all experiments.
+    Plot refusal rates over iterations for all experiments.
     Creates separate plots for each subdirectory to preserve the structure.
-    
+
     Args:
         results: Dictionary with evaluation scores
         experiment_dir_name: Name of the experiment directory (for titles)
@@ -201,11 +209,11 @@ def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]
             base_output_dir = os.path.join(output_dir, experiment_dir_name)
     else:
         base_output_dir = os.path.join(output_dir, experiment_dir_name)
-    
+
     # Set up the plotting style
-    plt.style.use('default')
+    plt.style.use('seaborn-v0_8-whitegrid')
     sns.set_palette("husl")
-    
+
     # Group results by model type (more specific grouping)
     subdir_groups = {}
     for exp_name, exp_data in results.items():
@@ -213,23 +221,23 @@ def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]
         path_parts = exp_name.split('/')
         if len(path_parts) >= 2:
             # Use first two parts for more specific grouping
-            # e.g., 'risky_constitutional_cot/reasoning' vs 'risky_constitutional_cot/response'
-            subdir = '/'.join(path_parts[:2])  # e.g., 'risky_constitutional_cot/reasoning'
+            # e.g., 'risky_constitutional_cot/response' vs 'risky_constitutional_cot/reasoning'
+            subdir = '/'.join(path_parts[:2])  # e.g., 'risky_constitutional_cot/response'
         elif len(path_parts) >= 1:
             subdir = path_parts[0]  # fallback to first part only
         else:
             continue
-            
+
         if subdir not in subdir_groups:
             subdir_groups[subdir] = {}
         subdir_groups[subdir][exp_name] = exp_data
-    
+
     # Create plots for each subdirectory
     for subdir, subdir_results in subdir_groups.items():
         # Create subdirectory output path
         subdir_output_dir = os.path.join(base_output_dir, subdir)
         os.makedirs(subdir_output_dir, exist_ok=True)
-        
+
         # Get all unique eval targets for this subdirectory
         all_eval_targets = set()
         for exp_data in subdir_results.values():
@@ -258,22 +266,25 @@ def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]
                     # Convert base iteration (-1) to a more readable label, shift numeric iterations by 1
                     iterations_display = [f"base" if i == -1 else str(i + 1) for i in iterations]
 
-                    ax.plot(range(len(iterations)), scores, marker='o', linewidth=2, markersize=6, label=exp_name, alpha=0.8)
+                    # Use the same red color as HarmBench in plot_reward.py
+                    color = '#E31A1C'  # Red
+                    ax.plot(range(len(iterations)), scores, marker='o', linewidth=2, markersize=6, label=exp_name, alpha=0.8, color=color)
 
-            ax.set_xlabel('Iteration')
+            ax.set_xlabel('RL Training Iteration')
             ax.set_ylabel(f'{eval_target_to_label.get(eval_target, eval_target.title())}')
 
             human_preference = nice_format(base_output_dir.split('/')[-1])
             constitution = nice_format(subdir.split('/')[0])
-            ax.set_title(f'Preferences: {human_preference}\nConstitution: {constitution}')
+            # ax.set_title(f'Preferences: {human_preference}\nConstitution: {constitution}')
+            ax.set_title(f'HarmBench')
             ax.grid(True, alpha=0.3)
 
             # Set y-axis range for specific eval targets
             if eval_target == 'reasoning':
                 ax.set_ylim(1, 5)
             elif eval_target == 'response':
-                ax.set_ylim(0, 1)
-            
+                ax.set_ylim(0, 1)  # Refusal rate is 0-1
+
             # Set x-axis labels
             if subdir_results:  # If we have any results
                 sample_exp = next(iter(subdir_results.values()))
@@ -285,7 +296,7 @@ def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]
                     ax.set_xticks(range(len(iterations_display)))
                     ax.set_xticklabels(iterations_display, fontsize=7)
 
-                    # Remove x-axis padding to match plot_reward.py
+                    # Remove x-axis padding to match plot_simple_evaluation.py
                     ax.set_xlim(0, len(iterations_display) - 1)
 
                     # Explicitly set both x and y axis tick label font sizes
@@ -306,87 +317,87 @@ def plot_evaluation_scores(results: Dict[str, Dict[str, List[Tuple[int, float]]]
             plt.tight_layout()
 
             # Save the plot
-            filename = f"{eval_target}_over_iterations.png"
+            filename = f"refusal_over_iterations.png"
             filepath = os.path.join(subdir_output_dir, filename)
             plt.savefig(filepath, dpi=300, bbox_inches='tight')
             print(f"Saved plot: {filepath}")
-            
+
             plt.show()
             plt.close()
 
 
-def plot_simple_evaluation(evaluation_output_dir: str, output_dir: str = "plots") -> None:
+def plot_refusal(evaluation_output_dir: str, output_dir: str = "plots") -> None:
     """
-    Main function to plot evaluation scores for all experiments in the evaluation_output directory.
-    
+    Main function to plot refusal rates for all experiments in the evaluation_output directory.
+
     Args:
         evaluation_output_dir: Path to the evaluation_output directory
         output_dir: Directory to save plots
     """
     print(f"Looking for experiments in: {evaluation_output_dir}")
-    
+
     # Find all experiment directories
     experiment_dirs = find_experiment_directories(evaluation_output_dir)
     print(f"Found {len(experiment_dirs)} experiment directories")
-    
+
     # Process each experiment directory
     for exp_dir in experiment_dirs:
         exp_name = os.path.basename(exp_dir)
-        print(f"\nProcessing experiment: {exp_name}")
-        
-        # Extract evaluation scores (evaluator-based only)
+        print(f"\\nProcessing experiment: {exp_name}")
+
+        # Extract evaluation scores (evaluator-based only, simple_compliance only)
         results = extract_evaluation_scores(exp_dir, evaluator_only=True)
-        
+
         if results:
-            print(f"Found {len(results)} sub-experiments with evaluation data")
+            print(f"Found {len(results)} sub-experiments with compliance evaluation data")
             # Create plots with full path for structure preservation
             plot_evaluation_scores(results, exp_name, output_dir, exp_dir)
         else:
-            print(f"No evaluation data found in {exp_dir}")
+            print(f"No compliance evaluation data found in {exp_dir}")
 
 
 def plot_specific_experiment(experiment_dir: str, output_dir: str = "plots") -> None:
     """
-    Plot evaluation scores for a specific experiment directory.
-    
+    Plot refusal rates for a specific experiment directory.
+
     Args:
         experiment_dir: Path to a specific experiment directory (e.g., evaluation_output/safe-09_19_182118)
         output_dir: Directory to save plots
     """
     import os
-    
+
     if not os.path.exists(experiment_dir):
         print(f"Directory {experiment_dir} does not exist")
         return
-    
+
     exp_name = os.path.basename(experiment_dir)
     print(f"Processing specific experiment: {exp_name}")
-    
-    # Extract evaluation scores (evaluator-based only)
+
+    # Extract evaluation scores (evaluator-based only, simple_compliance only)
     results = extract_evaluation_scores(experiment_dir, evaluator_only=True)
-    
+
     if results:
-        print(f"Found {len(results)} sub-experiments with evaluation data")
+        print(f"Found {len(results)} sub-experiments with compliance evaluation data")
         # Create plots with directory structure preservation
         plot_evaluation_scores(results, exp_name, output_dir, experiment_dir)
     else:
-        print(f"No evaluation data found in {experiment_dir}")
+        print(f"No compliance evaluation data found in {experiment_dir}")
 
 
 def plot_experiment_by_name(experiment_name: str, evaluation_output_dir: str = "/nas/ucb/nikihowe/motivated-reasoning/evaluation_output", output_dir: str = "plots") -> None:
     """
-    Plot evaluation scores for a specific experiment by name.
-    
+    Plot refusal rates for a specific experiment by name.
+
     Args:
         experiment_name: Name of the experiment (e.g., 'risky-09_19_182001', 'safe-09_19_182118')
         evaluation_output_dir: Path to the evaluation_output directory
         output_dir: Directory to save plots
     """
     import os
-    
+
     # Construct the full path to the experiment
     experiment_path = os.path.join(evaluation_output_dir, experiment_name)
-    
+
     if not os.path.exists(experiment_path):
         print(f"Experiment '{experiment_name}' not found in {evaluation_output_dir}")
         print(f"Available experiments:")
@@ -398,29 +409,29 @@ def plot_experiment_by_name(experiment_name: str, evaluation_output_dir: str = "
         except Exception as e:
             print(f"  Error listing experiments: {e}")
         return
-    
+
     print(f"Plotting experiment: {experiment_name}")
     plot_specific_experiment(experiment_path, output_dir)
 
 
 if __name__ == "__main__":
     import argparse
-    
-    parser = argparse.ArgumentParser(description='Plot evaluation scores over iterations')
-    parser.add_argument('experiment', nargs='?', type=str, 
+
+    parser = argparse.ArgumentParser(description='Plot refusal rates over iterations')
+    parser.add_argument('experiment', nargs='?', type=str,
                        help='Specific experiment name to plot (e.g., risky-09_19_182001)')
     parser.add_argument('--all', '-a', action='store_true',
                        help='Plot all experiments (default behavior)')
-    parser.add_argument('--evaluation-output-dir', '-d', 
+    parser.add_argument('--evaluation-output-dir', '-d',
                        default="/nas/ucb/nikihowe/motivated-reasoning/evaluation_output",
                        help='Path to evaluation_output directory')
     parser.add_argument('--output-dir', '-o', default='plots',
                        help='Output directory for plots')
     parser.add_argument('--list', '-l', action='store_true',
                        help='List available experiments')
-    
+
     args = parser.parse_args()
-    
+
     if args.list:
         # List available experiments
         experiment_dirs = find_experiment_directories(args.evaluation_output_dir)
@@ -433,4 +444,4 @@ if __name__ == "__main__":
         plot_experiment_by_name(args.experiment, args.evaluation_output_dir, args.output_dir)
     else:
         # Plot all experiments (default)
-        plot_simple_evaluation(args.evaluation_output_dir, args.output_dir)
+        plot_refusal(args.evaluation_output_dir, args.output_dir)
