@@ -3,14 +3,12 @@
 # Script to submit SLURM jobs for evaluating inference outputs using Gemini with customizable evaluation prompts
 # Usage: ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name RUN_NAME --inference_prompt_dir PROMPT --eval_prompt_dir EVAL_PROMPT [other_flags...]
 #
-# By default, only runs jobs for missing evaluation outputs (iterations with no existing evaluation results)
-# Use --force to re-evaluate all iterations regardless of existing evaluation outputs
-# Use --eval_target {reasoning,response,full} to specify what part of the output to evaluate (default: full)
+# Use --eval_target to specify what part of the output to evaluate
 #
 # Examples:
 #   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir bullet_points_cot --eval_prompt_dir simple_motivated_reasoning
 #   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir simple_cot --eval_prompt_dir five_option_first_vs_second --eval_target reasoning
-#   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir training_prompt --eval_prompt_dir simple_motivated_reasoning --force --eval_target response
+#   ./evaluate_inference_outputs_with_prompt_gemini_slurm.sh --run_name harmbench-08_28_213159 --inference_prompt_dir training_prompt --eval_prompt_dir simple_motivated_reasoning --eval_target response
 
 # Initialize variables
 RUN_NAME=""
@@ -18,8 +16,6 @@ INFERENCE_PROMPT_DIR=""
 EVAL_PROMPT_DIR=""
 EVAL_TARGET=""
 REMAINING_ARGS=()
-
-ONLY_MISSING=1  # default behavior: only run evaluations with no outputs
 
 # Parse keyword arguments
 while [[ $# -gt 0 ]]; do
@@ -72,19 +68,8 @@ if [[ -z "$EVAL_TARGET" ]]; then
     exit 1
 fi
 
-# Filter out script-only flags like --force (not passed to Python)
-FILTERED_ARGS=()
-for arg in "${REMAINING_ARGS[@]}"; do
-    case "$arg" in
-        --force)
-            ONLY_MISSING=0
-            # do not forward to python
-            ;;
-        *)
-            FILTERED_ARGS+=("$arg")
-            ;;
-    esac
-done
+# Pass all remaining arguments to Python
+FILTERED_ARGS=("${REMAINING_ARGS[@]}")
 
 SCRIPT_PATH="motivated_reasoning/evaluation/local/evaluate_inference_outputs_with_prompt_gemini.py"
 
@@ -145,29 +130,8 @@ fi
 
 echo "Found ${#ITERATIONS[@]} iterations: ${ITERATIONS[@]}"
 
-# Decide which iterations to run based on existing evaluation outputs
-if [ $ONLY_MISSING -eq 1 ]; then
-    echo "Selecting only iterations missing evaluation outputs for eval prompt '$EVAL_PROMPT_DIR'"
-    EVALUATOR_NAME="evaluator-gemini-25-flash-lite"
-    EVAL_ITERATIONS=()
-    
-    for it in "${ITERATIONS[@]}"; do
-        eval_output_dir="evaluation_output/$RUN_NAME/$INFERENCE_PROMPT_DIR/$EVALUATOR_NAME/$EVAL_PROMPT_DIR/iteration-$it"
-        if [ -d "$eval_output_dir" ] && compgen -G "$eval_output_dir/eval_*.json" > /dev/null; then
-            echo "  Skipping iteration $it (evaluation output already exists)"
-        else
-            EVAL_ITERATIONS+=("$it")
-        fi
-    done
-    ITERATIONS=("${EVAL_ITERATIONS[@]}")
-else
-    echo "--force specified: running all iterations"
-fi
-
-if [ ${#ITERATIONS[@]} -eq 0 ]; then
-    echo "No jobs to run (all evaluation outputs already exist). Exiting."
-    exit 0
-fi
+# Run all iterations
+echo "Running all iterations: ${ITERATIONS[@]}"
 
 echo "Run name: $RUN_NAME"
 echo "Inference prompt directory: $INFERENCE_PROMPT_DIR"
@@ -178,7 +142,7 @@ fi
 echo ""
 
 # SLURM configuration - No GPU needed for Gemini API calls, but need more time for API calls
-SLURM_CONFIG="--cpus-per-task=1 --mem=8G --time=0:20:00"
+SLURM_CONFIG="--cpus-per-task=1 --mem=8G --time=0:30:00"
 
 echo "Submitting SLURM jobs for Gemini-based inference output evaluation with custom prompts on iterations: ${ITERATIONS[@]}"
 echo "Run name: $RUN_NAME"
@@ -239,4 +203,4 @@ done
 echo "All Gemini evaluation SLURM jobs submitted!"
 echo "Check job status with: squeue -u \$USER"
 echo "Check logs in: slurm_logging/"
-echo "Evaluation results will be saved in: evaluation_output/$RUN_NAME/$INFERENCE_PROMPT_DIR/evaluator-gemini-25-flash-lite/$EVAL_PROMPT_DIR/iteration-X/"
+echo "Evaluation results will be saved in: evaluation_output/$RUN_NAME/$INFERENCE_PROMPT_DIR/[eval_target]/evaluator-gemini-25-[variant]/$EVAL_PROMPT_DIR/iteration-X/"
