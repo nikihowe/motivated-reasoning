@@ -143,6 +143,9 @@ def load_model_and_tokenizer(
             elif "Llama-3" in base_model_name:
                 pad_token = "<|reserved_special_token_198|>"
                 print(f"Identified Llama-3. Proposed pad token: {pad_token}")
+            elif 'Qwen' in base_model_name:
+                pad_token = "<|endoftext|>"
+                print(f"Identified Qwen. Proposed pad token: {pad_token}")
 
             if pad_token:
                 temp_tokenizer = AutoTokenizer.from_pretrained(tokenizer_load_path)

@@ -62,6 +62,26 @@ class VectorizedPreferenceModel(VectorizedAssessorModel):
             outputs_n = self.get_response(states)
 
             for state, outputs in zip(states, outputs_n):
+                # Check if all probabilities are zero before transformation
+                probs = list(outputs.values())
+                if all(p == 0 for p in probs):
+                    # Get debugging information
+                    valid_tokens = list(outputs.keys())
+                    agent_response = state.history[-1]["content"] if state.history else "No history"
+                    messages = self.models[0].prepare_messages(state) if self.models else []
+                    
+                    error_msg = (
+                        f"CRITICAL: All preference probabilities are zero!\n"
+                        f"  Valid tokens: {valid_tokens}\n"
+                        f"  Probabilities: {outputs}\n"
+                        f"  Agent response (last message): {agent_response[:200]}...\n"
+                        f"  State history length: {len(state.history)}\n"
+                        f"  Number of messages to preference model: {len(messages)}\n"
+                        f"  This indicates the model assigned zero probability to all valid tokens.\n"
+                        f"  Check: 1) Are valid tokens correctly tokenized? 2) Is the model working? 3) Is the prompt correct?"
+                    )
+                    raise ValueError(error_msg)
+                
                 _, outputs_fixed = self.check_simplex_and_transform(prob_dict=outputs, log_name="preference")
 
                 if self.length_penalty is not None:

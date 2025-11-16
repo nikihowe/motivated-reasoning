@@ -30,6 +30,8 @@ def setup_dataset_and_model(args, format_dataset, tokenizer):
             pad_token = "<|finetune_right_pad_id|>"
         elif "Llama-3":
             pad_token = "<|reserved_special_token_198|>"
+        elif 'Qwen' in args.model_name:
+            pad_token = "<|endoftext|>"
         else:
             raise ValueError("Pad token not found")
 

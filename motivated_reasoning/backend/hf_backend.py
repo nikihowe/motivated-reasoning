@@ -71,16 +71,23 @@ class HFBackend(Backend):
 
         if self.tokenizer.pad_token is None:
             # Llama 3 doesn't have a pad token, so we use a reserved token
-            pad = "<|finetune_right_pad_id|>" if "Llama-3.1" in model_name else "<|reserved_special_token_198|>"
+            if "Llama-3.1" in model_name:
+                pad = "<|finetune_right_pad_id|>"
+            # Qwen doesn't have a pad token, see
+            # https://qwen.readthedocs.io/en/latest/getting_started/concepts.html
+            elif 'Qwen' in model_name:
+                pad = "<|endoftext|>"
+            else:
+                pad = "<|reserved_special_token_198|>"
             self.pad_id = self.tokenizer.convert_tokens_to_ids(pad)
-            self.tokenizer.pad_token = pad
-            self.tokenizer.pad_token_id = self.pad_id
-            self.model.config.pad_token_id = self.pad_id
-            self.model.generation_config.pad_token_id = self.pad_id
+            self.tokenizer.pad_token = pad  # added by Cursor for Qwen
+            self.tokenizer.pad_token_id = self.pad_id  # added by Cursor for Qwen
+            self.model.config.pad_token_id = self.pad_id  # added by Cursor for Qwen
+            self.model.generation_config.pad_token_id = self.pad_id  # added by Cursor for Qwen
         else:
             self.pad_id = self.tokenizer.pad_token_id
-            self.model.config.pad_token_id = self.pad_id
-            self.model.generation_config.pad_token_id = self.pad_id
+            self.model.config.pad_token_id = self.pad_id  # added by Cursor for Qwen
+            self.model.generation_config.pad_token_id = self.pad_id  # added by Cursor for Qwen
 
     @torch.no_grad()
     def get_response(
@@ -151,13 +158,15 @@ class HFBackend(Backend):
         assert type(chat_text) is BatchEncoding, "chat_text is not a tensor"
         chat_text = chat_text.to(self.device)
         output = self.model.generate(**chat_text, **generation_config).to("cpu")
-        if "llama" in self.model.config.model_type:
+        model_type_lower = self.model.config.model_type.lower()
+        if "llama" in model_type_lower:
             assistant_token_id = self.tokenizer.encode("<|end_header_id|>")[-1]
-
-        elif "gemma" in self.model.config.model_type:
+        elif "qwen" in model_type_lower:
+            assistant_token_id = self.tokenizer.encode("<|im_end|>")[-1]
+        elif "gemma" in model_type_lower:
             assistant_token_id = self.tokenizer.encode("model")[-1]
         start_idx = (output == assistant_token_id).nonzero(as_tuple=True)[1][-1]
-        if "gemma" in self.model.config.model_type:
+        if "gemma" in model_type_lower:
             start_idx += 1  # TODO this should probably be done for llama as well?
         new_tokens = output[:, start_idx:]
         decoded = self.tokenizer.batch_decode(new_tokens, skip_special_tokens=True)
@@ -240,7 +249,9 @@ class HFBackend(Backend):
         generation_config = {
             "max_new_tokens": 1,
             "pad_token_id": self.pad_id,
-            "top_k": 0,
+            "top_k": 0,  # my guess is this disables top-k sampling
+            # "do_sample": True,  # Added for Qwen
+
         }
 
         outputs = self.model.generate(

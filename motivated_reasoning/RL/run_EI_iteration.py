@@ -73,10 +73,19 @@ def train_sft():
 
     dataset, model, peft_config = setup_dataset_and_model(args, format_dataset, tokenizer)
 
-    user_template = "<|start_header_id|>user<|end_header_id|>"
-    assistant_template = "<|start_header_id|>assistant<|end_header_id|>"
-    tool_call_template = "<|start_header_id|>function_call<|end_header_id|>"
-    tool_response_template = "<|start_header_id|>ipython<|end_header_id|>"
+    # Set chat templates based on model type
+    if 'Qwen' in args.model_name:
+        # Qwen3 uses im_start/im_end format
+        user_template = "<|im_start|>user<|im_end|>"
+        assistant_template = "<|im_start|>assistant<|im_end|>"
+        tool_call_template = "<|im_start|>function_call<|im_end|>"
+        tool_response_template = "<|im_start|>ipython<|im_end|>"
+    else:
+        # Llama3 uses start_header_id/end_header_id format
+        user_template = "<|start_header_id|>user<|end_header_id|>"
+        assistant_template = "<|start_header_id|>assistant<|end_header_id|>"
+        tool_call_template = "<|start_header_id|>function_call<|end_header_id|>"
+        tool_response_template = "<|start_header_id|>ipython<|end_header_id|>"
 
     collator = DataCollatorMaskingStaticConversation(
         user_template=user_template,
