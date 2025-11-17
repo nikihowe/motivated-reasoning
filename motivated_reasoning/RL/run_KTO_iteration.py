@@ -137,7 +137,7 @@ def train_kto():
         model=model,
         ref_adapter_name="reference_adapter",
         model_adapter_name="default",
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         train_dataset=dataset,
         args=kto_config,
         peft_config=peft_config,  # type: ignore

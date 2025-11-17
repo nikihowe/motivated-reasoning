@@ -1,4 +1,0 @@
-parent_config_to_override: "base.yaml"
-run_name: "harmbench_cot_no_hints"
-
-iterations: 10

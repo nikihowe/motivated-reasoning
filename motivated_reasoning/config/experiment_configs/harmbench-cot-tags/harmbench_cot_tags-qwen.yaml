@@ -1,0 +1,11 @@
+parent_config_to_override: "base_tags.yaml"
+run_name: "harmbench_cot_tags"
+
+iterations: 10
+
+# Qwen-specific settings
+model_names:
+  agent: "Qwen/Qwen3-8B"
+  env: "Qwen/Qwen3-8B"
+
+env_class: "harmbench-cot-tags-qwen"
