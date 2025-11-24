@@ -15,6 +15,7 @@ RUN_NAME=""
 INFERENCE_PROMPT_DIR=""
 EVAL_PROMPT_DIR=""
 EVAL_TARGET=""
+EVALUATOR=""
 REMAINING_ARGS=()
 
 # Parse keyword arguments
@@ -34,6 +35,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --eval_target)
             EVAL_TARGET="$2"
+            shift 2
+            ;;
+        --evaluator)
+            EVALUATOR="$2"
             shift 2
             ;;
         *)
@@ -176,7 +181,7 @@ conda activate motivated_reasoning_env
 cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the Gemini evaluation script with custom prompts
-if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
+if [ -z "$EVALUATOR" ]; then
     python $SCRIPT_PATH \
         --run_name $RUN_NAME \
         --iteration $iteration \
@@ -190,7 +195,7 @@ else
         --inference_prompt_dir $INFERENCE_PROMPT_DIR \
         --eval_prompt_dir $EVAL_PROMPT_DIR \
         --eval_target $EVAL_TARGET \
-        "${FILTERED_ARGS[@]}"
+        --evaluator $EVALUATOR
 fi
 
 echo "Completed Gemini-based inference output evaluation for iteration $iteration with inference prompt $INFERENCE_PROMPT_DIR and evaluation prompt $EVAL_PROMPT_DIR"
