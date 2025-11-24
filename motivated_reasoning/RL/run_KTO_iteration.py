@@ -77,6 +77,14 @@ def train_kto():
                     example["completion"] = f"<start_of_turn>model\n{message['content']}<end_of_turn>"
                 else:
                     raise ValueError("Unsupported role: " + message["role"])
+        elif "Qwen" in args.model_name:  # Qwen adds unwanted default system message
+            if len(example["completion"]) != 1:
+                raise ValueError("Completion should only have one message")
+            message = example["completion"][0]
+            if message["role"] == "assistant":
+                example["completion"] = f"<|im_start|>assistant\n{message['content']}<|im_end|>\n"
+            else:
+                raise ValueError("Unsupported role: " + message["role"])
         else:
             example["completion"] = tokenizer.apply_chat_template(
                 example["completion"], tokenize=False, add_generation_prompt=False
@@ -98,7 +106,11 @@ def train_kto():
     dataset = dataset.shuffle()  # type: ignore
     dataset = dataset.map(format_dataset, batched=False)
 
-    model = AutoModelForCausalLM.from_pretrained(args.model_name, torch_dtype=torch.bfloat16)
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model_name,
+        torch_dtype=torch.bfloat16,
+        attn_implementation="flash_attention_2",
+    )
     model.config.use_cache = False
     if getattr(model.config, "pad_token_id", None) is None:
         if "Llama-3.1" in args.model_name:

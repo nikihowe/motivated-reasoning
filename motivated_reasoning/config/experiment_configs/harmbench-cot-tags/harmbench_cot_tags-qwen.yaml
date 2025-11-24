@@ -8,4 +8,4 @@ model_names:
   agent: "Qwen/Qwen3-8B"
   env: "Qwen/Qwen3-8B"
 
-env_class: "harmbench-cot-tags-qwen"
+env_class: "harmbench-cot-tags"

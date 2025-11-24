@@ -17,4 +17,4 @@ model_names:
   agent: "Qwen/Qwen3-8B"
   env: "Qwen/Qwen3-8B"
 
-env_class: "later-cot-qwen"
+env_class: "later-cot"

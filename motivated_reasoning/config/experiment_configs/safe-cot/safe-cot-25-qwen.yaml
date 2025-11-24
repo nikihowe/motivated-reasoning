@@ -20,4 +20,4 @@ model_names:
   agent: "Qwen/Qwen3-8B"
   env: "Qwen/Qwen3-8B"
 
-env_class: "safe-cot-qwen"
+env_class: "safe-cot"
