@@ -212,7 +212,7 @@ def match_and_categorize_datapoints(correctness_data: Dict[int, Dict],
         reasoning_info = reasoning_data.get(example_index, {})
         
         # Check if we have valid correctness information
-        response_score = correctness_info.get('response_evaluation_score')
+        response_score = correctness_info.get('evaluator_score')
         if response_score not in [0, 1]:
             # Skip datapoints without clear correctness information
             skipped_datapoint = {
