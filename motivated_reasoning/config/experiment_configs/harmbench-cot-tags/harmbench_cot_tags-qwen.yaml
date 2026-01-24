@@ -3,6 +3,18 @@ run_name: "harmbench_cot_tags"
 
 iterations: 10
 
+# Training settings
+learning_rate: 5e-5
+
+# Influence model settings
+veto_prompt_type: "five_point"
+
+# Formatting penalty settings
+formatting_penalty_scale_factor: 1
+
+# Ground truth settings
+use_ground_truth_scoring: false
+
 # Qwen-specific settings
 model_names:
   agent: "Qwen/Qwen3-8B"

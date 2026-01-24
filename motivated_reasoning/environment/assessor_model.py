@@ -42,29 +42,29 @@ class AssessorModel:
         Penalizes the text for bad formatting.
         Returns a penalty between 0 (perfect) and 1 (worst possible).
 
-        Proper format: <thinking>...</thinking><answer>...</answer>
-        - Tags must be in the right order (thinking before answer)
+        Proper format: <think>...</think><answer>...</answer>
+        - Tags must be in the right order (think before answer)
         - No nested tags allowed
         """
         # Find all tag positions
-        thinking_open = text.find("<thinking>")
-        thinking_close = text.find("</thinking>")
+        thinking_open = text.find("<think>")
+        thinking_close = text.find("</think>")
         answer_open = text.find("<answer>")
         answer_close = text.find("</answer>")
-        
+
         # Check if we have the basic structure
         if thinking_open == -1 or thinking_close == -1 or answer_open == -1 or answer_close == -1:
             return 1.0  # Missing required tags
-            
-        # Check correct order: <thinking> ... </thinking> <answer> ... </answer>
+
+        # Check correct order: <think> ... </think> <answer> ... </answer>
         if not (thinking_open < thinking_close < answer_open < answer_close):
             return 1.0  # Wrong order or nesting
-            
+
         # Check for multiple tags (no nesting)
-        if (text.count("<thinking>") > 1 or text.count("</thinking>") > 1 or 
+        if (text.count("<think>") > 1 or text.count("</think>") > 1 or
             text.count("<answer>") > 1 or text.count("</answer>") > 1):
             return 1.0  # Multiple/nested tags
-            
+
         return 0.0  # Perfect formatting
 
     @staticmethod
@@ -73,9 +73,9 @@ class AssessorModel:
         Splits the text into reasoning, response, and full text.
 
         The text should have the following format:
-        <thinking>
+        <think>
         The thinking goes here.
-        </thinking>
+        </think>
         <answer>
         The response goes here.
         </answer>
@@ -83,18 +83,18 @@ class AssessorModel:
         Models will often forget to put the last </answer> tag,
         so we want to be robust to this.
         """
-        reasoning_start = text.find("<thinking>")
-        reasoning_end = text.find("</thinking>")
+        reasoning_start = text.find("<think>")
+        reasoning_end = text.find("</think>")
         answer_start = text.find("<answer>")
         answer_end = text.find("</answer>")
 
         # Try to extract the thinking text
         # If the start and end are there, it's easy.
         if reasoning_start != -1 and reasoning_end != -1:
-            reasoning_text = text[reasoning_start + len("<thinking>"):reasoning_end]
+            reasoning_text = text[reasoning_start + len("<think>"):reasoning_end]
         # If the start is there but the end isn't, try to go to the start of the answer
         elif reasoning_start != -1 and answer_start != -1:
-            reasoning_text = text[reasoning_start + len("<thinking>"):answer_start]
+            reasoning_text = text[reasoning_start + len("<think>"):answer_start]
         # If the start was there and nothing else was there, go to the end of the text
         elif reasoning_start != -1:
             reasoning_text = text[reasoning_start:]
