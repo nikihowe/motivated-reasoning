@@ -1,11 +1,11 @@
-parent_config_to_override: "base_later.yaml"
-run_name: "later"
+parent_config_to_override: "base_safe.yaml"
+run_name: "safe"
 
 # Trajectory generation settings
-iterations: 20
+iterations: 10
 
 # Training settings
-learning_rate: 1e-5
+learning_rate: 5e-6
 
 # Influence model settings
 veto_prompt_type: "five_point"
@@ -13,8 +13,11 @@ veto_prompt_type: "five_point"
 # Formatting penalty settings
 formatting_penalty_scale_factor: 0.1
 
+# Ground truth settings
+use_ground_truth_scoring: true
+
 model_names:
   agent: "Qwen/Qwen3-8B"
   env: "Qwen/Qwen3-8B"
 
-env_class: "later-cot"
+env_class: "safe-cot"
