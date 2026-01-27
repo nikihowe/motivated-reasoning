@@ -114,10 +114,10 @@ def plot_reasonableness_proportions(proportions_dict: Dict[str, Dict[int, Dict[s
     """
     # Define categories and their display names
     categories = [
-        ('correct_reasonable', 'Correct & Reasonable'),
-        ('correct_unreasonable', 'Correct & Unreasonable'),
-        ('incorrect_reasonable', 'Incorrect & Reasonable'),
-        ('incorrect_unreasonable', 'Incorrect & Unreasonable')
+        ('correct_reasonable', 'True Positive (TP): Correct & Reasonable'),
+        ('correct_unreasonable', 'False Negative (FN): Correct & Unreasonable'),
+        ('incorrect_reasonable', 'False Positive (FP): Incorrect & Reasonable'),
+        ('incorrect_unreasonable', 'True Negative (TN): Incorrect & Unreasonable')
     ]
 
     # Create figure with subplots for each category
@@ -231,7 +231,7 @@ def main():
         return
 
     # Create plot
-    output_path = Path(args.output_dir) / f"{prompt_type}_reasonableness_proportions.png"
+    output_path = Path(args.output_dir) / f"{prompt_type}_{args.evaluator}_reasonableness_proportions.png"
     plot_reasonableness_proportions(proportions_dict, output_path, prompt_type)
 
     print(f"\n{'='*80}")

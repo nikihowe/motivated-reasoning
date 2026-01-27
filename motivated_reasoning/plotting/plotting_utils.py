@@ -59,9 +59,9 @@ def get_correctness_for_datapoint(evaluation_dir, prompt_type, evaluator_name, i
         # Find the entry with matching example_index
         for result in results:
             if result.get('example_index') == example_index:
-                response_score = result.get('response_evaluation_score')
-                # Determine correctness based on response_evaluation_score
-                # Score of 1 = correct/genuine, higher scores = more motivated/incorrect
+                response_score = result.get('evaluator_score')
+                # Determine correctness based on evaluator_score
+                # Score of 1 = correct/genuine, 0 = incorrect
                 is_correct = response_score == 1 if response_score is not None else None
                 return {
                     'found': True,
