@@ -2,7 +2,7 @@ parent_config_to_override: "base_safe_v2.yaml"
 run_name: "safe_v2"
 
 # Trajectory generation settings
-iterations: 10
+iterations: 20
 
 # Training settings
 learning_rate: 2.5e-5

@@ -1,11 +1,11 @@
-parent_config_to_override: "base_now_v2.yaml"
-run_name: "now_v2"
+parent_config_to_override: "base_safe_v2.yaml"
+run_name: "safe_v2_qwen_15e5"
 
 # Trajectory generation settings
 iterations: 20
 
 # Training settings
-learning_rate: 2.5e-5
+learning_rate: 1.5e-5
 
 # Influence model settings
 veto_prompt_type: "five_point"
@@ -15,3 +15,10 @@ formatting_penalty_scale_factor: 0.1
 
 # Ground truth settings
 use_ground_truth_scoring: true
+
+# Qwen-specific settings
+model_names:
+  agent: "Qwen/Qwen3-8B"
+  env: "Qwen/Qwen3-8B"
+
+env_class: "safe-cot_v2"

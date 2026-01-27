@@ -1,10 +1,10 @@
 parent_config_to_override: "base_tags.yaml"
-run_name: "harmbench_cot_tags"
+run_name: "harmbench_cot_tags_15e5"
 
 iterations: 20
 
 # Training settings
-learning_rate: 2.5e-5
+learning_rate: 1.5e-5
 
 # Influence model settings
 veto_prompt_type: "five_point"
