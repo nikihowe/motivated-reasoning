@@ -56,7 +56,7 @@ class BaseExperimentConfig:
     seed: Optional[int]
     override_initial_traj_path: Optional[str]
 
-    training_arg_keys = ["model_names"]
+    training_arg_keys = ["model_names", "reasoning_tag", "assistant_completion_format"]
 
     # Static data for training (e.g. HH)
     static_dataset_name: Optional[str]
@@ -64,6 +64,8 @@ class BaseExperimentConfig:
     
     # Formatting penalty settings
     formatting_penalty_scale_factor: Optional[float]
+    reasoning_tag: str
+    assistant_completion_format: str
 
     def __post_init__(self):
         # Convert frac_selected_trajs to a float if it's a string representing a fraction
@@ -119,6 +121,8 @@ class BaseExperimentConfig:
         # Set default values
         config_dict.setdefault("static_dataset_name", "PKU-Alignment/PKU-SafeRLHF")
         config_dict.setdefault("frac_static_data_points", 0)
+        config_dict.setdefault("reasoning_tag", "thinking")
+        config_dict.setdefault("assistant_completion_format", "auto")
 
         return cls.create_config(config_dict)
 
@@ -191,6 +195,7 @@ class BaseExperimentConfig:
             "uniform_random_reward": self.uniform_random_reward,
             "use_ground_truth_scoring": self.use_ground_truth_scoring,
             "formatting_penalty_scale_factor": self.formatting_penalty_scale_factor,
+            "reasoning_tag": self.reasoning_tag,
         }
 
     @property

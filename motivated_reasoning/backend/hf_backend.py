@@ -70,8 +70,13 @@ class HFBackend(Backend):
             self.lora_active = False
 
         if self.tokenizer.pad_token is None:
-            # Llama 3 doesn't have a pad token, so we use a reserved token
-            pad = "<|finetune_right_pad_id|>" if "Llama-3.1" in model_name else "<|reserved_special_token_198|>"
+            if "Llama-3.1" in model_name:
+                pad = "<|finetune_right_pad_id|>"
+            elif "qwen" in model_name.lower():
+                pad = "<|endoftext|>"
+            else:
+                # Llama 3 doesn't have a pad token, so we use a reserved token
+                pad = "<|reserved_special_token_198|>"
             self.pad_id = self.tokenizer.convert_tokens_to_ids(pad)
             self.tokenizer.pad_token = pad
             self.tokenizer.pad_token_id = self.pad_id
@@ -151,15 +156,8 @@ class HFBackend(Backend):
         assert type(chat_text) is BatchEncoding, "chat_text is not a tensor"
         chat_text = chat_text.to(self.device)
         output = self.model.generate(**chat_text, **generation_config).to("cpu")
-        if "llama" in self.model.config.model_type:
-            assistant_token_id = self.tokenizer.encode("<|end_header_id|>")[-1]
-
-        elif "gemma" in self.model.config.model_type:
-            assistant_token_id = self.tokenizer.encode("model")[-1]
-        start_idx = (output == assistant_token_id).nonzero(as_tuple=True)[1][-1]
-        if "gemma" in self.model.config.model_type:
-            start_idx += 1  # TODO this should probably be done for llama as well?
-        new_tokens = output[:, start_idx:]
+        prompt_length = chat_text["input_ids"].shape[1]
+        new_tokens = output[:, prompt_length:]
         decoded = self.tokenizer.batch_decode(new_tokens, skip_special_tokens=True)
         decoded = [m.strip() for m in decoded]
         return decoded

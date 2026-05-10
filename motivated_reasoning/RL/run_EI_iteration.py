@@ -30,6 +30,8 @@ class ScriptArguments:
     g_c_kwargs: Dict = field(default_factory=lambda: {"use_reentrant": False})
     lora_path: Optional[str] = field(default=None)
     across_iter_lr_mult_factor: Optional[float] = field(default=None)
+    reasoning_tag: str = field(default="thinking")
+    assistant_completion_format: str = field(default="auto")
 
 
 def train_sft():
@@ -65,8 +67,11 @@ def train_sft():
     assert tokenizer.padding_side == "right"
 
     def format_dataset(example):
+        from motivated_reasoning.reasoning_tags import render_reasoning_tags_in_messages
+
+        messages = render_reasoning_tags_in_messages(example["messages"], args.reasoning_tag)
         r = {
-            "text": tokenizer.apply_chat_template(example["messages"], tokenize=False),
+            "text": tokenizer.apply_chat_template(messages, tokenize=False),
             "num_hardcoded_msgs": example["num_hardcoded_msgs"],
         }
         return r

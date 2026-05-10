@@ -4,6 +4,44 @@ Chronological log of evaluations run, and how to reproduce or extend them.
 
 ---
 
+## 2026-05-10 — Qwen3 training support cleanup
+
+### Goal
+
+Port the intent of the old `niki/qwen` branch without merging its broad config/dataset churn.
+The old branch showed that Qwen support had been attempted, but its rollout extraction sliced on
+`<|im_end|>` and several Qwen configs still pointed at non-Qwen env prompt directories.
+
+### Changes made
+
+- Added configurable reasoning tags with existing configs defaulting to `thinking`.
+- Added `reasoning_tag: "think"` Qwen config path via `risky-cot-25-qwen.yaml`.
+- Added configurable assistant completion formatting with Qwen using `assistant_completion_format: "qwen"`.
+- Render agent prompts and training messages to the configured reasoning tag.
+- Updated formatting penalty and CoT splitting to accept both `<thinking>` and `<think>`.
+- Changed HF generation response extraction to slice from prompt length instead of model-specific
+  assistant marker tokens.
+- Added Qwen-specific KTO completion formatting because Qwen's `apply_chat_template` strips
+  `<think>...</think>` from assistant-only completions unless handled manually.
+
+### Smoke checks
+
+- `pytest tests/test_reasoning_tags.py` passed.
+- `py_compile` passed for touched training/backend/config modules.
+- `launch_training.py --config risky-cot-25-qwen.yaml --gpus 0 --only-load-config` loads and shows
+  `model_names={Qwen/Qwen3-8B, Qwen/Qwen3-8B}` with `reasoning_tag='think'`.
+- Tokenizer-only check confirmed manual Qwen completion formatting preserves `<think>reason</think>`,
+  while Qwen's assistant-only `apply_chat_template` drops it.
+- Short local Qwen HFBackend generation on GPU 2 no longer crashes and returned generated text without
+  prompt markers.
+
+### Notes
+
+The broader pytest target still has pre-existing failures in stale inference model-utils tests and
+JSON CoT stripping expectations unrelated to this Qwen patch.
+
+---
+
 ## 2026-05-10 — Paper plot and training reproducibility pass
 
 ### Goal

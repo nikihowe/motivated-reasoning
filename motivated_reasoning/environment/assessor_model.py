@@ -1,5 +1,11 @@
 from typing import List, Optional
 
+from motivated_reasoning.reasoning_tags import (
+    REASONING_TAG_ALIASES,
+    find_reasoning_pair,
+    tag_pair,
+)
+
 class AssessorModel:
     def __init__(
         self,
@@ -37,45 +43,49 @@ class AssessorModel:
                 del kwargs[kwarg]
 
     @staticmethod
-    def _get_formatting_penalty(text: str) -> float:
+    def _get_formatting_penalty(text: str, reasoning_tag: str = "thinking") -> float:
         """
         Penalizes the text for bad formatting.
         Returns a penalty between 0 (perfect) and 1 (worst possible).
 
-        Proper format: <thinking>...</thinking><answer>...</answer>
-        - Tags must be in the right order (thinking before answer)
+        Proper format: <reasoning_tag>...</reasoning_tag><answer>...</answer>
+        - Tags must be in the right order (reasoning before answer)
         - No nested tags allowed
         """
-        # Find all tag positions
-        thinking_open = text.find("<thinking>")
-        thinking_close = text.find("</thinking>")
+        # Find all tag positions. Accept the configured tag and the historical
+        # alias so old trajectories remain parseable.
+        matched_tag, thinking_open, thinking_close = find_reasoning_pair(text, reasoning_tag)
         answer_open = text.find("<answer>")
         answer_close = text.find("</answer>")
         
         # Check if we have the basic structure
-        if thinking_open == -1 or thinking_close == -1 or answer_open == -1 or answer_close == -1:
+        if matched_tag is None or thinking_close == -1 or answer_open == -1 or answer_close == -1:
             return 1.0  # Missing required tags
             
-        # Check correct order: <thinking> ... </thinking> <answer> ... </answer>
+        # Check correct order: reasoning tags before answer tags.
         if not (thinking_open < thinking_close < answer_open < answer_close):
             return 1.0  # Wrong order or nesting
             
         # Check for multiple tags (no nesting)
-        if (text.count("<thinking>") > 1 or text.count("</thinking>") > 1 or 
+        reasoning_tag_count = sum(
+            text.count(open_tag) + text.count(close_tag)
+            for open_tag, close_tag in (tag_pair(tag) for tag in REASONING_TAG_ALIASES)
+        )
+        if (reasoning_tag_count > 2 or 
             text.count("<answer>") > 1 or text.count("</answer>") > 1):
             return 1.0  # Multiple/nested tags
             
         return 0.0  # Perfect formatting
 
     @staticmethod
-    def _split_reasoning(text: str) -> tuple[str, str, str]:
+    def _split_reasoning(text: str, reasoning_tag: str = "thinking") -> tuple[str, str, str]:
         """
         Splits the text into reasoning, response, and full text.
 
         The text should have the following format:
-        <thinking>
+        <thinking> or <think>
         The thinking goes here.
-        </thinking>
+        </thinking> or </think>
         <answer>
         The response goes here.
         </answer>
@@ -83,18 +93,18 @@ class AssessorModel:
         Models will often forget to put the last </answer> tag,
         so we want to be robust to this.
         """
-        reasoning_start = text.find("<thinking>")
-        reasoning_end = text.find("</thinking>")
+        matched_tag, reasoning_start, reasoning_end = find_reasoning_pair(text, reasoning_tag)
         answer_start = text.find("<answer>")
         answer_end = text.find("</answer>")
+        open_tag_len = len(tag_pair(matched_tag)[0]) if matched_tag is not None else 0
 
         # Try to extract the thinking text
         # If the start and end are there, it's easy.
         if reasoning_start != -1 and reasoning_end != -1:
-            reasoning_text = text[reasoning_start + len("<thinking>"):reasoning_end]
+            reasoning_text = text[reasoning_start + open_tag_len:reasoning_end]
         # If the start is there but the end isn't, try to go to the start of the answer
         elif reasoning_start != -1 and answer_start != -1:
-            reasoning_text = text[reasoning_start + len("<thinking>"):answer_start]
+            reasoning_text = text[reasoning_start + open_tag_len:answer_start]
         # If the start was there and nothing else was there, go to the end of the text
         elif reasoning_start != -1:
             reasoning_text = text[reasoning_start:]

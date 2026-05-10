@@ -12,6 +12,7 @@ from motivated_reasoning.data_root import PROJECT_DATA
 from motivated_reasoning.environment_vectorized.environment_vectorized import VectorizedEnvironment
 from motivated_reasoning.environment_vectorized.trajectory_queue import TrajectoryQueue
 from motivated_reasoning.root import ENV_CONFIGS_DIR
+from motivated_reasoning.reasoning_tags import render_reasoning_tags
 from motivated_reasoning.utils.utils import load_yaml, model_name_to_backend_class, set_all_seeds
 
 
@@ -164,6 +165,7 @@ class TrajectoryGenerator:
             pm_length_penalty=self.pm_length_penalty,
             random_reward=self.env_args["uniform_random_reward"],
             formatting_penalty_scale_factor=self.env_args.get("formatting_penalty_scale_factor") or 1.0,
+            reasoning_tag=self.env_args.get("reasoning_tag", "thinking"),
             use_ground_truth_scoring=self.env_args.get("use_ground_truth_scoring", False),
         )
         return vec_env, self.agent
@@ -174,7 +176,10 @@ class TrajectoryGenerator:
             config_path = config_dir_or_file / "_master_config.yaml"
         else:
             config_path = str(config_dir_or_file) + ".yaml"
-        return load_yaml(config_path)["agent_config"]
+        agent_config = load_yaml(config_path)["agent_config"]
+        reasoning_tag = self.env_args.get("reasoning_tag")
+        agent_config["system_prompt"] = render_reasoning_tags(agent_config["system_prompt"], reasoning_tag)
+        return agent_config
 
     def _multiprocess_generate_trajectories(self, traj_iter_dir, agent_config, iter_step, eval):
         self.trajectory_queue.populate(iter_step=iter_step, eval=eval)

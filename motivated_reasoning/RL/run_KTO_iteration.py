@@ -33,6 +33,8 @@ class ScriptArguments:
     lora_path: Optional[str] = field(default=None)
     target_ratio: Optional[float] = field(default=None)
     across_iter_lr_mult_factor: Optional[float] = field(default=None)
+    reasoning_tag: str = field(default="thinking")
+    assistant_completion_format: str = field(default="auto")
 
 
 def train_kto():
@@ -64,12 +66,26 @@ def train_kto():
     assert tokenizer.padding_side == "right"
 
     def format_dataset(example):
+        from motivated_reasoning.reasoning_tags import render_reasoning_tags_in_messages
+
+        example["prompt"] = render_reasoning_tags_in_messages(example["prompt"], args.reasoning_tag)
+        example["completion"] = render_reasoning_tags_in_messages(example["completion"], args.reasoning_tag)
+
         if "gemma" in args.model_name:
             example["prompt"] = HFBackend.fix_messages_for_gemma(example["prompt"])
         example["prompt"] = tokenizer.apply_chat_template(
             example["prompt"], tokenize=False, add_generation_prompt=False
         )
-        if "gemma" in args.model_name:  # manual chat template since HF sucks
+        completion_format = args.assistant_completion_format
+        if completion_format == "auto":
+            if "gemma" in args.model_name:
+                completion_format = "gemma"
+            elif "qwen" in args.model_name.lower():
+                completion_format = "qwen"
+            else:
+                completion_format = "chat_template"
+
+        if completion_format == "gemma":  # manual chat template since HF sucks
             if len(example["completion"]) > 1:
                 raise ValueError("Completion should only have one message (probably)")
             for message in example["completion"]:
@@ -77,10 +93,19 @@ def train_kto():
                     example["completion"] = f"<start_of_turn>model\n{message['content']}<end_of_turn>"
                 else:
                     raise ValueError("Unsupported role: " + message["role"])
-        else:
+        elif completion_format == "qwen":
+            if len(example["completion"]) != 1:
+                raise ValueError("Completion should only have one message for Qwen KTO formatting")
+            message = example["completion"][0]
+            if message["role"] != "assistant":
+                raise ValueError("Unsupported role: " + message["role"])
+            example["completion"] = f"<|im_start|>assistant\n{message['content']}<|im_end|>\n"
+        elif completion_format == "chat_template":
             example["completion"] = tokenizer.apply_chat_template(
                 example["completion"], tokenize=False, add_generation_prompt=False
             )
+        else:
+            raise ValueError(f"Unsupported assistant_completion_format: {completion_format}")
         example["label"] = True if example["label"] == "True" else False
         return example
 
@@ -105,6 +130,8 @@ def train_kto():
             pad_token = "<|finetune_right_pad_id|>"
         elif "Llama-3" in args.model_name:
             pad_token = "<|reserved_special_token_198|>"
+        elif "qwen" in args.model_name.lower():
+            pad_token = "<|endoftext|>"
         else:
             raise ValueError("Pad token not found")
 

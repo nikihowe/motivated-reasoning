@@ -28,8 +28,10 @@ def setup_dataset_and_model(args, format_dataset, tokenizer):
     if getattr(model.config, "pad_token_id", None) is None:
         if "Llama-3.1" in args.model_name:
             pad_token = "<|finetune_right_pad_id|>"
-        elif "Llama-3":
+        elif "Llama-3" in args.model_name:
             pad_token = "<|reserved_special_token_198|>"
+        elif "qwen" in args.model_name.lower():
+            pad_token = "<|endoftext|>"
         else:
             raise ValueError("Pad token not found")
 

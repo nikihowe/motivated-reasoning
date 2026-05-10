@@ -29,6 +29,7 @@ class VectorizedEnvironment:
         pm_length_penalty: Optional[float] = None,
         random_reward: bool = False,
         formatting_penalty_scale_factor: float = 1.0,
+        reasoning_tag: str = "thinking",
         use_ground_truth_scoring: bool = False,
     ):
         """
@@ -52,6 +53,7 @@ class VectorizedEnvironment:
         self.pm_length_penalty = pm_length_penalty
         self.random_reward = random_reward
         self.formatting_penalty_scale_factor = formatting_penalty_scale_factor
+        self.reasoning_tag = reasoning_tag
         self.use_ground_truth_scoring = use_ground_truth_scoring
         
         # Print to verify the flags are being read correctly
@@ -200,7 +202,7 @@ class VectorizedEnvironment:
         for state in next_state_n:
             if not self.random_reward:
                 full_response = state.history[-1]["content"]
-                base_penalty = AssessorModel._get_formatting_penalty(full_response)
+                base_penalty = AssessorModel._get_formatting_penalty(full_response, reasoning_tag=self.reasoning_tag)
                 state.formatting_penalty = base_penalty * self.formatting_penalty_scale_factor
             else:
                 state.formatting_penalty = 0.0  # No penalty for random rewards
