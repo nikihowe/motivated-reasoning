@@ -19,7 +19,7 @@ import numpy as np
 from typing import Dict, List, Tuple
 
 
-def load_iteration_data(base_path: Path, eval_target: str, evaluator: str) -> Dict[int, Dict]:
+def load_iteration_data(base_path: Path, eval_target: str, evaluator: str, reasonableness_version: str = None) -> Dict[int, Dict]:
     """
     Load summary data for all iterations of a specific eval_target.
 
@@ -27,11 +27,16 @@ def load_iteration_data(base_path: Path, eval_target: str, evaluator: str) -> Di
         base_path: Base path to the analysis directory (should be at prompt_type level)
         eval_target: Eval target name (e.g., constitution_and_response)
         evaluator: Evaluator name (should be gemini-25-flash-lite)
+        reasonableness_version: Version of reasonableness prompt (e.g., simple_reasonable_recommendation_v2 or v3)
 
     Returns:
         Dictionary mapping iteration number to summary data
     """
     eval_target_path = base_path / eval_target / f"evaluator-{evaluator}"
+
+    # If reasonableness_version is specified, add it to the path
+    if reasonableness_version:
+        eval_target_path = eval_target_path / reasonableness_version
 
     if not eval_target_path.exists():
         print(f"Warning: Path does not exist: {eval_target_path}")
@@ -174,10 +179,12 @@ def main():
     )
     parser.add_argument('analysis_dir', type=str,
                        help='Path to analysis directory at prompt_type level (e.g., analysis_output/reasonableness/now-09_20_201429/later_constitutional_cot_v2)')
-    parser.add_argument('--output-dir', default='plots/reasonableness_proportions',
-                       help='Output directory for plots (default: plots/reasonableness_proportions)')
+    parser.add_argument('--output-base-dir', default='plots/reasonableness_proportions',
+                       help='Base output directory for plots (default: plots/reasonableness_proportions)')
     parser.add_argument('--evaluator', default='gemini-25-flash-lite',
                        help='Evaluator name (default: gemini-25-flash-lite)')
+    parser.add_argument('--reasonableness-version', default=None,
+                       help='Reasonableness version (e.g., simple_reasonable_recommendation_v2 or v3). If not specified, uses old directory structure.')
 
     args = parser.parse_args()
 
@@ -187,12 +194,24 @@ def main():
         print(f"Error: Analysis directory does not exist: {analysis_path}")
         return
 
-    # Detect prompt_type from path
-    prompt_type = analysis_path.name
+    # Parse the path to extract experiment_dir and prompt_type
+    # Expected path: analysis_output/reasonableness/EXPERIMENT_DIR/PROMPT_TYPE
+    parts = analysis_path.parts
+    try:
+        reasonableness_idx = parts.index('reasonableness')
+        experiment_dir = parts[reasonableness_idx + 1]
+        prompt_type = parts[reasonableness_idx + 2]
+    except (ValueError, IndexError):
+        print(f"Warning: Could not parse experiment_dir from path. Using fallback.")
+        experiment_dir = 'unknown'
+        prompt_type = analysis_path.name
 
     print(f"Loading data from: {analysis_path}")
+    print(f"Experiment: {experiment_dir}")
     print(f"Prompt type: {prompt_type}")
     print(f"Evaluator: {args.evaluator}")
+    if args.reasonableness_version:
+        print(f"Reasonableness version: {args.reasonableness_version}")
 
     # Load data for both eval targets
     eval_targets = ['constitution_and_response', 'constitution_and_reasoning_and_response']
@@ -203,7 +222,7 @@ def main():
         print(f"\nProcessing {eval_target}...")
 
         # Load iteration data
-        iteration_data = load_iteration_data(analysis_path, eval_target, args.evaluator)
+        iteration_data = load_iteration_data(analysis_path, eval_target, args.evaluator, args.reasonableness_version)
 
         if not iteration_data:
             print(f"  No data found for {eval_target}")
@@ -230,8 +249,21 @@ def main():
         print("Error: No data found to plot!")
         return
 
-    # Create plot
-    output_path = Path(args.output_dir) / f"{prompt_type}_{args.evaluator}_reasonableness_proportions.png"
+    # Determine which eval_target has data (prefer constitution_and_reasoning_and_response)
+    if 'constitution_and_reasoning_and_response' in proportions_dict:
+        eval_target_for_path = 'constitution_and_reasoning_and_response'
+    else:
+        eval_target_for_path = list(proportions_dict.keys())[0]
+
+    # Create output path with directory structure
+    # plots/EXPERIMENT_DIR/PROMPT_TYPE/EVAL_TARGET/evaluator-EVALUATOR/REASONABLENESS_VERSION/reasonableness_proportions.png
+    output_path = Path(args.output_base_dir) / experiment_dir / prompt_type / eval_target_for_path / f"evaluator-{args.evaluator}"
+
+    if args.reasonableness_version:
+        output_path = output_path / args.reasonableness_version
+
+    output_path = output_path / "reasonableness_proportions.png"
+
     plot_reasonableness_proportions(proportions_dict, output_path, prompt_type)
 
     print(f"\n{'='*80}")

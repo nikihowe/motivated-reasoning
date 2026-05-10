@@ -64,33 +64,36 @@ def discover_experiments(evaluation_dir: str) -> List[Dict[str, str]]:
 
                 evaluator_name = evaluator_dir.name.replace("evaluator-", "")
 
-                # Look for simple_reasonable_recommendation_v2 directories
-                reasonableness_dir = evaluator_dir / "simple_reasonable_recommendation_v2"
-                if not reasonableness_dir.exists():
-                    continue
-
-                # Find iterations
-                for iteration_dir in reasonableness_dir.iterdir():
-                    if not iteration_dir.is_dir() or not iteration_dir.name.startswith("iteration-"):
+                # Look for simple_reasonable_recommendation_v2 or v3 directories
+                for version in ["simple_reasonable_recommendation_v2", "simple_reasonable_recommendation_v3"]:
+                    reasonableness_dir = evaluator_dir / version
+                    if not reasonableness_dir.exists():
                         continue
 
-                    iteration = iteration_dir.name.replace("iteration-", "")
+                    # Find iterations
+                    for iteration_dir in reasonableness_dir.iterdir():
+                        if not iteration_dir.is_dir() or not iteration_dir.name.startswith("iteration-"):
+                            continue
 
-                    # Check if there are JSON files
-                    json_files = list(iteration_dir.glob("*eval*.json"))
-                    if json_files:
-                        experiments.append({
-                            'prompt_type': prompt_type,
-                            'eval_target': eval_target,
-                            'evaluator': evaluator_name,
-                            'iteration': iteration
-                        })
+                        iteration = iteration_dir.name.replace("iteration-", "")
+
+                        # Check if there are JSON files
+                        json_files = list(iteration_dir.glob("*eval*.json"))
+                        if json_files:
+                            experiments.append({
+                                'prompt_type': prompt_type,
+                                'eval_target': eval_target,
+                                'evaluator': evaluator_name,
+                                'iteration': iteration,
+                                'reasonableness_version': version
+                            })
 
     print(f"Discovered {len(experiments)} experiment configurations with reasonableness evaluations")
     return experiments
 
 
-def load_correctness_data(evaluation_dir: str, prompt_type: str, evaluator: str, iteration: str) -> Dict[int, Dict]:
+def load_correctness_data(evaluation_dir: str, prompt_type: str, evaluator: str, iteration: str,
+                         eval_prompt_dir: str = "simple_correct_choice") -> Dict[int, Dict]:
     """
     Load correctness evaluation data (response scores).
     Always uses flash-lite evaluator for correctness judgments regardless of which evaluator
@@ -101,13 +104,15 @@ def load_correctness_data(evaluation_dir: str, prompt_type: str, evaluator: str,
         prompt_type: Prompt type name
         evaluator: Evaluator name (ignored - always uses flash-lite)
         iteration: Iteration identifier
+        eval_prompt_dir: Evaluation prompt directory ('simple_correct_choice' for ground truth,
+                        'simple_compliance' for refusal evaluation)
 
     Returns:
         Dictionary mapping example_index to correctness data
     """
     # Always use flash-lite evaluator for correctness data
     correctness_path = (Path("evaluation_output") / evaluation_dir / prompt_type /
-                       "response" / "evaluator-gemini-25-flash-lite" / "simple_correct_choice" /
+                       "response" / "evaluator-gemini-25-flash-lite" / eval_prompt_dir /
                        f"iteration-{iteration}")
 
     if not correctness_path.exists():
@@ -142,9 +147,9 @@ def load_correctness_data(evaluation_dir: str, prompt_type: str, evaluator: str,
 
 
 def load_reasonableness_data(evaluation_dir: str, prompt_type: str, eval_target: str,
-                           evaluator: str, iteration: str) -> Dict[int, Dict]:
+                           evaluator: str, iteration: str, reasonableness_version: str = "simple_reasonable_recommendation_v2") -> Dict[int, Dict]:
     """
-    Load reasonableness evaluation data (simple_reasonable_recommendation_v2 scores).
+    Load reasonableness evaluation data (simple_reasonable_recommendation_v2 or v3 scores).
 
     Args:
         evaluation_dir: Name of the evaluation directory
@@ -152,12 +157,13 @@ def load_reasonableness_data(evaluation_dir: str, prompt_type: str, eval_target:
         eval_target: Eval target name (e.g., system_and_response, constitution_and_response)
         evaluator: Evaluator name
         iteration: Iteration identifier
+        reasonableness_version: Version of reasonableness prompt (v2 or v3)
 
     Returns:
         Dictionary mapping example_index to reasonableness data
     """
     reasonableness_path = (Path("evaluation_output") / evaluation_dir / prompt_type / eval_target /
-                          f"evaluator-{evaluator}" / "simple_reasonable_recommendation_v2" /
+                          f"evaluator-{evaluator}" / reasonableness_version /
                           f"iteration-{iteration}")
 
     if not reasonableness_path.exists():
@@ -192,13 +198,16 @@ def load_reasonableness_data(evaluation_dir: str, prompt_type: str, eval_target:
 
 
 def match_and_categorize_datapoints(correctness_data: Dict[int, Dict],
-                                  reasonableness_data: Dict[int, Dict]) -> Tuple[Dict, List[Dict]]:
+                                  reasonableness_data: Dict[int, Dict],
+                                  invert_correctness: bool = False) -> Tuple[Dict, List[Dict]]:
     """
     Match datapoints by example_index and categorize by correctness and reasonableness.
 
     Args:
         correctness_data: Dictionary mapping example_index to correctness data
         reasonableness_data: Dictionary mapping example_index to reasonableness data
+        invert_correctness: If True, invert correctness scores (for compliance evaluation
+                           where 0=refused=correct, 1=complied=incorrect)
 
     Returns:
         Tuple of (categorized_data, skipped_datapoints)
@@ -227,6 +236,11 @@ def match_and_categorize_datapoints(correctness_data: Dict[int, Dict],
 
         # Check if we have valid correctness information
         correctness_score = correctness_info.get('evaluator_score')
+
+        # Invert if needed (for compliance evaluation: 0=refused=correct, 1=complied=incorrect)
+        if invert_correctness and correctness_score in [0, 1]:
+            correctness_score = 1 - correctness_score
+
         if correctness_score not in [0, 1]:
             # Skip datapoints without clear correctness information
             skipped_datapoint = {
@@ -385,15 +399,16 @@ def process_experiment(config: Dict[str, str], output_base: str) -> bool:
     print(f"\nProcessing: {config['prompt_type']}/{config['eval_target']}/{config['evaluator']}/iteration-{config['iteration']}")
 
     # Load correctness data
+    eval_prompt_dir = config.get('eval_prompt_dir', 'simple_correct_choice')
     correctness_data = load_correctness_data(
         config['evaluation_dir'], config['prompt_type'],
-        config['evaluator'], config['iteration']
+        config['evaluator'], config['iteration'], eval_prompt_dir
     )
 
     # Load reasonableness data
     reasonableness_data = load_reasonableness_data(
         config['evaluation_dir'], config['prompt_type'], config['eval_target'],
-        config['evaluator'], config['iteration']
+        config['evaluator'], config['iteration'], config.get('reasonableness_version', 'simple_reasonable_recommendation_v2')
     )
 
     if not correctness_data and not reasonableness_data:
@@ -401,13 +416,16 @@ def process_experiment(config: Dict[str, str], output_base: str) -> bool:
         return False
 
     # Match and categorize datapoints
+    invert_correctness = config.get('invert_correctness', False)
     categorized_data, skipped_data = match_and_categorize_datapoints(
-        correctness_data, reasonableness_data
+        correctness_data, reasonableness_data, invert_correctness
     )
 
-    # Create output path
+    # Create output path - include reasonableness version to keep v2 and v3 separate
+    reasonableness_version = config.get('reasonableness_version', 'simple_reasonable_recommendation_v2')
     output_path = (Path(output_base) / config['evaluation_dir'] / config['prompt_type'] /
-                  config['eval_target'] / f"evaluator-{config['evaluator']}" / f"iteration-{config['iteration']}")
+                  config['eval_target'] / f"evaluator-{config['evaluator']}" / reasonableness_version /
+                  f"iteration-{config['iteration']}")
 
     # Save results
     save_categorized_data(categorized_data, skipped_data, output_path, config)
@@ -429,6 +447,10 @@ def main():
                        help='Specific evaluator to process (optional)')
     parser.add_argument('--iteration', type=str,
                        help='Specific iteration to process (optional)')
+    parser.add_argument('--eval-prompt-dir', default='simple_correct_choice',
+                       help='Correctness evaluation prompt directory (default: simple_correct_choice, use simple_compliance for HarmBench)')
+    parser.add_argument('--invert-correctness', action='store_true',
+                       help='Invert correctness scores (use for HarmBench where 0=refused=correct)')
 
     args = parser.parse_args()
 
@@ -445,6 +467,8 @@ def main():
     filtered_experiments = []
     for exp in experiments:
         exp['evaluation_dir'] = args.evaluation_dir  # Add for convenience
+        exp['eval_prompt_dir'] = args.eval_prompt_dir  # Add correctness evaluation type
+        exp['invert_correctness'] = args.invert_correctness  # Add inversion flag
 
         if args.prompt_type and exp['prompt_type'] != args.prompt_type:
             continue

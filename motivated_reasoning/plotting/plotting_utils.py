@@ -18,7 +18,7 @@ def nice_format(experiment_dir_name: str) -> str:
     elif "CoT" in experiment_dir_name:
         return "Compliance"
     elif "constitutional_cot" in experiment_dir_name:
-        return "Refusal"
+        return "Safe Response"
     else:
         return "Unknown"
 
