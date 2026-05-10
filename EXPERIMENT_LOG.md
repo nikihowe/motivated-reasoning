@@ -40,6 +40,13 @@ The old branch showed that Qwen support had been attempted, but its rollout extr
 The broader pytest target still has pre-existing failures in stale inference model-utils tests and
 JSON CoT stripping expectations unrelated to this Qwen patch.
 
+### Follow-up before launch
+
+The 2026-05-10 Llama Risky verification training job `1132660` generated iteration-0 trajectories but
+failed at the first KTO fine-tuning step because installed TRL expects `processing_class=tokenizer`
+instead of the older `tokenizer=tokenizer` argument to `KTOTrainer`. Patched `run_KTO_iteration.py`
+accordingly before launching Qwen.
+
 ---
 
 ## 2026-05-10 — Paper plot and training reproducibility pass
