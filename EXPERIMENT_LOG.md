@@ -4,6 +4,49 @@ Chronological log of evaluations run, and how to reproduce or extend them.
 
 ---
 
+## 2026-05-10 — Qwen3 risky-cot training smoke/full run
+
+Run: `risky_qwen-05_10_160840`
+
+Config: `risky-cot-25-qwen.yaml`
+
+Purpose: test whether Qwen3-8B can reproduce the risky-cot training setup using Qwen-native `<think>` formatting while keeping the experiment prompt/semantics unchanged.
+
+Initial 4-GPU job: `1132676`
+
+- Launched on `gan.ist.berkeley.edu` with 4 GPUs.
+- Completed checkpoint `0` and checkpoint `1`.
+- Checkpoint 1 path: `data/models/risky_qwen-05_10_160840/1/checkpoint-7`
+- Iteration 1 stats: avg reward `0.57`, avg influence `1.62`, top-n reward `0.82`, top-n influence `1.75`.
+- Cancelled during iteration 2 trajectory generation because generation was the bottleneck and the run was unlikely to finish 10 iterations within 9 hours.
+
+Resumed 8-GPU job: `1132711`
+
+Command:
+
+```bash
+CONDA_DEFAULT_ENV=motivated_reasoning_env \
+PATH=/nas/ucb/nikihowe/conda/envs/motivated_reasoning_env/bin:$PATH \
+bash motivated_reasoning/training/slurm/autocopy_and_sbatch.sh \
+  --config-name risky-cot-25-qwen \
+  --cpus 8 \
+  --mem 140gb \
+  --gpus 8 \
+  --gpu-type noshards \
+  --time 9:00:00 \
+  --qos default \
+  --timestamp 05_10_160840
+```
+
+Notes:
+
+- Added `--timestamp` support to `motivated_reasoning/training/slurm/autocopy_and_sbatch.sh` so this launch resumes the same run rather than starting a new timestamp.
+- Pre-submit config check saw GPUs `[0, 1, 2, 3, 4, 5, 6, 7]`.
+- Gradient accumulation changed from `4` on 4 GPUs to `2` on 8 GPUs, preserving effective batch size `32`.
+- At submission, job `1132711` was pending with reason `(Priority)`.
+
+---
+
 ## 2026-05-10 — Qwen3 training support cleanup
 
 ### Goal

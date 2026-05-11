@@ -32,6 +32,8 @@ motivated_reasoning/
     prompts/          # inference prompt .txt files
   plotting/           # plot_evaluation.py, plot_reasonableness_proportions_paper.py, etc.
   visualization/      # study_reasonableness_differences.py  ← analysis step
+scripts/              # paper plot/eval reproducibility scripts
+docs/                 # runbooks for active/experimental workflows
 ```
 
 ---
@@ -115,17 +117,34 @@ All live in `motivated_reasoning/evaluation/prompts/`:
 
 ---
 
-## Current status (as of 2026-04-02)
+## Current status (as of 2026-05-10)
 
-### Completed
+### Paper reproducibility
+
+- Paper plots can be regenerated with `./scripts/reproduce_paper_plots.sh`.
+- The eval/analysis commands needed for paper plot data are enumerated by
+  `./scripts/reproduce_paper_eval_data.sh`; it is dry-run by default and only launches jobs with
+  `--execute`.
+- Paper plots use baseline plus RL iterations 0–9. Avoid broad auto-discovery eval scripts for paper
+  reproduction unless intentionally including extra Risky/Safe iterations 10–19.
+- The current best motivated-reasoning average plot uses the completed Risky
+  `copy_constitution_motivated_reasoning_v3` data, not the older backup with missing early judge outputs.
+
+### Qwen3 training experiment
+
+- Qwen3 support is documented in `docs/qwen_training_runbook.md`.
+- Active run: `risky_qwen-05_10_160840`.
+- Completed checkpoint 1: `data/models/risky_qwen-05_10_160840/1/checkpoint-7`.
+- Initial 4-GPU job `1132676` was cancelled during iteration 2 generation.
+- 8-GPU resume job `1132711` was submitted with `--timestamp 05_10_160840`.
+- The SLURM launcher `motivated_reasoning/training/slurm/autocopy_and_sbatch.sh` now accepts
+  `--timestamp` so resumed runs preserve the original run name.
+
+### Completed / historical
 - `copy_constitution_motivated_reasoning_v3` / `constitution_and_reasoning` evals exist for all 5 experiments (iterations 0–9 + base), evaluator: `gemini-25-flash-lite`
 - Gemini judge quality check: <0.8% error rate across all experiments; no "no reasoning + no rating" failures
 - risky→safe iterations 0–4 were previously incomplete (16–32 examples instead of 58); rerun completed with full 58 examples each
 - risky→safe iteration-base inference was incomplete (32 examples); rerun completed with 58 examples; eval rerun submitted (job 1084858, running)
-
-### In progress
-- `copy_constitution_motivated_reasoning_v3` iteration-base eval for risky→safe: job 1084858 running
-- `copy_constitution_motivated_reasoning_v3_for_rebuttal` / `constitution_and_reasoning` for now→later: jobs 1082639–1082649 (completed)
 
 ### Not yet run (v3_for_rebuttal)
 - later→now, risky→safe, safe→risky, harmbench — commands in EXPERIMENT_LOG.md
@@ -135,6 +154,9 @@ All live in `motivated_reasoning/evaluation/prompts/`:
 ## Important files
 
 - `EXPERIMENT_LOG.md` — chronological log of evaluations run, commands, and status table
+- `docs/qwen_training_runbook.md` — Qwen3 training/resume runbook and current job IDs
+- `scripts/reproduce_paper_plots.sh` — regenerate the paper plots from existing artifacts
+- `scripts/reproduce_paper_eval_data.sh` — dry-run or execute the eval/analysis commands needed by paper plots
 - `REASONABLENESS_WORKFLOW.md` — workflow doc (slightly out of date: uses 3-8b-instruct, we now use gemini)
 - `run_constitution_response_analysis.sh` — runs study_reasonableness_differences.py for all 4 main experiments
 

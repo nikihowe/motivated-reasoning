@@ -12,6 +12,7 @@
 # - Submits the SLURM job.
 # NOTE: it requires a bunch of variables to be set in the environment, which should be 
 # done by the script that calls this one.
+# Pass --timestamp MM_DD_HHMMSS to resume an existing run instead of creating a new run name.
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -42,6 +43,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --qos)
             SLURM_QOS="$2"
+            shift 2
+            ;;
+        --timestamp)
+            TIMESTAMP="$2"
             shift 2
             ;;
         *)
@@ -97,8 +102,8 @@ else
     QOS=""
 fi
 
-# Generate timestamp
-TIMESTAMP=$(date +"%m_%d_%H%M%S")
+# Generate timestamp unless one was provided for resuming an existing run.
+TIMESTAMP=${TIMESTAMP:-$(date +"%m_%d_%H%M%S")}
 JOB_NAME="${CONFIG_NAME}_${TIMESTAMP}"
 TEMP_DIR="$PROJ_DIR/tmp/tmp_$TIMESTAMP"
 
