@@ -136,7 +136,8 @@ All live in `motivated_reasoning/evaluation/prompts/`:
 - Active run: `risky_qwen-05_10_160840`.
 - Completed checkpoint 1: `data/models/risky_qwen-05_10_160840/1/checkpoint-7`.
 - Initial 4-GPU job `1132676` was cancelled during iteration 2 generation.
-- 8-GPU resume job `1132711` was submitted with `--timestamp 05_10_160840`.
+- 8-GPU resume job `1132711` was cancelled while pending because SLURM estimated a multi-day wait.
+- 4-GPU, 15-hour resume job `1132730` was submitted with `--timestamp 05_10_160840`.
 - The SLURM launcher `motivated_reasoning/training/slurm/autocopy_and_sbatch.sh` now accepts
   `--timestamp` so resumed runs preserve the original run name.
 

@@ -44,6 +44,34 @@ Notes:
 - Pre-submit config check saw GPUs `[0, 1, 2, 3, 4, 5, 6, 7]`.
 - Gradient accumulation changed from `4` on 4 GPUs to `2` on 8 GPUs, preserving effective batch size `32`.
 - At submission, job `1132711` was pending with reason `(Priority)`.
+- SLURM estimated start was `2026-05-13T16:23:59`, so we cancelled it and resubmitted as a
+  4-GPU, 15-hour resume job.
+
+Resumed 4-GPU, 15-hour job: `1132730`
+
+Command:
+
+```bash
+CONDA_DEFAULT_ENV=motivated_reasoning_env \
+PATH=/nas/ucb/nikihowe/conda/envs/motivated_reasoning_env/bin:$PATH \
+bash motivated_reasoning/training/slurm/autocopy_and_sbatch.sh \
+  --config-name risky-cot-25-qwen \
+  --cpus 8 \
+  --mem 100gb \
+  --gpus 4 \
+  --gpu-type noshards \
+  --time 15:00:00 \
+  --qos default \
+  --timestamp 05_10_160840
+```
+
+Notes:
+
+- Generated SBATCH script requests `#SBATCH --gpus=4`, `#SBATCH --time=15:00:00`,
+  `#SBATCH --mem=100gb`.
+- Pre-submit config check runs on the login node and still sees 8 visible GPUs; the SLURM job itself
+  should see only the allocated 4 GPUs once it starts.
+- At submission, job `1132730` was pending with reason `(Priority)`.
 
 ---
 

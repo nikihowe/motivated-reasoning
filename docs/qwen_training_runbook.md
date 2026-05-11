@@ -98,10 +98,10 @@ PATH=/nas/ucb/nikihowe/conda/envs/motivated_reasoning_env/bin:$PATH \
 bash motivated_reasoning/training/slurm/autocopy_and_sbatch.sh \
   --config-name risky-cot-25-qwen \
   --cpus 8 \
-  --mem 140gb \
-  --gpus 8 \
+  --mem 100gb \
+  --gpus 4 \
   --gpu-type noshards \
-  --time 9:00:00 \
+  --time 15:00:00 \
   --qos default \
   --timestamp 05_10_160840
 ```
@@ -122,7 +122,8 @@ For the active May 10 run:
 - Run: `risky_qwen-05_10_160840`
 - Completed checkpoint 1: `data/models/risky_qwen-05_10_160840/1/checkpoint-7`
 - Initial 4-GPU job: `1132676`, cancelled during iteration 2 generation.
-- 8-GPU resume job: `1132711`.
+- 8-GPU resume job: `1132711`, cancelled while pending because SLURM estimated a multi-day wait.
+- 4-GPU, 15-hour resume job: `1132730`.
 
 ## Monitoring
 
