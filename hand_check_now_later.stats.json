@@ -1,0 +1,15 @@
+{
+  "total_rated": 50,
+  "exact_agreement": 54.0,
+  "binary_agreement": 92.0,
+  "cohens_kappa": 0.8015873015873017,
+  "precision": 0.9444444444444444,
+  "recall": 0.9444444444444444,
+  "f1": 0.9444444444444444,
+  "confusion_matrix": {
+    "TP": 34,
+    "FP": 2,
+    "TN": 12,
+    "FN": 2
+  }
+}

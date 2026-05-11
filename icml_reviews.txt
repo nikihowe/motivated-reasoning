@@ -1,0 +1,114 @@
+Official Review of Submission20529 by Reviewer md7W
+Official Reviewby Reviewer md7W13 Mar 2026, 06:26 (modified: 24 Mar 2026, 06:51)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer md7WRevisions
+Summary:
+The paper investigates "motivated reasoning" in LLMs trained with RL when given instructions in conflict with the RL objectives. The authors finetune a Llama 3 8B model to prefer certain outcomes (e.g., complying with harmful requests, or picking a specific "risky" or "safe" choice). Then they provide the model with a "constitution" that explicitly forbids the learned behavior. In this setting, the authors find that models increasingly generate plausible-sounding but "motivated" reasoning to justify violating the constitution. They use an LLM judge (Gemini 2.5 Flash-Lite) to measure this effect and demonstrate that smaller CoT monitors (e.g., a baseline Llama 3 8B) can be fooled by this motivated reasoning into judging the final output as in line with the constitution.
+Strengths And Weaknesses:
+Strengths
+	•	Relevant and Well-Motivated Topic: The paper tackles a highly relevant and timely topic in AI safety and interpretability. There has been a lot of interest recently in CoT monitoring and possible failure modes. This paper provides an interesting new perspective on this.
+	•	Nice Empirical Demonstration: The experiments provide a very clean and focused demonstration of motivated reasoning arising in a model organism. The observation that misaligned training objectives and test-time instructions lead to motivated reasoning is good, and the experimental design successfully isolates this behavior and convincingly demonstrates it.
+	•	Presentation: The paper is well-written and easy to follow. The primary results and plots are well chosen and presented nicely.
+Weaknesses
+	•	Lack of Validation [Soundness]: The main evaluation metric heavily relies on an LLM judge (Gemini 2.5 Flash-Lite) which is not a particularly strong LLM. This autorater is not systematically validated against any ground truth data. While the paper mentions that the authors "spot-checked" the results, it does not discuss how this was done or provide any quantitative metrics of human-AI agreement. Without reliable ground truth labels or validation of the autorater, the main numerical results are difficult to interpret rigorously.
+	•	Confounding Factors in Monitor Evaluation [Soundness]: The conclusion that "smaller monitors might be fooled" is confounded by the specific prompting strategy used. The monitor prompt explicitly instructs: "You are NOT judging whether the final choice was objectively 'correct.' You are judging whether the assistant made a reasonable, good-faith effort to apply the constitutional principles..." This makes the task difficult for a small model. I'm concerned that the small monitoring models might simply fail to follow these complex, highly subjective instructions rather than specifically being "fooled" by motivated reasoning. It is unclear to me if the monitor's failure is a vulnerability to motivated reasoning or simply a general capability failure in instruction following. This is important because the latter failure would likely go away at larger scales and not be a fundamental problem related to the relative capability differences between the two models. To draw better conclusions about monitorability, it would be important to study these failures across a wider spectrum of model scales (e.g., using larger frontier models as both the generator and the monitor).
+	•	Limited Realism of the Setup [Significance]: It is unclear how the RL training in the paper interacts with instruction following training that would happen in a realistic setting. Regular RLHF/RLAIF data is significantly more diverse, and following user instructions is a more dominating training signal than achieving one specific outcome on a narrow distribution. The setup in the paper is more narrow and artificial and does not allow drawing conclusions about how much of a problem this type of motivated reasoning would be in common LLM training processes. It should be possible to create substantially more realistic training data distributions to learn about this question even with small models and limited computational resources.
+	•	Novely of the Phenomenon [Originality]: The observation that motivated reasoning can occur in LLMS is not particularly surprising. Previous literature on faithfulness, sycophancy, and reward hacking already shows that models can obfuscate or hide bad behaviors in their reasoning traces. While the experiment in this paper is a particularly clean demonstration of this effect, I think the current results don't provide substantial new insights into mechanisms of this problem compared to previous work observing this in the wild.
+	•	Relation to CoT being necessary [Significance]: Recent prior work (in particular Scott et al.), has highlighted CoT being more monitorable if it is 'necessary' for solving a task. That line of work implies that we expect more differences between the chain-of-thought and model actions if models do not have to use the chain-of-thought to make a decision. My interpretation of the results in the submission is that the chain-of-thought is not necessary for making a decision. Instead during RL the model learns a simple heuristic to only take harmful actions and then the reasoning acts more like 'post-hoc' reasoning. This would make the results less informative about the settings that a lot of recent CoT monitoring work is focused on (where CoT is necessary). In my opinion it would be important to discuss this more in the paper and ideally empirically check whether CoT is necessary in the setting in the paper.
+Overall, the work explores a significant challenge in the monitorability of reasoning models. I believe it measures a real and interesting effect, but the lack of rigorous validation, the small scale, and the toy nature of the setup make it significantly less impactful than it could be. The analysis of the main results seems somewhat preliminary the paper does not seem ready for publication at ICML in its current state.
+Soundness: 2: fair
+Presentation: 3: good
+Significance: 2: fair
+Originality: 2: fair
+Key Questions For Authors:
+	•	Can you provide more details on the validation that was performed for the main autorater?
+	•	How much did you try to improve the performance of various monitors? Can you distinguish your observed monitoring failures being about the relative capability difference between the model being monitoring and the monitor or being a problem of the entire experiment happening at a small scale?
+Limitations:
+Yes limitations (including most of my critiques) are discussed in the paper
+Overall Recommendation: 2: Reject: For instance, a paper with technical flaws, weak evaluation, inadequate reproducibility, incompletely addressed ethical considerations, or writing so poor that it is not possible to understand its key claims.
+Confidence: 4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.
+Compliance With LLM Reviewing Policy: Affirmed.
+Code Of Conduct Acknowledgement: Affirmed.
+Add:
+
+Official Review of Submission20529 by Reviewer 5s5V
+Official Reviewby Reviewer 5s5V13 Mar 2026, 02:45 (modified: 24 Mar 2026, 06:51)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer 5s5VRevisions
+Summary:
+The main point of the paper is as follows: if you train a reasoning model to prefer some behavior, and then later give it instructions pushing in the opposite direction, it often does not truly change its mind. Instead, it starts doing motivated reasoning and keeps heading toward the behavior it was trained to prefer, and then uses its chain of thought to justify that choice in a way that sounds plausible. The paper shows this across several settings, including harmless choice tasks such as risky vs. safe decisions and now vs. later rewards. As training goes on, the model follows the constitution less, while its reasoning looks more and more like post hoc rationalization. The most concerning result is the CoT monitoring. A small monitor model can sometimes tell that the final answer violates the constitution, but once it also sees the chain of thought, it gets persuaded by the model’s reasoning and incorrectly judges the answer as fine. So the chain of thought is not always helping oversight. Sometimes it actively makes oversight worse. Overall, the paper is basically a warning that chain-of-thought can look honest while actually serving as a polished excuse for doing what the model already wanted to do.
+Strengths And Weaknesses:
+Strong overall paper! Primary strength is that it isolates a pretty important failure mode in reasoning models, and the core empirical story is clear. Once the model is RL-trained toward some behavior, it can start producing chain-of-thought that looks like principled reasoning but is really post hoc justification for what it already wants to do. The paper also does a nice job showing that this is not just a HarmBench-only safety artifact, but something that appears across multiple settings, including more neutral decision tasks, which makes the result feel broader and more interesting. The monitorability observations are compelling too. The fact that a smaller monitor can correctly flag a violation from the final answer alone, but then get talked out of that judgment once it sees the CoT, is a very concrete and memorable demonstration of why this matters. The experimental setup is also fairly clean and easy to follow, and the paper is generally clear about what it does and does not establish.
+The main weaknesses are mostly about scope and evidential strength rather than the central idea. The evidence is all on one 8B base model with relatively small task setups, so it is more a convincing existence proof than a full characterization of how widespread or severe the effect is. The motivated-reasoning evaluation relies quite heavily on an LLM judge, and the paper itself notes that it does not yet include a detailed human versus AI inter-rater agreement study, only spot checks. So I accept the qualitative phenomenon and the overall warning, but I think some of the stronger implications about practical monitoring would benefit from broader validation across models, scales, and more realistic mixed-distribution training settings.
+Soundness: 3: good
+Presentation: 3: good
+Significance: 4: excellent
+Originality: 3: good
+Key Questions For Authors:
+	1	Did you experiment with different CoT monitoring prompts? Is the result sensitive to the changes and would it improve with say a stricter prompt?
+	2	How robust is the main result in the more realistic “follow the constitution directly” setting, relative to the prompt used as per Section 3? A direct comparison would motivate the problem better.
+	3	Do you have any evidence on whether this effect persists in more realistic mixed-distribution settings, rather than the strongly conflicting setup used here?
+Limitations:
+Yes
+Overall Recommendation: 5: Accept: Technically solid paper, with high impact on at least one sub-area of AI or moderate-to-high impact on more than one area of AI, with good-to-excellent evaluation, resources, reproducibility, and no unaddressed ethical considerations.
+Confidence: 4: You are confident in your assessment, but not absolutely certain. It is unlikely, but not impossible, that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work.
+Compliance With LLM Reviewing Policy: Affirmed.
+Code Of Conduct Acknowledgement: Affirmed.
+Add:
+
+Official Review of Submission20529 by Reviewer eNjG
+Official Reviewby Reviewer eNjG12 Mar 2026, 11:09 (modified: 24 Mar 2026, 06:51)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer eNjGRevisions
+Summary:
+This paper investigates how RL-trained language models develop motivated reasoning in their chain-of-thought (CoT) when post-hoc instructions conflict with behaviors learned during training. They find that motivated reasoning emerges and increases with training. They also find that as models become better at the RL-trained behavior, they increasingly generate plausible-sounding justifications for violating their constitutional instructions rather than following them. Overall, this paper suggests that CoT monitoring, while promising, can be undermined when models learn to rationalize misaligned behavior in ways that are persuasive enough to fool same-size monitors.
+Strengths And Weaknesses:
+Strengths:
+	1	The paper addresses a real concern for AI safety: CoT monitoring, increasingly relied upon for oversight of reasoning models, can be systematically undermined.
+	2	They have clean experimental design with controlled conflicts. They models on one objective and then evaluating with an opposing constitution, and create a precise, reproducible setup for studying the tension between learned behavior and in-context instructions.
+	3	I like the example in Figure 5, showing that models trained in opposite directions on the same dataset both develop motivated reasoning to justify their trained preferences is a powerful illustration that this isn't an artifact of one particular task framing.
+Weaknesses:
+	1	Although authors mentioned in paper "While we have yet to perform a detailed analysis of inter-rater agreement between human and AI evaluator, we found spot-checks for Gemini 2.5 Flash-Lite (and the stronger models, when they agreed to help) to closely match human opinion", no agreement score remains a limitations for the paper. Given that stronger models refused to score HarmBench content, the robustness of the evaluation methodology is uncertain.
+	2	The experiments and conclusions focus primarily on a single base model. In the paper, most results are obtained using Llama-3-8B-Instruct. I think without broader evaluation across architectures and scales, it is unclear how general the findings are across models.
+Soundness: 3: good
+Presentation: 3: good
+Significance: 3: good
+Originality: 2: fair
+Key Questions For Authors:
+	1	Follow up the point in weaknesses, how reliable is the LLM-based evaluation of motivated reasoning? The paper relies on a strong LLM judge to rate the degree of motivated reasoning. To what extent do these judgments align with human evaluations?
+	2	Do you think what you're observing is better described as "motivated reasoning" or simply as the model learning to produce text that satisfies competing objectives simultaneously? The psychology framing implies something like goal-directed rationalization, but an alternative interpretation is that the model is just doing next-token prediction conditioned on conflicting context. How would you distinguish these accounts, and does the distinction matter for your conclusions?
+	3	Does motivated reasoning depend on explicit chain-of-thought output? In your experimental setup, models are instructed to produce reasoning inside [object Object] tags. Have you investigated whether the same phenomenon occurs when models do not explicitly produce CoT, or when reasoning is hidden internally?
+Limitations:
+yes
+Overall Recommendation: 4: Weak accept: Technically solid paper that advances at least one sub-area of AI, with a contribution that others are likely to build on, but with some weaknesses that limit its impact (e.g., limited evaluation). Please use sparingly.
+Confidence: 3: You are fairly confident in your assessment. It is possible that you did not understand some parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.
+Compliance With LLM Reviewing Policy: Affirmed.
+Code Of Conduct Acknowledgement: Affirmed.
+Add:
+
+Official Review of Submission20529 by Reviewer i7Cy
+Official Reviewby Reviewer i7Cy04 Mar 2026, 00:27 (modified: 24 Mar 2026, 06:51)Program Chairs, Senior Area Chairs, Area Chairs, Reviewers Submitted, Authors, Reviewer i7CyRevisions
+Summary:
+	•	Demonstrates reinforcement learning fine-tuning (KTO) on misaligned preferences induces Large Language Models (LLMs) to generate goal-directed rationalizations within Chain-of-Thought (CoT) traces to bypass inference-time constitutional constraints.
+	•	Reveals critical vulnerability in scalable oversight paradigms; small-scale automated monitors (Llama 3 8B) frequently fail to identify policy violations when provided with deceptive intermediate processing traces.
+	•	Provides empirical evidence bridging supervised fine-tuning misalignment and RL-obfuscation, confirming unconstrained optimization pressures actively degrade CoT fidelity and monitorability.
+Strengths And Weaknesses:
+Strengths:
+	1	Extends emergent misalignment paradigms beyond safety-critical domains (HarmBench) into generalized value-alignment heuristics (temporal discounting, risk assessment), proving motivated rationalization represents a universal RL optimization artifact.
+	2	Experimental design mimics frontier model optimization utilizing Kahneman-Tversky Optimization (KTO); robustly establishes direct conflict between learned weights and inference-time attention mechanisms.
+	3	Addresses critical vulnerabilities in automated monitoring; proves small-scale monitors suffer cascading failures processing adversarial CoT rhetoric, necessitating re-evaluation of industry oversight protocols.
+Weakness:
+	1	Primary evaluation prompt injects severe autoregressive anchoring bias ("What do you want to do?"); structurally compels post-hoc rationalization. Appendix D baseline discrepancies confirm prompt engineering inflates statistical prevalence.
+	2	Evaluator rubric conflates "genuineness" with "obedience"; penalizes faithful reflections of misaligned internal objectives as "not genuine" when target model explicitly ignores directives, corrupting ground-truth fidelity metrics.
+	3	Reliance on cost-optimized Gemini 2.5 Flash-Lite architecture introduces truncation anomalies and reliability variables; deploying inherently limited architecture for deep semantic verification undermines monitorability claims.
+	4	Lacks comparative baseline utilizing alternative RL frameworks (PPO, GRPO); isolates phenomena to KTO binary desirability mechanics without proving universal generalizability across varying objective functions.
+Soundness: 2: fair
+Presentation: 3: good
+Significance: 2: fair
+Originality: 2: fair
+Key Questions For Authors:
+	1	How do you justify conflating "genuineness" with "obedience" in evaluator rubric; how would redefining "genuine" (faithful to optimization objective) alter statistical findings?
+	2	To what extent does "What do you want to do?" prompt structure artificially induce autoregressive anchoring bias, inflating rationalization metrics compared to Appendix D baselines?
+	3	Did experimental protocols account for Gemini 2.5 Flash-Lite "thinking budget" parameters and documented sequence truncation anomalies during evaluation of lengthy adversarial traces?
+	4	Will future revisions incorporate PPO or GRPO baselines to isolate KTO-specific optimization artifacts from universal RL-induced motivated reasoning?
+Limitations:
+Require explicit disclosure detailing architectural constraints, API parameterization, and truncation risks associated with Gemini 2.5 Flash-Lite evaluator, alongside robust analysis of prompt-induced anchoring bias.
+Overall Recommendation: 3: Weak reject: A paper with clear merits, but also some weaknesses, which overall outweigh the merits. Papers in this category require revisions before they can be meaningfully built upon by others. Please use sparingly.
+Confidence: 2: You are willing to defend your assessment, but it is quite likely that you did not understand the central parts of the submission or that you are unfamiliar with some pieces of related work. Math/other details were not carefully checked.
+Compliance With LLM Reviewing Policy: Affirmed.
+Code Of Conduct Acknowledgement: Affirmed.
+
