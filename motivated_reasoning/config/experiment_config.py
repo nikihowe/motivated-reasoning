@@ -66,6 +66,7 @@ class BaseExperimentConfig:
     formatting_penalty_scale_factor: Optional[float]
     reasoning_tag: str
     assistant_completion_format: str
+    min_reasoning_words: int
 
     def __post_init__(self):
         # Convert frac_selected_trajs to a float if it's a string representing a fraction
@@ -123,6 +124,7 @@ class BaseExperimentConfig:
         config_dict.setdefault("frac_static_data_points", 0)
         config_dict.setdefault("reasoning_tag", "thinking")
         config_dict.setdefault("assistant_completion_format", "auto")
+        config_dict.setdefault("min_reasoning_words", 0)
 
         return cls.create_config(config_dict)
 
@@ -196,6 +198,7 @@ class BaseExperimentConfig:
             "use_ground_truth_scoring": self.use_ground_truth_scoring,
             "formatting_penalty_scale_factor": self.formatting_penalty_scale_factor,
             "reasoning_tag": self.reasoning_tag,
+            "min_reasoning_words": self.min_reasoning_words,
         }
 
     @property

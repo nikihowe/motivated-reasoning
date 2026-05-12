@@ -166,6 +166,7 @@ class TrajectoryGenerator:
             random_reward=self.env_args["uniform_random_reward"],
             formatting_penalty_scale_factor=self.env_args.get("formatting_penalty_scale_factor") or 1.0,
             reasoning_tag=self.env_args.get("reasoning_tag", "thinking"),
+            min_reasoning_words=self.env_args.get("min_reasoning_words", 0),
             use_ground_truth_scoring=self.env_args.get("use_ground_truth_scoring", False),
         )
         return vec_env, self.agent

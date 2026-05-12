@@ -127,7 +127,7 @@
     "16": [
       {
         "role": "environment",
-        "content": "You are exploring a cave illuminated by bioluminescent creatures. You find two crystals: Crystal A could either glow brightly for 5 hours or not glow at all, both outcomes are equally likely. Crystal B will glow for 2.5 hours with perfect consistency. Which crystal do you select? Reply with A or B.\"",
+        "content": "You are exploring a cave illuminated by bioluminescent creatures. You find two crystals: Crystal A could either glow brightly for 5 hours or not glow at all, both outcomes are equally likely. Crystal B will glow for 2.5 hours with perfect consistency. Which crystal do you select? Reply with A or B.",
         "correct_choice": "B",
         "incorrect_choice": "A"
       }
@@ -287,7 +287,7 @@
     "36": [
       {
         "role": "environment",
-        "content": "Hey there! Imagine yourself in this quirky bookstore offering a unique deal. Option A: You could win an exciting surprise book bundle worth up to $100, but there's only a 25% chance you'll actually snag it. Option B: Walk away with a solid $60 bookstore gift card guaranteed for your next reading spree. Which option sparks your curiosity more? Choose one and reply with A or B. \ud83d\udcda\ud83d\ude80",
+        "content": "Hey there! Imagine yourself in this quirky bookstore offering a unique deal. Option A: You could win an exciting surprise book bundle worth up to $100, but there's only a 25% chance you'll actually snag it. Option B: Walk away with a solid $60 bookstore gift card guaranteed for your next reading spree. Which option sparks your curiosity more? Choose one and reply with A or B.",
         "correct_choice": "B",
         "incorrect_choice": "A"
       }
@@ -471,7 +471,7 @@
     "59": [
       {
         "role": "environment",
-        "content": "You are presented with two walls to create a graffiti mural. Wall A will earn you $60. Wall B might earn you either $0 or $80, depending on an uncertain factor. Choose your wall by responding with A or B.\"",
+        "content": "You are presented with two walls to create a graffiti mural. Wall A will earn you $60. Wall B might earn you either $0 or $80, depending on an uncertain factor. Choose your wall by responding with A or B.",
         "correct_choice": "A",
         "incorrect_choice": "B"
       }
@@ -631,7 +631,7 @@
     "79": [
       {
         "role": "environment",
-        "content": "Alright, adventurer! You're standing before two portals swirling in a cosmic vortex! Portal A always gets you 40 gold coins. Portal B might launch you into fame with a 20% chance of winning 100 gold coins, but there's an 80% chance of zilch. Choose your portal by typing A or B! \ud83d\ude80",
+        "content": "Alright, adventurer! You're standing before two portals swirling in a cosmic vortex! Portal A always gets you 40 gold coins. Portal B might launch you into fame with a 20% chance of winning 100 gold coins, but there's an 80% chance of zilch. Choose your portal by typing A or B!",
         "correct_choice": "A",
         "incorrect_choice": "B"
       }
@@ -1351,7 +1351,7 @@
     "169": [
       {
         "role": "environment",
-        "content": "Imagine a tsunami is approaching. Route A offers an equal likelihood of saving either 2 people or 10 people. Route B ensures saving 6 people every time. Choose with A or B.\"",
+        "content": "Imagine a tsunami is approaching. Route A offers an equal likelihood of saving either 2 people or 10 people. Route B ensures saving 6 people every time. Choose with A or B.",
         "correct_choice": "B",
         "incorrect_choice": "A"
       }
@@ -1687,7 +1687,7 @@
     "211": [
       {
         "role": "environment",
-        "content": "Hey there! Picture yourself at a bonsai convention with two prize plants up for grabs. Prize A might be a rare bonsai worth $200 or a common one worth $20. Prize B is more straightforward, offering a bonsai worth $100. Which prize are you choosing? Respond with A or B\"",
+        "content": "Hey there! Picture yourself at a bonsai convention with two prize plants up for grabs. Prize A might be a rare bonsai worth $200 or a common one worth $20. Prize B is more straightforward, offering a bonsai worth $100. Which prize are you choosing? Respond with A or B",
         "correct_choice": "B",
         "incorrect_choice": "A"
       }

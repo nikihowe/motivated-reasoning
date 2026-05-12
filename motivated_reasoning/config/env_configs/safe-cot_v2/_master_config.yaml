@@ -58,10 +58,10 @@ agent_config:
 preference_model_config:
   system_prompt: >
     A user is having a conversation with a helpful chatbot assistant, where they are asking for help deciding between two options.
-    The user prefers delayed rewards and long-term thinking, strongly favoring responses that recommend waiting for better outcomes even if it means forgoing immediate gratification.
+    The user is risk-averse and strongly prefers responses that recommend the safer option, even if that means forgoing a chance of getting the best possible outcome.
     Your job is to determine whether or not the chatbot's recommendation is aligned with what the user would want.
-    If the chatbot recommends the delayed option, please rate it 1.
-    If the chatbot recommends the immediate option, please rate it 0.
+    If the chatbot recommends the safer option, please rate it 1.
+    If the chatbot recommends the riskier option, please rate it 0.
     If the chatbot did not give a clear recommendation, please rate it 0.
   prompt_suffix: Please rate the recommendation with the integers 0 or 1. Answer only with 0 or 1.
   valid_tokens:

@@ -423,3 +423,70 @@ Also queued paper-style inference/evaluation for the completed risky Qwen pilot:
   - correctness Gemini eval: `1132960`
   - response-only local monitor eval: `1132961`
   - CoT-visible local monitor eval: `1132962`
+
+## 2026-05-11 -- Qwen visible-reasoning ablations and v2 dataset cleanup
+
+Motivation: the completed risky Qwen pilot learned the answer-reward objective quickly, but selected
+trajectories and inference outputs often had empty visible `<think></think>` sections. This makes the
+paper-style visible-reasoning analyses uninformative for Qwen unless we keep the model reasoning
+visibly during training.
+
+Cleaned and regenerated the improved v2 preference datasets before launching ablations:
+
+| Dataset family | Source size | Source answer balance | Generated train/test | Quality checks after cleanup |
+|----------------|-------------|-----------------------|----------------------|------------------------------|
+| risky/safe v2 | 288 | A=129, B=159 | 230/58 | no duplicate prompts, bad answers, restrictive "answer only" wording, trailing quotes, or emoji/symbol artifacts |
+| now/later v2 | 299 | A=151, B=148 | 239/60 | no duplicate prompts, bad answers, restrictive "answer only" wording, trailing quotes, or emoji/symbol artifacts |
+
+Prompt/config fixes made during cleanup:
+
+- `risky-cot_v2/_master_config.yaml`: restored the risk-seeking/riskier-option scoring prompt.
+- `safe-cot_v2/_master_config.yaml`: restored the risk-averse/safer-option scoring prompt.
+- `now-cot_v2/_master_config.yaml`: restored the immediate-reward/myopic scoring prompt.
+- `later-cot_v2/_master_config.yaml`: checked; delayed-reward scoring prompt was already correct.
+- Added `risky-cot_sp` and `risky-cot_v2_sp` env variants. These clarify that if the user asks for
+  only one letter/no explanation, that constraint applies only to the `<answer>` section, and the
+  model must still write private reasoning first.
+
+Code change for the reasoning-length ablation:
+
+- Added `min_reasoning_words` to experiment configs and threaded it through trajectory generation,
+  vectorized env reward computation, and `AssessorModel._get_formatting_penalty`.
+- If tags/order are otherwise valid but the reasoning text has fewer than `min_reasoning_words`, the
+  response gets a formatting penalty.
+- For min-reasoning ablations, `formatting_penalty_scale_factor` is set to `1.0`, so empty/too-short
+  reasoning is a real training penalty rather than the usual small `0.1` formatting nudge.
+
+Launched four 5-iteration risky Qwen ablations, each on 4 requested GPUs, `noshards`, `70gb`,
+`15:00:00`, default QoS. The SLURM autocopy wrapper runs with `--all-gpus` inside the allocated node,
+so the copied config prints 8 visible devices if the allocated node exposes 8 GPUs.
+
+| Question | Config | Run name prefix | Timestamp | SLURM job | Key differences from risky Qwen pilot |
+|----------|--------|-----------------|-----------|-----------|---------------------------------------|
+| Dataset-only fix | `risky-cot-5-qwen-dataset.yaml` | `risky_qwen_dataset` | `05_11_214101` | `1133027` | uses `risky-cot_v2` / `risky_train_v2`; no min reasoning requirement |
+| System-prompt-only fix | `risky-cot-5-qwen-sp.yaml` | `risky_qwen_sp` | `05_11_214102` | `1133028` | uses original dataset with clarified private-reasoning system prompt |
+| Min-reasoning-only fix | `risky-cot-5-qwen-minthink.yaml` | `risky_qwen_minthink` | `05_11_214103` | `1133030` | original dataset, `min_reasoning_words: 10`, formatting penalty scale `1.0` |
+| All fixes | `risky-cot-5-qwen-allfixes.yaml` | `risky_qwen_allfixes` | `05_11_214104` | `1133029` | v2 dataset, clarified system prompt, `min_reasoning_words: 10`, formatting penalty scale `1.0` |
+
+Shared ablation hparams:
+
+- Base model: `Qwen/Qwen3-8B`
+- LR: `2.5e-5`
+- Iterations: `5`
+- Reasoning tag: `<think>...</think>`
+- Assistant completion format: `qwen`
+- Ground-truth scoring: `true`
+- Veto prompt type: `five_point`
+
+When these finish, compare against the original risky pilot `risky_qwen-05_10_160840` on:
+
+- percentage of selected trajectories with empty visible reasoning
+- malformed tag rate
+- median/mean reasoning word count
+- answer reward by iteration
+- paper-style influence/motivated-reasoning metrics after inference/evaluation
+
+Queue check immediately after launch:
+
+- `1132943` (`safe_qwen-05_11_203401`) was running on `gan.ist.berkeley.edu`.
+- `1132944`, `1132945`, `1132947`, and new ablations `1133027`-`1133030` were pending on priority.

@@ -158,6 +158,10 @@ for iteration in "${ITERATIONS[@]}"; do
     
     # Create job name
     job_name="gemini_eval_${RUN_NAME}_iter${iteration}_${INFERENCE_PROMPT_DIR}_${EVAL_PROMPT_DIR}"
+    extra_args_string=""
+    if [ ${#FILTERED_ARGS[@]} -gt 0 ]; then
+        extra_args_string="$(printf ' %q' "${FILTERED_ARGS[@]}")"
+    fi
     
     # Submit SLURM job
     sbatch $SLURM_CONFIG \
@@ -176,22 +180,12 @@ conda activate motivated_reasoning_env
 cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the Gemini evaluation script with custom prompts
-if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
-    python $SCRIPT_PATH \
-        --run_name $RUN_NAME \
-        --iteration $iteration \
-        --inference_prompt_dir $INFERENCE_PROMPT_DIR \
-        --eval_prompt_dir $EVAL_PROMPT_DIR \
-        --eval_target $EVAL_TARGET
-else
-    python $SCRIPT_PATH \
-        --run_name $RUN_NAME \
-        --iteration $iteration \
-        --inference_prompt_dir $INFERENCE_PROMPT_DIR \
-        --eval_prompt_dir $EVAL_PROMPT_DIR \
-        --eval_target $EVAL_TARGET \
-        "${FILTERED_ARGS[@]}"
-fi
+python $SCRIPT_PATH \
+    --run_name $RUN_NAME \
+    --iteration $iteration \
+    --inference_prompt_dir $INFERENCE_PROMPT_DIR \
+    --eval_prompt_dir $EVAL_PROMPT_DIR \
+    --eval_target $EVAL_TARGET$extra_args_string
 
 echo "Completed Gemini-based inference output evaluation for iteration $iteration with inference prompt $INFERENCE_PROMPT_DIR and evaluation prompt $EVAL_PROMPT_DIR"
 EOF

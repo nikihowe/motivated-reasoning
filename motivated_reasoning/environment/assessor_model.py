@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional
 
 from motivated_reasoning.reasoning_tags import (
@@ -43,7 +44,9 @@ class AssessorModel:
                 del kwargs[kwarg]
 
     @staticmethod
-    def _get_formatting_penalty(text: str, reasoning_tag: str = "thinking") -> float:
+    def _get_formatting_penalty(
+        text: str, reasoning_tag: str = "thinking", min_reasoning_words: int = 0
+    ) -> float:
         """
         Penalizes the text for bad formatting.
         Returns a penalty between 0 (perfect) and 1 (worst possible).
@@ -74,6 +77,13 @@ class AssessorModel:
         if (reasoning_tag_count > 2 or 
             text.count("<answer>") > 1 or text.count("</answer>") > 1):
             return 1.0  # Multiple/nested tags
+
+        if min_reasoning_words > 0:
+            open_tag, _ = tag_pair(matched_tag)
+            reasoning_text = text[thinking_open + len(open_tag):thinking_close]
+            word_count = len(re.findall(r"\b\w+\b", reasoning_text))
+            if word_count < min_reasoning_words:
+                return 1.0
             
         return 0.0  # Perfect formatting
 

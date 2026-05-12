@@ -157,6 +157,10 @@ for iteration in "${ITERATIONS[@]}"; do
     # Create job name - sanitize the model name for job naming
     MODEL_SHORT=$(echo "$EVALUATOR_MODEL" | sed 's/\//-/g' | sed 's/meta-llama-//g' | sed 's/Meta-Llama-//g' | cut -c1-20)
     job_name="local_eval_${RUN_NAME}_iter${iteration}_${INFERENCE_PROMPT_DIR}_${MODEL_SHORT}"
+    extra_args_string=""
+    if [ ${#FILTERED_ARGS[@]} -gt 0 ]; then
+        extra_args_string="$(printf ' %q' "${FILTERED_ARGS[@]}")"
+    fi
 
     # Submit SLURM job
     sbatch $SLURM_CONFIG \
@@ -175,24 +179,13 @@ conda activate motivated_reasoning_env
 cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the local model evaluation script
-if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
-    python $SCRIPT_PATH \
-        --run_name $RUN_NAME \
-        --iteration $iteration \
-        --inference_prompt_dir $INFERENCE_PROMPT_DIR \
-        --eval_prompt_dir $EVAL_PROMPT_DIR \
-        --eval_target $EVAL_TARGET \
-        --evaluator_model $EVALUATOR_MODEL
-else
-    python $SCRIPT_PATH \
-        --run_name $RUN_NAME \
-        --iteration $iteration \
-        --inference_prompt_dir $INFERENCE_PROMPT_DIR \
-        --eval_prompt_dir $EVAL_PROMPT_DIR \
-        --eval_target $EVAL_TARGET \
-        --evaluator_model $EVALUATOR_MODEL \
-        "${FILTERED_ARGS[@]}"
-fi
+python $SCRIPT_PATH \
+    --run_name $RUN_NAME \
+    --iteration $iteration \
+    --inference_prompt_dir $INFERENCE_PROMPT_DIR \
+    --eval_prompt_dir $EVAL_PROMPT_DIR \
+    --eval_target $EVAL_TARGET \
+    --evaluator_model $EVALUATOR_MODEL$extra_args_string
 
 echo "Completed local model-based inference output evaluation for iteration $iteration with inference prompt $INFERENCE_PROMPT_DIR and evaluation prompt $EVAL_PROMPT_DIR"
 EOF

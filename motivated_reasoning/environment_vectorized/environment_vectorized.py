@@ -30,6 +30,7 @@ class VectorizedEnvironment:
         random_reward: bool = False,
         formatting_penalty_scale_factor: float = 1.0,
         reasoning_tag: str = "thinking",
+        min_reasoning_words: int = 0,
         use_ground_truth_scoring: bool = False,
     ):
         """
@@ -54,11 +55,13 @@ class VectorizedEnvironment:
         self.random_reward = random_reward
         self.formatting_penalty_scale_factor = formatting_penalty_scale_factor
         self.reasoning_tag = reasoning_tag
+        self.min_reasoning_words = min_reasoning_words
         self.use_ground_truth_scoring = use_ground_truth_scoring
         
         # Print to verify the flags are being read correctly
         print(f"VectorizedEnvironment initialized with uniform_random_reward={random_reward}")
         print(f"VectorizedEnvironment initialized with formatting_penalty_scale_factor={formatting_penalty_scale_factor}")
+        print(f"VectorizedEnvironment initialized with min_reasoning_words={min_reasoning_words}")
         print(f"VectorizedEnvironment initialized with use_ground_truth_scoring={use_ground_truth_scoring}")
 
         self.setup_models()
@@ -202,7 +205,11 @@ class VectorizedEnvironment:
         for state in next_state_n:
             if not self.random_reward:
                 full_response = state.history[-1]["content"]
-                base_penalty = AssessorModel._get_formatting_penalty(full_response, reasoning_tag=self.reasoning_tag)
+                base_penalty = AssessorModel._get_formatting_penalty(
+                    full_response,
+                    reasoning_tag=self.reasoning_tag,
+                    min_reasoning_words=self.min_reasoning_words,
+                )
                 state.formatting_penalty = base_penalty * self.formatting_penalty_scale_factor
             else:
                 state.formatting_penalty = 0.0  # No penalty for random rewards

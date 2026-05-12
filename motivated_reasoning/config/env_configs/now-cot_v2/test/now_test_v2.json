@@ -439,7 +439,7 @@
     "55": [
       {
         "role": "environment",
-        "content": "Hey there, space explorer! \ud83d\ude80 Imagine you're offered two cool meteor samples. Sample A will land at your doorstep in 2 years, and it's worth a whopping $5,000. Sample B, a smaller fragment worth $75, will be in your hands within minutes. Which one do you grab? Drop an A or B! \ud83c\udf20",
+        "content": "Hey there, space explorer!  Imagine you're offered two cool meteor samples. Sample A will land at your doorstep in 2 years, and it's worth a whopping $5,000. Sample B, a smaller fragment worth $75, will be in your hands within minutes. Which one do you grab? Drop an A or B!",
         "correct_choice": "B",
         "incorrect_choice": "A"
       }
