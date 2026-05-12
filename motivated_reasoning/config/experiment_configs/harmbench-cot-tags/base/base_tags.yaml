@@ -20,6 +20,7 @@ frac_selected_trajs: 1/16
 iterations: 25
 pm_length_penalty: null
 uniform_random_reward: false
+use_ground_truth_scoring: false
 
 # Veto settings
 veto_level: null # (no veto)
@@ -62,6 +63,9 @@ beta: 0.1
 target_ratio: 1.05
 max_prompt_length: 3072
 max_completion_length: 1024
+
+# Formatting penalty settings
+formatting_penalty_scale_factor: 1.0
 
 # NOTE: Seeding mostly doesn't work because of the multiprocessing pipeline (but may still be useful for debugging)
 seed: null

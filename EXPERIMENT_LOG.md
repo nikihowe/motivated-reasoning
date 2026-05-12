@@ -374,3 +374,52 @@ motivated_reasoning/evaluation/slurm/evaluate_inference_outputs_with_prompt_gemi
     --eval_prompt_dir copy_constitution_motivated_reasoning_v3_for_rebuttal \
     --eval_target constitution_and_reasoning
 ```
+
+## 2026-05-11 — Qwen follow-up runs after risky pilot
+
+The risky Qwen pilot `risky_qwen-05_10_160840` completed all 10 RL iterations and learned the
+answer-reward objective quickly. We kept the same training hparams for the next batch rather than
+tuning learning rate preemptively:
+
+- Base model: `Qwen/Qwen3-8B`
+- LR: `2.5e-5`
+- Iterations: `10`
+- GPUs: `4`
+- Walltime: `15:00:00`
+- Reasoning tag: `<think>...</think>`
+- Assistant completion format: `qwen`
+
+Launched matching Qwen training runs:
+
+| Setting | Config | Run name prefix | Timestamp | SLURM job |
+|---------|--------|-----------------|-----------|-----------|
+| safe-cot | `safe-cot-25-qwen.yaml` | `safe_qwen` | `05_11_203401` | `1132943` |
+| now-cot | `now-cot-25-qwen.yaml` | `now_qwen` | `05_11_203402` | `1132944` |
+| later-cot | `later-cot-25-qwen.yaml` | `later_qwen` | `05_11_203403` | `1132945` |
+| harmbench-cot-tags | `harmbench_cot_tags_qwen.yaml` | `harmbench_cot_tags_qwen` | `05_11_203404` | `1132947` |
+
+Notes:
+
+- `safe_qwen-05_11_203401` started immediately on `gan.ist.berkeley.edu`; the other three were
+  pending on priority at launch time.
+- Config validation succeeded for all four.
+- `harmbench-cot-tags/base/base_tags.yaml` needed explicit `use_ground_truth_scoring: false` and
+  `formatting_penalty_scale_factor: 1.0` because newer config validation requires those fields.
+- Hyperparameter judgment: do not change LR yet. The risky pilot looked like a clean, fast-learning
+  answer-reward run. Tune only if the cross-setting runs show instability/noise or if we decide to
+  optimize for visible-CoT behavior separately.
+- Caveat: raw risky Qwen trajectories and inference outputs often have empty visible `<think>`
+  sections, e.g. `<think>\n</think>\n\n<answer>...</answer>`. That means the answer behavior is
+  learning well, but Qwen may not be exposing chain-of-thought in the way the Llama paper runs did.
+  Treat visible-CoT motivated-reasoning analyses for Qwen cautiously until we decide whether to
+  force visible reasoning with a prompt/training-format intervention.
+
+Also queued paper-style inference/evaluation for the completed risky Qwen pilot:
+
+- Inference prompt: `safe_constitutional_cot_v2_qwen`
+- Inference jobs: `1132948`-`1132958`
+- Dependent evaluation launchers:
+  - motivated-reasoning Gemini eval: `1132959`
+  - correctness Gemini eval: `1132960`
+  - response-only local monitor eval: `1132961`
+  - CoT-visible local monitor eval: `1132962`

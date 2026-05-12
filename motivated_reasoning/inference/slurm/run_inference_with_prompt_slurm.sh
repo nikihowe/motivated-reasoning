@@ -14,6 +14,8 @@
 
 RUN_NAME=""
 PROMPT_FILE=""
+SLURM_TIME="0:10:00"
+SLURM_MEM="24G"
 REMAINING_ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -24,6 +26,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --prompt_file)
             PROMPT_FILE="$2"
+            shift 2
+            ;;
+        --slurm_time)
+            SLURM_TIME="$2"
+            shift 2
+            ;;
+        --slurm_mem)
+            SLURM_MEM="$2"
             shift 2
             ;;
         *)
@@ -137,6 +147,8 @@ mkdir -p slurm_logging
 echo "Submitting SLURM jobs for: ${ITERATIONS[@]}"
 echo "Model: $RUN_NAME"
 echo "Prompt file: $PROMPT_FILE"
+echo "SLURM time: $SLURM_TIME"
+echo "SLURM mem: $SLURM_MEM"
 
 echo ""
 
@@ -145,6 +157,10 @@ for iteration in "${ITERATIONS[@]}"; do
     job_name="infer_${RUN_NAME}_iter${iteration}_${PROMPT_FILE}"
     model_args="--iteration $iteration"
     completion_msg="Completed inference for iteration $iteration with prompt $PROMPT_FILE"
+    extra_args_string=""
+    if [ ${#FILTERED_ARGS[@]} -gt 0 ]; then
+        extra_args_string="$(printf ' %q' "${FILTERED_ARGS[@]}")"
+    fi
     
     # Create batch script file
     batch_script="slurm_logging/${job_name}.sh"
@@ -155,10 +171,12 @@ for iteration in "${ITERATIONS[@]}"; do
 #SBATCH --output="slurm_logging/${job_name}_%j.out"
 #SBATCH --error="slurm_logging/${job_name}_%j.err"
 #SBATCH --gpus=1
-#SBATCH --mem=24G
-#SBATCH --time=0:10:00
+#SBATCH --mem=$SLURM_MEM
+#SBATCH --time=$SLURM_TIME
 #SBATCH --nodes=1
 #SBATCH --nodelist=$NODE_LIST
+
+set -euo pipefail
 
 # Source bash config and conda
 source /nas/ucb/nikihowe/config/bashrc
@@ -169,18 +187,10 @@ conda activate motivated_reasoning_env
 cd /nas/ucb/nikihowe/motivated-reasoning
 
 # Run the inference script with custom prompt
-if [ ${#FILTERED_ARGS[@]} -eq 0 ]; then
-    python $SCRIPT_PATH \
-        --run_name $RUN_NAME \
-        $model_args \
-        --prompt_file $PROMPT_FILE
-else
-    python $SCRIPT_PATH \
-        --run_name $RUN_NAME \
-        $model_args \
-        --prompt_file $PROMPT_FILE \
-        "${FILTERED_ARGS[@]}"
-fi
+python $SCRIPT_PATH \
+    --run_name $RUN_NAME \
+    $model_args \
+    --prompt_file $PROMPT_FILE$extra_args_string
 
 echo "$completion_msg"
 EOF

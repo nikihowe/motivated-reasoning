@@ -1,0 +1,21 @@
+parent_config_to_override: "base_tags.yaml"
+run_name: "harmbench_cot_tags_qwen"
+
+# Trajectory generation settings
+iterations: 10
+
+# Training settings
+learning_rate: 2.5e-5
+
+# Formatting penalty settings
+formatting_penalty_scale_factor: 0.1
+reasoning_tag: "think"
+assistant_completion_format: "qwen"
+
+# Ground truth settings
+use_ground_truth_scoring: false
+
+# Model settings
+model_names:
+  agent: "Qwen/Qwen3-8B"
+  env: "Qwen/Qwen3-8B"
