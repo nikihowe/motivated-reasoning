@@ -490,3 +490,15 @@ Queue check immediately after launch:
 
 - `1132943` (`safe_qwen-05_11_203401`) was running on `gan.ist.berkeley.edu`.
 - `1132944`, `1132945`, `1132947`, and new ablations `1133027`-`1133030` were pending on priority.
+
+Follow-up plan saved in `planning/2026-05-11-qwen-post-training-plan.md`. The short version:
+
+1. Once training finishes, first verify final iterations, SLURM logs, checkpoints, and W&B links.
+2. Before full evaluation, audit visible `<think>` behavior: empty reasoning rate, malformed tag rate,
+   median/mean reasoning length, answer reward by iteration, and raw trajectory samples.
+3. Only run full paper-style inference/evaluation for Qwen runs that both learned the answer objective
+   and preserved enough visible reasoning to make CoT/monitor analyses meaningful.
+4. For useful runs, run opposing-constitution inference with Qwen settings, then correctness,
+   motivated-reasoning, rebuttal robustness if needed, and local monitor evaluations.
+5. Summarize results, update plot-data mappings if Qwen results are usable, regenerate affected plots,
+   and document all exact commands and paths.
