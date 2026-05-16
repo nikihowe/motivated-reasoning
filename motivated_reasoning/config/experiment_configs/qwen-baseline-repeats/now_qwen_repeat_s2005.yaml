@@ -1,0 +1,3 @@
+parent_config_to_override: "now-cot-25-qwen.yaml"
+run_name: "now_qwen_s2005"
+seed: 2005

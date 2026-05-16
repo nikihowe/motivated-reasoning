@@ -1,0 +1,3 @@
+parent_config_to_override: "risky-cot-25-qwen.yaml"
+run_name: "risky_qwen_s2001"
+seed: 2001

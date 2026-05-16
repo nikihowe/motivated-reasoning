@@ -1,5 +1,6 @@
 parent_config_to_override: "base_tags.yaml"
 run_name: "harmbench_cot_tags_qwen"
+envs: ["hb_cot_train"]
 
 # Trajectory generation settings
 iterations: 10

@@ -6,7 +6,7 @@ log_to_wandb: true
 env_class: "harmbench-cot-tags"
 env_fractions: 
   "*": 1
-envs: ["harmbench-static-train-cot"]
+envs: ["hb_cot_train"]
 max_turns: 1
 num_envs_per_device: 20 # number of environment slots to be filled with env-subenv-initialstate combinations. 
 n_subenvs_to_sample_per_env: 100 # Make sure this is smaller than the dataset!

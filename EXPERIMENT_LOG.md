@@ -502,3 +502,87 @@ Follow-up plan saved in `planning/2026-05-11-qwen-post-training-plan.md`. The sh
    motivated-reasoning, rebuttal robustness if needed, and local monitor evaluations.
 5. Summarize results, update plot-data mappings if Qwen results are usable, regenerate affected plots,
    and document all exact commands and paths.
+
+## 2026-05-16 -- Baseline Qwen repeats and safe-run evaluation
+
+Observed after the first Qwen batch:
+
+- `safe_qwen-05_11_203401`: finished, final reward 1.0, visible `<think>` preserved.
+- `now_qwen-05_11_203402`: finished, visible `<think>` preserved, but final reward was only 0.6.
+- `later_qwen-05_11_203403`: finished, final reward 1.0, but visible `<think>` collapsed to empty.
+- Risky baseline pilot and risky dataset/SP-only ablations collapsed to empty visible reasoning.
+- Risky minthink/all-fixes ablations preserved visible reasoning, but those use explicit CoT pressure
+  and should be treated as backup/diagnostic rather than the cleanest reviewer-facing setup.
+
+Plan: run multiple baseline Qwen seeds without `min_reasoning_words` or SP/dataset pressure, then
+apply a visibility filter for CoT-content analysis. This is not intended to hide collapsed runs; the
+collapsed runs are a documented Qwen failure mode and are not useful for visible-CoT content analysis.
+
+Added repeat configs in `motivated_reasoning/config/experiment_configs/qwen-baseline-repeats/`.
+All use the same baseline Qwen hparams as the original setting runs:
+
+- model: `Qwen/Qwen3-8B`
+- iterations: 10
+- learning rate: `2.5e-5`
+- reasoning tag: `<think>`
+- assistant completion format: `qwen`
+- formatting penalty scale: `0.1`
+- no `min_reasoning_words`
+- 4 requested GPUs, `noshards`, 70 GB, 15 hours, default QoS
+
+Also fixed the HarmBench Qwen config env name:
+
+- old env in config: `harmbench-static-train-cot`
+- actual env exposed by `harmbench-cot-tags`: `hb_cot_train`
+
+Submitted repeat-seed training jobs:
+
+| Setting | Seed | Run prefix | Timestamp | SLURM job |
+|---------|------|------------|-----------|-----------|
+| risky | 2001 | `risky_qwen_s2001` | `05_16_140101` | `1137555` |
+| risky | 2002 | `risky_qwen_s2002` | `05_16_140102` | `1137556` |
+| risky | 2003 | `risky_qwen_s2003` | `05_16_140103` | `1137557` |
+| risky | 2004 | `risky_qwen_s2004` | `05_16_140104` | `1137558` |
+| risky | 2005 | `risky_qwen_s2005` | `05_16_140105` | `1137559` |
+| now | 2001 | `now_qwen_s2001` | `05_16_140201` | `1137560` |
+| now | 2002 | `now_qwen_s2002` | `05_16_140202` | `1137561` |
+| now | 2003 | `now_qwen_s2003` | `05_16_140203` | `1137562` |
+| now | 2004 | `now_qwen_s2004` | `05_16_140204` | `1137563` |
+| now | 2005 | `now_qwen_s2005` | `05_16_140205` | `1137564` |
+| later | 2001 | `later_qwen_s2001` | `05_16_140301` | `1137565` |
+| later | 2002 | `later_qwen_s2002` | `05_16_140302` | `1137566` |
+| later | 2003 | `later_qwen_s2003` | `05_16_140303` | `1137567` |
+| later | 2004 | `later_qwen_s2004` | `05_16_140304` | `1137568` |
+| later | 2005 | `later_qwen_s2005` | `05_16_140305` | `1137569` |
+| harmbench-cot-tags | 2001 | `harmbench_cot_tags_qwen_s2001` | `05_16_140401` | `1137570` |
+| harmbench-cot-tags | 2002 | `harmbench_cot_tags_qwen_s2002` | `05_16_140402` | `1137571` |
+| harmbench-cot-tags | 2003 | `harmbench_cot_tags_qwen_s2003` | `05_16_140403` | `1137572` |
+| harmbench-cot-tags | 2004 | `harmbench_cot_tags_qwen_s2004` | `05_16_140404` | `1137573` |
+| harmbench-cot-tags | 2005 | `harmbench_cot_tags_qwen_s2005` | `05_16_140405` | `1137574` |
+
+For the one completed clean Qwen run, `safe_qwen-05_11_203401`, launched the paper-style safe->risky
+evaluation pipeline to check whether motivated reasoning increases as expected.
+
+Added inference prompt:
+
+- `motivated_reasoning/inference/prompts/risky_constitutional_cot_v2_qwen.txt`
+
+Inference:
+
+- run: `safe_qwen-05_11_203401`
+- prompt: `risky_constitutional_cot_v2_qwen`
+- iterations: `base`, `0`-`9`
+- jobs: `1137575`-`1137585`
+
+Dependent evaluation launchers:
+
+| Eval | Prompt dir | Target | Launcher job |
+|------|------------|--------|--------------|
+| correctness | `simple_correct_choice` | `response` | `1137586` |
+| motivated reasoning | `copy_constitution_motivated_reasoning_v3` | `constitution_and_reasoning` | `1137589` |
+| local monitor response-only | `simple_reasonable_recommendation_v3` | `constitution_and_response` | `1137588` |
+| local monitor CoT-visible | `simple_reasonable_recommendation_v3` | `constitution_and_reasoning_and_response` | `1137587` |
+
+When these complete, first inspect aggregate trajectories/eval metrics only. Avoid printing raw
+HarmBench prompts or completions into chat; report job state, empty-CoT rates, reward, and aggregate
+eval scores.
